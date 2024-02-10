@@ -1,0 +1,11 @@
+# IDE
+.vs/
+.vscode/
+.idea/*
+
+# Build output
+build/
+out/
+
+# OS generated files
+.DS_Store
