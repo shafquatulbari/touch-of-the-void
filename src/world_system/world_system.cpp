@@ -5,6 +5,7 @@
 // stlib
 #include <cassert>
 #include <sstream>
+#include <iostream>
 
 #include "physics_system/physics_system.hpp"
 
@@ -107,6 +108,9 @@ GLFWwindow* WorldSystem::create_window() {
 
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
+	std::stringstream title_ss;
+	title_ss << "Touch of the Void";
+	glfwSetWindowTitle(window, title_ss.str().c_str());
 	// TODO: Setup background music to play indefinitely
 	//Mix_PlayMusic(background_music, -1);
 	//fprintf(stderr, "Loaded music\n");
@@ -117,10 +121,6 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
-	// Updating window title with points
-	std::stringstream title_ss;
-	title_ss << "Touch of the Void";
-	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -189,7 +189,10 @@ void WorldSystem::restart_game() {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Create a new chicken
+	// Create a level
+	createBackground(renderer, { window_width_px / 2, window_height_px / 2 });
+
+	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 }
 
@@ -259,22 +262,50 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 
-	// Player movement
-	// directional keys should increase the chicken's velocity and continue to do so until released
+
 	if (!registry.deathTimers.has(player)) {
 		// TODO: Handle player controls here
+		if (key == GLFW_KEY_W) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_up = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_up = false;
+			}
+		}
+		if (key == GLFW_KEY_S) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_down = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_down = false;
+			}
+		}
+		if (key == GLFW_KEY_A) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_left = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_left = false;
+			}
+		}
+		if (key == GLFW_KEY_D) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_right = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_right = false;
+			}
+		}
 	}
 
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
-
-	// updated rotation with respect to default facing direction (1, 0)
 	if (registry.deathTimers.has(player)) {
 		return;
 	}
 	vec2 player_position = registry.motions.get(player).position;
 	vec2 direction = mouse_position - player_position;
-	registry.motions.get(player).angle = atan2(direction.y, direction.x) + M_PI/2;
-
+	registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 }

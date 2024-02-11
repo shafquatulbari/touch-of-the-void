@@ -30,9 +30,9 @@ inline std::string textures_path(const std::string& name) { return data_path() +
 inline std::string audio_path(const std::string& name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string mesh_path(const std::string& name) { return data_path() + "/meshes/" + std::string(name); };
 
-// game artstyle was generated for 1024x512 window but we can scale it up i hope
-const int window_width_px = 2048;
-const int window_height_px = 1024;
+// game artstyle was generated for 1024x512 window
+const int window_width_px = 1024;
+const int window_height_px = 512;
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f

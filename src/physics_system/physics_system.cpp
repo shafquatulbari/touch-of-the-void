@@ -28,6 +28,73 @@ bool collides(const Motion& motion1, const Motion& motion2)
 	return false;
 }
 
+
+void update_motion(Motion& motion, float step_seconds) {
+	// TODO: Update position with motion here
+
+	float potential_velocity_delta_x = 0.f;
+	float potential_velocity_delta_y = 0.f;
+
+	// TODO: Make acceleration and deceleration work as variables on current velocty
+
+	float velocity_magnitude = sqrt(motion.velocity.x * motion.velocity.x + motion.velocity.y * motion.velocity.y);
+
+	// UP - DOWN CASES (these cancel each other out)
+	if (motion.is_moving_up && !motion.is_moving_down) {
+		potential_velocity_delta_y -= motion.acceleration_rate;
+	} else if (motion.is_moving_down && !motion.is_moving_up) {
+		potential_velocity_delta_y += motion.acceleration_rate;
+	}
+	else {
+		// decelerate case
+		if ((motion.velocity.y - motion.deceleration_rate) >= 0.f) {
+			potential_velocity_delta_y -= motion.deceleration_rate;
+		}
+		else if (motion.velocity.y <= -motion.deceleration_rate) {
+			potential_velocity_delta_y += motion.deceleration_rate;
+		}
+		else {
+			potential_velocity_delta_y = 0.f;
+		}
+	}
+
+	// LEFT - RIGHT CASES (these cancel each other out)
+	if (motion.is_moving_left && !motion.is_moving_right) {
+		potential_velocity_delta_x -= motion.acceleration_rate;
+	}
+	else if (motion.is_moving_right && !motion.is_moving_left) {
+		potential_velocity_delta_x += motion.acceleration_rate;
+	}
+	else {
+		// decelerate case
+		if ((motion.velocity.x - motion.deceleration_rate) >= 0.f) {
+			potential_velocity_delta_x -= motion.deceleration_rate;
+		}
+		else if (motion.velocity.x <= -motion.deceleration_rate) {
+			potential_velocity_delta_x += motion.deceleration_rate;
+		}
+		else {
+			potential_velocity_delta_x = 0.f;
+		}
+	}
+
+	// Update velocity
+	motion.velocity.x += potential_velocity_delta_x;
+	motion.velocity.y += potential_velocity_delta_y;
+
+	// normalize velocity to max velocity if needed
+	velocity_magnitude = sqrt(motion.velocity.x * motion.velocity.x + motion.velocity.y * motion.velocity.y);
+	if (velocity_magnitude > motion.max_velocity) {
+		motion.velocity.x = motion.velocity.x / velocity_magnitude * motion.max_velocity;
+		motion.velocity.y = motion.velocity.y / velocity_magnitude * motion.max_velocity;
+	}
+
+	// Update position
+	motion.position.x += motion.velocity.x * step_seconds;
+	motion.position.y += motion.velocity.y * step_seconds;
+
+}
+
 void PhysicsSystem::step(float elapsed_ms)
 {
 	// Move entity with motion based on how much time has passed, this is to (partially) avoid
@@ -37,13 +104,10 @@ void PhysicsSystem::step(float elapsed_ms)
 	{
 
 		Motion& motion = motion_registry.components[i];
-		Entity entity = motion_registry.entities[i];
+		//Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
-
-		// TODO: Update position with motion here
-
-		// Update position with angle and velocity		
-		motion.position += motion.velocity * step_seconds;
+		// update the motion of the entity
+		update_motion(motion, step_seconds);
 	}
 
 	// Check for collisions between all moving entities
