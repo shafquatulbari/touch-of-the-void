@@ -23,3 +23,8 @@ CMakeSettings.json
 
 # OS generated files
 .DS_Store
+
+# Exclude library files
+!ext/**/*.dll
+!ext/**/*.lib
+!ext/**/*.a
