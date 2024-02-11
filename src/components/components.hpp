@@ -22,12 +22,25 @@ struct Deadly
 
 };
 
-// All data relevant to the shape and motion of entities, accounting for the force of drag
+// All data relevant to the shape and motion of entities
 struct Motion {
 	vec2 position = { 0, 0 };
-	float angle = 0;
-	vec2 velocity = { 0, 0 };
+	float velocity = 0.0f;
 	vec2 scale = { 10, 10 };
+
+	float look_angle = 0; // angle the entity is looking at
+	float direction_angle = 0; // angle the entity is moving towards
+
+	bool is_moving_up = false;
+	bool is_moving_down = false;
+	bool is_moving_left = false;
+	bool is_moving_right = false;
+
+	float acceleration_rate = 0.0f;	// amount to be added to velocity if not moving in direction
+	float deceleration_rate = 0.0f; // amount to be shaved off velocity if moving in direction
+	float max_velocity = 0.0f; 	// maximum velocity in any direction
+	float turn_rate = 0.0f;		// how fast the entity can turn
+
 };
 
 // Stucture to store collision information
@@ -112,7 +125,13 @@ struct Mesh
 
 enum class TEXTURE_ASSET_ID {
 	PLAYER = 0,
-	TEXTURE_COUNT = PLAYER + 1
+	OBSTACLE = PLAYER + 1,
+	LEVEL1_BACKGROUND = OBSTACLE + 1,
+	LEVEL1_WALL = LEVEL1_BACKGROUND + 1,
+	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_WALL + 1,
+	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
+	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
+	TEXTURE_COUNT = LEVEL1_WALL_TOP_CORNER + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 

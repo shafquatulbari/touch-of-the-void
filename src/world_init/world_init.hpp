@@ -9,6 +9,9 @@
 const float PLAYER_BB_WIDTH = 32.0f;
 const float PLAYER_BB_HEIGHT = 32.0f;
 
+const float OBSTACLE_BB_WIDTH = 32.0f;
+const float OBSTACLE_BB_HEIGHT = 32.0f;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the prey

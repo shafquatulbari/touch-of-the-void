@@ -5,6 +5,7 @@
 // stlib
 #include <cassert>
 #include <sstream>
+#include <iostream>
 
 #include "physics_system/physics_system.hpp"
 
@@ -189,7 +190,7 @@ void WorldSystem::restart_game() {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Create a new chicken
+	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 }
 
@@ -259,10 +260,42 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 
-	// Player movement
-	// directional keys should increase the chicken's velocity and continue to do so until released
+
 	if (!registry.deathTimers.has(player)) {
 		// TODO: Handle player controls here
+		if (key == GLFW_KEY_W) {
+			printf("moving up\n");
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_up = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_up = false;
+			}
+		}
+		if (key == GLFW_KEY_S) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_down = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_down = false;
+			}
+		}
+		if (key == GLFW_KEY_A) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_left = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_left = false;
+			}
+		}
+		if (key == GLFW_KEY_D) {
+			if (action == GLFW_PRESS) {
+				registry.motions.get(player).is_moving_right = true;
+			}
+			else if (action == GLFW_RELEASE) {
+				registry.motions.get(player).is_moving_right = false;
+			}
+		}
 	}
 
 }
@@ -275,6 +308,5 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 	}
 	vec2 player_position = registry.motions.get(player).position;
 	vec2 direction = mouse_position - player_position;
-	registry.motions.get(player).angle = atan2(direction.y, direction.x) + M_PI/2;
-
+	registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 }

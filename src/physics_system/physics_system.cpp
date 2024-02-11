@@ -41,9 +41,78 @@ void PhysicsSystem::step(float elapsed_ms)
 		float step_seconds = elapsed_ms / 1000.f;
 
 		// TODO: Update position with motion here
+		if (motion.is_moving_up || motion.is_moving_down || motion.is_moving_left || motion.is_moving_right) {
+			// only increase velocity once
+			motion.velocity += motion.acceleration_rate;
+			
+			// velocity cannot exceed max_velocity
+			if (motion.velocity > motion.max_velocity) {
+				motion.velocity = motion.max_velocity;
+			}
+
+			// nudge the direction angle towards the angle of motion
+			if (motion.is_moving_up) {
+				if (0 < motion.direction_angle < M_PI) {
+						motion.direction_angle -= motion.turn_rate;
+				}
+				else if ((M_PI <= motion.direction_angle < 2 * M_PI) || (motion.direction_angle < 0)) {
+						motion.direction_angle += motion.turn_rate;
+				}
+				else {
+					motion.direction_angle = 0;
+				}
+			}
+			if (motion.is_moving_down) {
+				if (0 < motion.direction_angle < M_PI) {
+					motion.direction_angle += motion.turn_rate;
+				}
+				else if ((M_PI < motion.direction_angle < 2 * M_PI) || (motion.direction_angle <= 0)) {
+					motion.direction_angle -= motion.turn_rate;
+				}
+				else {
+					motion.direction_angle = M_PI;
+				}	
+			}
+			if (motion.is_moving_right) {
+				if (-M_PI / 2 < motion.direction_angle < M_PI / 2) {
+					motion.direction_angle += motion.turn_rate;
+				}
+				else if (M_PI / 2 < motion.direction_angle <= 2 * M_PI) {
+					motion.direction_angle -= motion.turn_rate;
+				}
+				else {
+					motion.direction_angle = M_PI / 2;
+				}
+			}
+			if (motion.is_moving_left) {
+				if (-M_PI / 2 < motion.direction_angle < M_PI / 2) {
+					motion.direction_angle -= motion.turn_rate;
+				}
+				else if (M_PI / 2 < motion.direction_angle <= 2 * M_PI) {
+					motion.direction_angle += motion.turn_rate;
+				}
+				else {
+					motion.direction_angle = -M_PI / 2;
+				}
+			}
+			motion.direction_angle = clamp(motion.direction_angle, -M_PI / 2, 2 * M_PI);
+		} 
+		else {
+			// decrease the velocity
+			motion.velocity -= motion.deceleration_rate;
+			// velocity cannot be negative (it's a scalar)
+			if (motion.velocity < 0) {
+				motion.velocity = 0;
+			}
+		}
 
 		// Update position with angle and velocity		
-		motion.position += motion.velocity * step_seconds;
+
+		printf("motion.direction_angle: %f\n", motion.direction_angle);
+		printf("motion.velocity: %f\n", motion.velocity);
+
+		motion.position.x += cos(motion.direction_angle) * motion.velocity * step_seconds;
+		motion.position.y += sin(motion.direction_angle) * motion.velocity * step_seconds;
 	}
 
 	// Check for collisions between all moving entities

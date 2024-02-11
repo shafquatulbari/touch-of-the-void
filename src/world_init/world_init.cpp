@@ -12,15 +12,17 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
-	motion.angle = 0.f;
-	motion.velocity = { 0.f, 0.f };
-	motion.scale = mesh.original_size * 100.f;
+	motion.acceleration_rate = 25.0f;
+	motion.deceleration_rate = 10.0f;
+	motion.max_velocity = 100.0f;
+	motion.turn_rate = M_PI/64;
+	motion.scale = vec2({ PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT });
 
-	// Create and (empty) Chicken component to be able to refer to all eagles
+	// Create and (empty) Player component
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::PLAYER, // TEXTURE_COUNT indicates that no txture is needed
+		{ TEXTURE_ASSET_ID::PLAYER, 
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -68,8 +70,9 @@ Entity createLine(vec2 position, vec2 scale)
 
 	// Create motion
 	Motion& motion = registry.motions.emplace(entity);
-	motion.angle = 0.f;
-	motion.velocity = { 0, 0 };
+	motion.look_angle = 0.f;
+	motion.direction_angle = 0.f;
+	motion.velocity = 0.f;
 	motion.position = position;
 	motion.scale = scale;
 
