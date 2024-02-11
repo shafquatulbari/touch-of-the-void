@@ -14,8 +14,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	motion.position = pos;
 	motion.acceleration_rate = 25.0f;
 	motion.deceleration_rate = 10.0f;
-	motion.max_velocity = 100.0f;
-	motion.turn_rate = M_PI/64;
+	motion.max_velocity = 200.0f;
 	motion.scale = vec2({ PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT });
 
 	// Create and (empty) Player component
@@ -71,11 +70,32 @@ Entity createLine(vec2 position, vec2 scale)
 	// Create motion
 	Motion& motion = registry.motions.emplace(entity);
 	motion.look_angle = 0.f;
-	motion.direction_angle = 0.f;
-	motion.velocity = 0.f;
+	motion.velocity = { 0, 0 };
 	motion.position = position;
 	motion.scale = scale;
 
 	registry.debugComponents.emplace(entity);
 	return entity;
+}
+
+Entity createBackground(RenderSystem* renderer, vec2 position)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE });
+	
+	return Entity();
 }

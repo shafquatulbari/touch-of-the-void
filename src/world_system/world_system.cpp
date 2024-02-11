@@ -108,6 +108,9 @@ GLFWwindow* WorldSystem::create_window() {
 
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
+	std::stringstream title_ss;
+	title_ss << "Touch of the Void";
+	glfwSetWindowTitle(window, title_ss.str().c_str());
 	// TODO: Setup background music to play indefinitely
 	//Mix_PlayMusic(background_music, -1);
 	//fprintf(stderr, "Loaded music\n");
@@ -118,10 +121,6 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 
 // Update our game world
 bool WorldSystem::step(float elapsed_ms_since_last_update) {
-	// Updating window title with points
-	std::stringstream title_ss;
-	title_ss << "Touch of the Void";
-	glfwSetWindowTitle(window, title_ss.str().c_str());
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -189,6 +188,9 @@ void WorldSystem::restart_game() {
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
+
+	// Create a level
+	createBackground(renderer, { window_width_px / 2, window_height_px / 2 });
 
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
@@ -264,7 +266,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	if (!registry.deathTimers.has(player)) {
 		// TODO: Handle player controls here
 		if (key == GLFW_KEY_W) {
-			printf("moving up\n");
 			if (action == GLFW_PRESS) {
 				registry.motions.get(player).is_moving_up = true;
 			}
@@ -301,8 +302,6 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
-
-	// updated rotation with respect to default facing direction (1, 0)
 	if (registry.deathTimers.has(player)) {
 		return;
 	}

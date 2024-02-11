@@ -25,11 +25,10 @@ struct Deadly
 // All data relevant to the shape and motion of entities
 struct Motion {
 	vec2 position = { 0, 0 };
-	float velocity = 0.0f;
+	vec2 velocity = { 0, 0 };
 	vec2 scale = { 10, 10 };
 
 	float look_angle = 0; // angle the entity is looking at
-	float direction_angle = 0; // angle the entity is moving towards
 
 	bool is_moving_up = false;
 	bool is_moving_down = false;

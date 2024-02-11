@@ -12,6 +12,9 @@ const float PLAYER_BB_HEIGHT = 32.0f;
 const float OBSTACLE_BB_WIDTH = 32.0f;
 const float OBSTACLE_BB_HEIGHT = 32.0f;
 
+const float BACKGROUND_BB_WIDTH = 480.0f;
+const float BACKGROUND_BB_HEIGHT = 480.0f;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the prey
@@ -22,4 +25,6 @@ Entity createObstacle(RenderSystem* renderer, vec2 position);
 Entity createBullet(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes
 Entity createLine(vec2 position, vec2 size);
+// the background
+Entity createBackground(RenderSystem* renderer, vec2 position);
 
