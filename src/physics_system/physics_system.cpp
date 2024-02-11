@@ -2,6 +2,8 @@
 #include "physics_system/physics_system.hpp"
 #include "world_init/world_init.hpp"
 
+// TODO: Improve bounding box collision detection into a more accurate one
+
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion& motion)
 {
@@ -37,6 +39,8 @@ void PhysicsSystem::step(float elapsed_ms)
 		Motion& motion = motion_registry.components[i];
 		Entity entity = motion_registry.entities[i];
 		float step_seconds = elapsed_ms / 1000.f;
+
+		// TODO: Update position with motion here
 
 		// Update position with angle and velocity		
 		motion.position += motion.velocity * step_seconds;
