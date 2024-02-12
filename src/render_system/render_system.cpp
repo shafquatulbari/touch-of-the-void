@@ -67,6 +67,14 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 		glBindTexture(GL_TEXTURE_2D, texture_id);
 		gl_has_errors();
+		
+		// texture specific uniforms
+		if (registry.renderRequests.get(entity).used_texture == TEXTURE_ASSET_ID::BULLET)
+		{
+			// rotate the bullet texture
+			GLuint rotation_uloc = glGetUniformLocation(program, "rotation");
+			glUniform1f(rotation_uloc, motion.look_angle);
+		}
 
 	}
 	else if (render_request.used_effect == EFFECT_ASSET_ID::EGG)

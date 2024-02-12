@@ -76,8 +76,10 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwSetWindowUserPointer(window, this);
 	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
 	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
+	auto mouse_button_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
+	glfwSetMouseButtonCallback(window, mouse_button_redirect);
 
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -259,12 +261,26 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 	// exit the game on escape
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+		// TODO: Change to different screen or close depending on the game state
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 
 
 	if (!registry.deathTimers.has(player)) {
 		// TODO: Handle player controls here
+
+		// WEAPON CONTROLS
+		if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+			// TODO: initiate reload
+		}
+		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+			// TODO: Change weapon (scroll up)
+		}
+		if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+			// TODO: Change weapon (scroll down)
+		}
+
+		// MOVEMENT CONTROLS
 		if (key == GLFW_KEY_W) {
 			if (action == GLFW_PRESS) {
 				registry.motions.get(player).is_moving_up = true;
@@ -308,4 +324,28 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 	vec2 player_position = registry.motions.get(player).position;
 	vec2 direction = mouse_position - player_position;
 	registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
+}
+
+void WorldSystem::on_mouse_click(int button, int action, int mods) {
+	if (registry.deathTimers.has(player)) {
+		return;
+	}
+
+	// glfw mouse button codes
+	int left_click = 0;
+	int right_click = 1;
+	int press = 1;
+	int release = 0;
+
+	// TODO: Change to fire until clip is empty then auto reload
+	if (button == left_click) {
+		if (action == press) {
+			// start firing
+			// example of one bullet
+			createProjectile(renderer, registry.motions.get(player).position, registry.motions.get(player).look_angle - M_PI / 2);
+		}
+		if (action == release) {
+			// stop firing
+		}
+	}
 }

@@ -33,6 +33,7 @@ class RenderSystem {
 		// TODO: specify textures of other assets here like so:
 		textures_path("player.png"),
 		textures_path("obstacle.png"),
+		textures_path("bullet.png"),
 		textures_path("lvl1_background.png"),
 		textures_path("lvl1_wall.png"),
 		textures_path("lvl1_wall_bottom_corner.png"),

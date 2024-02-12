@@ -31,6 +31,11 @@ bool collides(const Motion& motion1, const Motion& motion2)
 
 void update_motion(Motion& motion, float step_seconds) {
 	// TODO: Update position with motion here
+	if (!motion.complex) {
+		motion.position.x += motion.velocity.x * step_seconds;
+		motion.position.y += motion.velocity.y * step_seconds;
+		return;
+	}
 
 	float potential_velocity_delta_x = 0.f;
 	float potential_velocity_delta_y = 0.f;
@@ -54,7 +59,7 @@ void update_motion(Motion& motion, float step_seconds) {
 			potential_velocity_delta_y += motion.deceleration_rate;
 		}
 		else {
-			potential_velocity_delta_y = 0.f;
+			potential_velocity_delta_y = -motion.velocity.y;
 		}
 	}
 
@@ -74,7 +79,8 @@ void update_motion(Motion& motion, float step_seconds) {
 			potential_velocity_delta_x += motion.deceleration_rate;
 		}
 		else {
-			potential_velocity_delta_x = 0.f;
+			// needed as we can still be 
+			potential_velocity_delta_x = -motion.velocity.x;
 		}
 	}
 

@@ -12,6 +12,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos)
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
+	motion.complex = true;
 	motion.acceleration_rate = 25.0f;
 	motion.deceleration_rate = 10.0f;
 	motion.max_velocity = 200.0f;
@@ -64,8 +65,8 @@ Entity createLine(vec2 position, vec2 scale)
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-		 EFFECT_ASSET_ID::EGG,
-		 GEOMETRY_BUFFER_ID::DEBUG_LINE });
+			EFFECT_ASSET_ID::EGG,
+			GEOMETRY_BUFFER_ID::DEBUG_LINE });
 
 	// Create motion
 	Motion& motion = registry.motions.emplace(entity);
@@ -94,8 +95,32 @@ Entity createBackground(RenderSystem* renderer, vec2 position)
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
-				 EFFECT_ASSET_ID::TEXTURED,
-				 GEOMETRY_BUFFER_ID::SPRITE });
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
 	
 	return Entity();
+}
+
+Entity createProjectile(RenderSystem* render, vec2 position, float angle)
+{
+	auto entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle + M_PI/4;
+	motion.scale = vec2({ BULLET_BB_WIDTH, BULLET_BB_HEIGHT });
+	motion.velocity = vec2({ 500.0f * cos(angle), 500.0f * sin(angle) });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
 }

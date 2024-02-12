@@ -16,10 +16,10 @@ struct Obstacle
 
 };
 
-// Deadly collision component
+// Harmful collision component
 struct Deadly
 {
-
+	float damange = 0.0f; // damage to be dealt to the other entity on collision
 };
 
 // All data relevant to the shape and motion of entities
@@ -29,6 +29,8 @@ struct Motion {
 	vec2 scale = { 10, 10 };
 
 	float look_angle = 0; // angle the entity is looking at
+
+	bool complex = false; // if the entity has complex motion, i.e. not just a straight line
 
 	bool is_moving_up = false;
 	bool is_moving_down = false;
@@ -40,6 +42,11 @@ struct Motion {
 	float max_velocity = 0.0f; 	// maximum velocity in any direction
 	float turn_rate = 0.0f;		// how fast the entity can turn
 
+};
+
+struct ReloadTimer
+{
+	float counter_ms = 0.0f;
 };
 
 // Stucture to store collision information
@@ -125,7 +132,8 @@ struct Mesh
 enum class TEXTURE_ASSET_ID {
 	PLAYER = 0,
 	OBSTACLE = PLAYER + 1,
-	LEVEL1_BACKGROUND = OBSTACLE + 1,
+	BULLET = OBSTACLE + 1,
+	LEVEL1_BACKGROUND = BULLET + 1,
 	LEVEL1_WALL = LEVEL1_BACKGROUND + 1,
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_WALL + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
