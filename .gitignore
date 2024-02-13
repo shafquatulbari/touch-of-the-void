@@ -28,3 +28,5 @@ CMakeSettings.json
 !ext/**/*.dll
 !ext/**/*.lib
 !ext/**/*.a
+
+# ext/project_path.hpp
