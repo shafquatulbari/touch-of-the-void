@@ -279,6 +279,9 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		if (key == GLFW_KEY_E && action == GLFW_PRESS) {
 			// TODO: Change weapon (scroll down)
 		}
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+			// TODO: Shoot/Fire weapon 
+		}
 
 		// MOVEMENT CONTROLS
 		if (key == GLFW_KEY_W) {
