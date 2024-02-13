@@ -33,9 +33,13 @@ void update_motion(Motion &motion, float step_seconds)
 	// TODO: Update position with motion here
 	if (!motion.complex)
 	{
+		motion.position.x += motion.velocity.x * step_seconds;
+		motion.position.y += motion.velocity.y * step_seconds;
+
 		float max_position = (game_window_size_px / 2) - (game_window_block_size / 2);
 		motion.position.x = clamp(motion.position.x, (window_width_px / 2) - max_position, (window_width_px / 2) + max_position);
 		motion.position.y = clamp(motion.position.y, (window_height_px / 2) - max_position, (window_height_px / 2) + max_position);
+
 		return;
 	}
 

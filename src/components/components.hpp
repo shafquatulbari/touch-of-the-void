@@ -76,7 +76,7 @@ struct DebugComponent
 	// Note, an empty struct has size 1
 };
 
-// A timer that will be associated to dying chicken
+// A timer that will be associated to dying player
 struct DeathTimer
 {
 	float counter_ms = 3000;
