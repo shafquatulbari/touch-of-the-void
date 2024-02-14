@@ -20,6 +20,8 @@ class WorldSystem
 public:
 	WorldSystem();
 
+	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
+
 	// Creates a window
 	GLFWwindow* create_window();
 

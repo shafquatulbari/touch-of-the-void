@@ -154,34 +154,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-	// TODO: Update the game state here with newly spawned entities if applicable
+	// Assuming darken_screen_factor is part of ScreenState
+    ScreenState& screen = registry.screenStates.components[0];
 
-	// Processing the player state
-	assert(registry.screenStates.components.size() <= 1);
-	ScreenState& screen = registry.screenStates.components[0];
+	// Countdown the restart delay timer if it's above zero
+    if (restart_delay_timer > 0.0f) {
+        restart_delay_timer -= elapsed_ms_since_last_update / 1000.0f; // Convert milliseconds to seconds
 
-	// TODO: Progress any counters here
-	
-	float min_counter_ms = 3000.f;
-	for (Entity entity : registry.deathTimers.entities) {
-		// progress timer
-		DeathTimer& counter = registry.deathTimers.get(entity);
-		counter.counter_ms -= elapsed_ms_since_last_update;
-		if (counter.counter_ms < min_counter_ms) {
-			min_counter_ms = counter.counter_ms;
-		}
+        // Check if the timer has elapsed
+        if (restart_delay_timer <= 0.0f) {
+            restart_game();
+        }
 
-		// restart the game once the death timer expired
-		if (counter.counter_ms < 0) {
-			registry.deathTimers.remove(entity);
-			screen.darken_screen_factor = 0;
-			restart_game();
-			return true;
-		}
-	}
-
-	// reduce window brightness if the player is dying
-	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
+        return true; // Skip the rest of the update logic while waiting to restart
+    }
 
 	return true;
 }
@@ -194,6 +180,10 @@ void WorldSystem::restart_game() {
 
 	// Reset the game speed
 	current_speed = 1.f;
+
+	// Reset darken_screen_factor on game restart
+    ScreenState& screen = registry.screenStates.components[0];
+    screen.darken_screen_factor = 0.0f; 
 
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all bug, eagles, ... but that would be more cumbersome
@@ -355,15 +345,19 @@ void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
 		Health& playerHealth = registry.healths.get(player);
 		playerHealth.value -= 10; // Example damage value
 		if (playerHealth.value <= 0) {
-			restart_game(); // Restart the game if the player's health is 0 or less
-		} else {
-		// Trigger damage feedback for the player
-		trigger_damage_feedback(player, 1.0f); // 1 seconds of damage feedback
+			//screen darkening effect
+			ScreenState& screen = registry.screenStates.components[0];
+			screen.darken_screen_factor = 2.0f;
 
-		// Bounce back functionality by moving back by a bit
-		Motion& playerMotion = registry.motions.get(player);
-		playerMotion.velocity *= -1; 
-		playerMotion.position += playerMotion.velocity * 0.1f; 
+			restart_delay_timer = 0.5f; // Delay for 1 seconds before restarting
+		} else {
+			// Trigger damage feedback for the player
+			trigger_damage_feedback(player, 1.0f); // 1 seconds of damage feedback
+
+			// Bounce back functionality by moving back by a bit
+			Motion& playerMotion = registry.motions.get(player);
+			playerMotion.velocity *= -1; 
+			playerMotion.position += playerMotion.velocity * 0.1f; 
 		}
 }
 
