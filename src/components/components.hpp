@@ -29,6 +29,14 @@ struct Deadly
 	float damage = 0.0f; // damage to be dealt to the other entity on collision
 };
 
+//This component can track whether the entity is currently showing damage feedback and how much longer it should do so.
+struct Damaged {
+    bool is_damaged = false;
+    float damage_time_left = 0.0f; // Time in milliseconds
+    vec3 original_color;
+    vec3 damaged_color = {1.0f, 0.0f, 0.0f}; // Example: turn red when damaged
+};
+
 // Health component 
 struct Health
 {

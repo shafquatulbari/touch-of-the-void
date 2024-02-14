@@ -212,6 +212,9 @@ void WorldSystem::restart_game() {
 	// Create an obstacle
 	Entity obstacle = createObstacle(renderer, { (window_width_px / 2) - 100, (window_height_px / 2) - 100 }, 50.0f);
 
+	for (auto& health : registry.healths.components) {
+        health.value = 100.0f; // Reset health to its initial value after restarting game
+    }
 }
 
 // Compute collisions between entities
@@ -223,13 +226,10 @@ void WorldSystem::handle_collisions() {
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 
-		// For now, we are only interested in collisions that involve the chicken
-		if (registry.players.has(entity)) {
-			//Player& player = registry.players.get(entity);
-
-			// TODO: Handle collisions with the player
-		}
-
+		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
+				//on collision with an obstacle, the player should take damage and bounce back
+				apply_damage_and_bounce_back(entity, entity_other);
+        }
 		// Handle collisions projectiles and obstacles
 		if (registry.projectiles.has(entity)) {
 			if (registry.obstacles.has(entity_other)) {
@@ -249,6 +249,7 @@ void WorldSystem::handle_collisions() {
 	// Remove all collisions from this simulation step
 	registry.collisions.clear();
 }
+
 
 // Should the game be over ?
 bool WorldSystem::is_over() const {
@@ -347,6 +348,33 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		}
 	}
 
+}
+
+void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
+		// Apply damage to the player
+		Health& playerHealth = registry.healths.get(player);
+		playerHealth.value -= 10; // Example damage value
+		if (playerHealth.value <= 0) {
+			restart_game(); // Restart the game if the player's health is 0 or less
+		} else {
+		// Trigger damage feedback for the player
+		trigger_damage_feedback(player, 1.0f); // 1 seconds of damage feedback
+
+		// Bounce back functionality by moving back by a bit
+		Motion& playerMotion = registry.motions.get(player);
+		playerMotion.velocity *= -1; 
+		playerMotion.position += playerMotion.velocity * 0.1f; 
+		}
+}
+
+void WorldSystem::trigger_damage_feedback(Entity entity, float duration) {
+    if (!registry.damageds.has(entity)) {
+        registry.damageds.emplace(entity);
+    }
+    Damaged& damaged = registry.damageds.get(entity);
+    damaged.is_damaged = true;
+    damaged.damage_time_left = duration * 1000; // Convert to milliseconds
+    // Change color here TODO
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
