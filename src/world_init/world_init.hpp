@@ -21,9 +21,9 @@ const float BULLET_BB_HEIGHT = 8.0f;
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the prey
-Entity createEnemy(RenderSystem* renderer, vec2 position);
-// the powerup
-Entity createObstacle(RenderSystem* renderer, vec2 position);
+Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points);
+// the obstacle
+Entity createObstacle(RenderSystem* renderer, vec2 position, float health_points);
 // the enemy
 Entity createBullet(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes

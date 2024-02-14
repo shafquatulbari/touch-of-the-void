@@ -18,6 +18,10 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	motion.max_velocity = 200.0f;
 	motion.scale = vec2({PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT});
 
+	// Setting initial health values
+	Health& health = registry.healths.emplace(entity);
+	health.value = 100.0f; // player health 
+
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
@@ -26,10 +30,11 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE});
 
+	
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 {
 	// Reserve en entity
 	auto entity = Entity();
@@ -39,11 +44,33 @@ Entity createEnemy(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
-Entity createObstacle(RenderSystem *renderer, vec2 position)
+Entity createObstacle(RenderSystem *renderer, vec2 position, float health_points)
 {
 	auto entity = Entity();
 
-	// TODO: Create an obstacle
+
+	// Store a reference to the potentially re-used mesh object
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.complex = false;
+	motion.acceleration_rate = 0.0f;
+	motion.deceleration_rate = 0.0f;
+	motion.max_velocity = 0.0f;
+	motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
+
+	Health& health = registry.healths.emplace(entity);
+	health.value = health_points; // obstacle health 
+
+	registry.players.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::OBSTACLE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
