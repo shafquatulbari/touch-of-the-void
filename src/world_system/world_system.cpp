@@ -210,7 +210,7 @@ void WorldSystem::restart_game() {
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
 	// Create an obstacle
-	Entity obstacle = createObstacle(renderer, { (window_width_px / 2) - 100, (window_height_px / 2) - 100 }, 10.0f);
+	Entity obstacle = createObstacle(renderer, { (window_width_px / 2) - 100, (window_height_px / 2) - 100 }, 50.0f);
 
 }
 
@@ -228,6 +228,21 @@ void WorldSystem::handle_collisions() {
 			//Player& player = registry.players.get(entity);
 
 			// TODO: Handle collisions with the player
+		}
+
+		// Handle collisions projectiles and obstacles
+		if (registry.projectiles.has(entity)) {
+			if (registry.obstacles.has(entity_other)) {
+				Health& obstacle_health = registry.healths.get(entity_other);
+				Projectile& projectile = registry.projectiles.get(entity);
+
+				obstacle_health.value -= projectile.damage;
+				registry.remove_all_components_of(entity);
+
+				if (obstacle_health.value <= 0) {
+					registry.remove_all_components_of(entity_other);
+				}
+			}
 		}
 	}
 
