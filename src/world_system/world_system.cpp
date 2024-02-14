@@ -154,19 +154,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		}
 	}
 
-	// Assuming darken_screen_factor is part of ScreenState
-    ScreenState& screen = registry.screenStates.components[0];
+	ScreenState& screen = registry.screenStates.components[0];
 
-	// Countdown the restart delay timer if it's above zero
-    if (restart_delay_timer > 0.0f) {
-        restart_delay_timer -= elapsed_ms_since_last_update / 1000.0f; // Convert milliseconds to seconds
-
-        // Check if the timer has elapsed
-        if (restart_delay_timer <= 0.0f) {
+    // Gradually darken the screen if the player is dead
+    if (registry.healths.get(player).value <= 0) {
+        if (screen.darken_screen_factor > 0 && screen.darken_screen_factor < 1.0f) {
+            // Increase darken_screen_factor gradually to simulate darkening over time
+            screen.darken_screen_factor += (elapsed_ms_since_last_update / 1000.0f) * 0.5f; // Adjust speed here
+            screen.darken_screen_factor = std::min(screen.darken_screen_factor, 1.0f);
+        } else if (screen.darken_screen_factor >= 1.0f) {
+            // Reset game after screen is fully darkened
             restart_game();
+            return true;
         }
-
-        return true; // Skip the rest of the update logic while waiting to restart
     }
 
 	return true;
@@ -345,19 +345,16 @@ void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
 		Health& playerHealth = registry.healths.get(player);
 		playerHealth.value -= 10; // Example damage value
 		if (playerHealth.value <= 0) {
-			//screen darkening effect
-			ScreenState& screen = registry.screenStates.components[0];
-			screen.darken_screen_factor = 2.0f;
-
-			restart_delay_timer = 0.5f; // Delay for 1 seconds before restarting
+        // Trigger darkening immediately, but actual effect is controlled in step
+        ScreenState& screen = registry.screenStates.components[0];
+        screen.darken_screen_factor = 0.01f; // Start the darkening process
 		} else {
 			// Trigger damage feedback for the player
 			trigger_damage_feedback(player, 1.0f); // 1 seconds of damage feedback
-
 			// Bounce back functionality by moving back by a bit
 			Motion& playerMotion = registry.motions.get(player);
-			playerMotion.velocity *= -1; 
-			playerMotion.position += playerMotion.velocity * 0.1f; 
+			playerMotion.velocity *= -1;
+			playerMotion.position += playerMotion.velocity * 0.1f;
 		}
 }
 
