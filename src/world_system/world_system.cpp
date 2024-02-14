@@ -208,6 +208,10 @@ void WorldSystem::restart_game() {
 
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
+
+	// Create an obstacle
+	Entity obstacle = createObstacle(renderer, { (window_width_px / 2) - 100, (window_height_px / 2) - 100 }, 10.0f);
+
 }
 
 // Compute collisions between entities
