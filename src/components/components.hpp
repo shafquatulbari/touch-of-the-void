@@ -19,7 +19,19 @@ struct Obstacle
 // Harmful collision component
 struct Deadly
 {
-	float damange = 0.0f; // damage to be dealt to the other entity on collision
+	float damage = 0.0f; // damage to be dealt to the other entity on collision
+};
+
+// Health component 
+struct Health
+{
+	float value = 100.0f; // "health points" of an entity. default to 100 
+};
+
+// Health component 
+struct Shield
+{
+	float value = 100.0f; // regenerable "shield points" of an entity
 };
 
 // All data relevant to the shape and motion of entities
