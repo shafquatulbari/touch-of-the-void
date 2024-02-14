@@ -140,6 +140,18 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			if (!registry.players.has(motions_registry.entities[i])) // don't remove the player
 				registry.remove_all_components_of(motions_registry.entities[i]);
 		}
+
+		if (registry.projectiles.has(motions_registry.entities[i])) {
+			// max_position from physics_system.cpp and replaced game_window_block_size 
+			// with the entity's width and height
+			float max_position_x = (game_window_size_px / 2) - (motion.scale.x / 2);
+			float max_position_y = (game_window_size_px / 2) - (motion.scale.y / 2);
+			if (
+				abs(motion.position.x - (window_width_px / 2)) >= max_position_x ||
+				abs(motion.position.y - (window_height_px / 2)) >= max_position_y
+			)
+					registry.remove_all_components_of(motions_registry.entities[i]);
+		}
 	}
 
 	// TODO: Update the game state here with newly spawned entities if applicable
