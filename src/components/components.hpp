@@ -16,6 +16,13 @@ struct Obstacle
 
 };
 
+// Projectile component
+struct Projectile 
+{
+	float damage = 0.0f;	// damage when projectile hits an entity
+	float lifetime = 0.0f;	// time before the projectile disappears
+};
+
 // Harmful collision component
 struct Deadly
 {
@@ -53,7 +60,6 @@ struct Motion {
 	float deceleration_rate = 0.0f; // amount to be shaved off velocity if moving in direction
 	float max_velocity = 0.0f; 	// maximum velocity in any direction
 	float turn_rate = 0.0f;		// how fast the entity can turn
-
 };
 
 struct ReloadTimer

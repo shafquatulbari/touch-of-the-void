@@ -20,6 +20,7 @@ public:
 	ComponentContainer<Mesh*> meshPtrs;
 	ComponentContainer<RenderRequest> renderRequests;
 	ComponentContainer<ScreenState> screenStates;
+	ComponentContainer<Projectile> projectiles;
 	ComponentContainer<DebugComponent> debugComponents;
 	ComponentContainer<vec3> colors;
 	ComponentContainer<Health> healths;
@@ -41,6 +42,7 @@ public:
 		registry_list.push_back(&screenStates);
 		registry_list.push_back(&debugComponents);
 		registry_list.push_back(&colors);
+		registry_list.push_back(&projectiles);
 		registry_list.push_back(&healths);
 		registry_list.push_back(&shields);
 	}

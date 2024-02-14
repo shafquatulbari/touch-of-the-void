@@ -143,10 +143,15 @@ Entity createProjectile(RenderSystem *render, vec2 position, float angle)
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
 	motion.scale = vec2({BULLET_BB_WIDTH, BULLET_BB_HEIGHT});
 	motion.velocity = vec2({500.0f * cos(angle), 500.0f * sin(angle)});
+
+	// TODO: change the damage value and lifetime into constant variables
+	projectile.damage = 10.0f; 
+	projectile.lifetime = 1000.0f;
 
 	registry.renderRequests.insert(
 			entity,
