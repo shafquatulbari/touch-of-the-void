@@ -176,7 +176,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			Health& health = registry.healths.get(obstacle);
 			if (health.current_health < health.max_health) {
 				// Heal damage over time
-				health.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5f; // Adjust speed here
+				health.current_health += (elapsed_ms_since_last_update / 1000.0f) * 10.0f; // Adjust speed here
+				health.current_health = std::min(health.current_health, health.max_health);
 			}
         }
     }
@@ -358,23 +359,11 @@ void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
 			ScreenState& screen = registry.screenStates.components[0];
 			screen.darken_screen_factor = 0.01f; // Start the darkening process
 		} else {
-			// Trigger damage feedback for the player
-			trigger_damage_feedback(player, 1.0f); // 1 seconds of damage feedback
 			// Bounce back functionality by moving back by a bit
 			Motion& playerMotion = registry.motions.get(player);
 			playerMotion.velocity *= -1;
 			playerMotion.position += playerMotion.velocity * 0.1f;
 		}
-}
-
-void WorldSystem::trigger_damage_feedback(Entity entity, float duration) {
-    //if (!registry.damageds.has(entity)) {
-    //    registry.damageds.emplace(entity);
-    //}
-    //Damaged& damaged = registry.damageds.get(entity);
-    //damaged.is_damaged = true;
-    //damaged.damage_time_left_ms = duration * 1000; // Convert to milliseconds
-    // Change color here TODO
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
