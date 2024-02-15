@@ -91,6 +91,18 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		assert(false && "Type of render request not supported");
 	}
 
+	// change color based on damage intensity
+	if (registry.obstacles.has(entity)) {
+		const Obstacle& obstacle = registry.obstacles.get(entity);
+		GLint damageIntensityLoc = glGetUniformLocation(program, "damageIntensity");
+		glUniform1f(damageIntensityLoc, obstacle.is_damaged ? obstacle.damage_intensity : 0.0f);
+	}
+	else {
+		// Ensure it's set to zero for non-obstacle entities
+		GLint damageIntensityLoc = glGetUniformLocation(program, "damageIntensity");
+		glUniform1f(damageIntensityLoc, 0.0f);
+	}
+
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
 	const vec3 color = registry.colors.has(entity) ? (registry.deathTimers.has(entity) ? vec3(1, 0, 0) : registry.colors.get(entity)) : vec3(1);
@@ -104,7 +116,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	GLsizei num_indices = size / sizeof(uint16_t);
-	// GLsizei num_triangles = num_indices / 3;
+	
 
 	GLint currProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);

@@ -13,7 +13,8 @@ struct Player
 // Obstacle component
 struct Obstacle
 {
-
+	bool is_damaged = false;
+    float damage_intensity = 0.0f; // Range [0.0, 1.0], where 0 is no damage and 1 is maximum damage
 };
 
 // Projectile component

@@ -169,6 +169,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
         }
     }
 
+	for (auto& obstacle : registry.obstacles.components) {
+        if (obstacle.is_damaged) {
+            // Decrease damage intensity over time
+            obstacle.damage_intensity -= elapsed_ms_since_last_update * 0.001f; // Adjust the multiplier for speed
+            if (obstacle.damage_intensity <= 0.0f) {
+                obstacle.damage_intensity = 0.0f;
+                obstacle.is_damaged = false;
+            }
+        }
+    }
+
 	return true;
 }
 
@@ -220,6 +231,12 @@ void WorldSystem::handle_collisions() {
 				//on collision with an obstacle, the player should take damage and bounce back
 				apply_damage_and_bounce_back(entity, entity_other);
         }
+		//damage color change logic on projectile shoot
+		if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
+			Obstacle& obstacle = registry.obstacles.get(entity_other);
+			obstacle.is_damaged = true;
+			obstacle.damage_intensity = std::min(obstacle.damage_intensity + 0.5f, 3.0f); // Example increment
+		}
 		// Handle collisions projectiles and obstacles
 		if (registry.projectiles.has(entity)) {
 			if (registry.obstacles.has(entity_other)) {
