@@ -91,6 +91,18 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		assert(false && "Type of render request not supported");
 	}
 
+	// change color based on damage intensity
+	if (registry.obstacles.has(entity)) {
+		const Obstacle& obstacle = registry.obstacles.get(entity);
+		GLint damageIntensityLoc = glGetUniformLocation(program, "damageIntensity");
+		glUniform1f(damageIntensityLoc, obstacle.is_damaged ? obstacle.damage_intensity : 0.0f);
+	}
+	else {
+		// Ensure it's set to zero for non-obstacle entities
+		GLint damageIntensityLoc = glGetUniformLocation(program, "damageIntensity");
+		glUniform1f(damageIntensityLoc, 0.0f);
+	}
+
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
 	const vec3 color = registry.colors.has(entity) ? (registry.deathTimers.has(entity) ? vec3(1, 0, 0) : registry.colors.get(entity)) : vec3(1);
@@ -104,7 +116,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	GLsizei num_indices = size / sizeof(uint16_t);
-	// GLsizei num_triangles = num_indices / 3;
+	
 
 	GLint currProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
@@ -126,6 +138,13 @@ void RenderSystem::drawToScreen()
 	// Setting shaders
 	// get the wind texture, sprite mesh, and program
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS]);
+
+	
+	GLuint postProcessShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS];
+    glUseProgram(postProcessShaderProgram);
+	
+
+
 	gl_has_errors();
 	// Clearing backbuffer
 	int w, h;
@@ -150,18 +169,17 @@ void RenderSystem::drawToScreen()
 	// indices to the bound GL_ARRAY_BUFFER
 	gl_has_errors();
 	const GLuint wind_program = effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS];
-	// Set clock
-	GLuint time_uloc = glGetUniformLocation(wind_program, "time");
-	GLuint dead_timer_uloc = glGetUniformLocation(wind_program, "darken_screen_factor");
-	glUniform1f(time_uloc, (float)(glfwGetTime() * 10.0f));
-	ScreenState& screen = registry.screenStates.get(screen_state_entity);
-	glUniform1f(dead_timer_uloc, screen.darken_screen_factor);
 	gl_has_errors();
 	// Set the vertex position and vertex texture coordinates (both stored in the
 	// same VBO)
 	GLint in_position_loc = glGetAttribLocation(wind_program, "in_position");
 	glEnableVertexAttribArray(in_position_loc);
 	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+
+	//For darkening the screen when player dies
+    ScreenState& screen = registry.screenStates.get(screen_state_entity);
+    GLuint darkenScreenFactorLocation = glGetUniformLocation(postProcessShaderProgram, "darken_screen_factor");
+    glUniform1f(darkenScreenFactorLocation, screen.darken_screen_factor);
 	gl_has_errors();
 
 	// Bind our texture in Texture Unit 0

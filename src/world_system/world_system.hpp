@@ -20,6 +20,8 @@ class WorldSystem
 public:
 	WorldSystem();
 
+	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
+
 	// Creates a window
 	GLFWwindow* create_window();
 
@@ -34,6 +36,9 @@ public:
 
 	// Check for collisions
 	void handle_collisions();
+	void apply_damage_and_bounce_back(Entity player, Entity obstacle);
+
+	void trigger_damage_feedback(Entity entity, float duration);
 
 	// Should the game be over ?
 	bool is_over()const;
