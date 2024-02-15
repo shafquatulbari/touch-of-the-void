@@ -5,10 +5,6 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
 	auto entity = Entity();
 
-	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
-
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -20,7 +16,8 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
-	health.value = 100.0f; // player health 
+	health.current_health = 100.0f;
+	health.max_health = 100.0f;
 
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
@@ -39,31 +36,15 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	// Reserve en entity
 	auto entity = Entity();
 
-	// TODO: Create an enemy
-
-	return entity;
-}
-
-Entity createObstacle(RenderSystem *renderer, vec2 position, float health_points)
-{
-	auto entity = Entity();
-
-
-	// Store a reference to the potentially re-used mesh object
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
-
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.complex = false;
-	motion.acceleration_rate = 0.0f;
-	motion.deceleration_rate = 0.0f;
-	motion.max_velocity = 0.0f;
 	motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	Health& health = registry.healths.emplace(entity);
-	health.value = health_points; // obstacle health 
+	health.current_health = health_points;
+	health.max_health = health_points; 
 
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
@@ -72,14 +53,27 @@ Entity createObstacle(RenderSystem *renderer, vec2 position, float health_points
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
+
 	return entity;
 }
 
-Entity createBullet(RenderSystem *renderer, vec2 position)
+Entity createObstacle(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
 
-	// TODO: Create a bullet
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.complex = false;
+	motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
+
+	registry.obstacles.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::OBSTACLE,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
@@ -110,10 +104,6 @@ Entity createBackground(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
 
-	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
-
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = position;
@@ -131,10 +121,6 @@ Entity createBackground(RenderSystem *renderer, vec2 position)
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length)
 {
 	auto entity = Entity();
-
-	// Store a reference to the potentially re-used mesh object
-	Mesh &mesh = render->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
-	registry.meshPtrs.emplace(entity, &mesh);
 
 	// actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);

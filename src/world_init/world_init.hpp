@@ -23,7 +23,7 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
 Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points);
 // the obstacle
-Entity createObstacle(RenderSystem* renderer, vec2 position, float health_points);
+Entity createObstacle(RenderSystem* renderer, vec2 position);
 // a red line for debugging purposes
 Entity createLine(vec2 position, vec2 size);
 // the background
