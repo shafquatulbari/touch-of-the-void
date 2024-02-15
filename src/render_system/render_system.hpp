@@ -35,6 +35,7 @@ class RenderSystem {
 		textures_path("obstacle.png"),
 		textures_path("bullet.png"),
 		textures_path("lvl1_background.png"),
+		textures_path("lvl1_fullwall.png"),
 		textures_path("lvl1_wall.png"),
 		textures_path("lvl1_wall_bottom_corner.png"),
 		textures_path("lvl1_wall_end.png"),

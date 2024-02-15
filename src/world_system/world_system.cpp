@@ -131,7 +131,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	auto& motions_registry = registry.motions;
 
 	if (registry.players.get(player).is_firing) {
-		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2);
+		// increase the counter of fire length
+		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
+		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms);
 	}
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
@@ -394,6 +396,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 		}
 		else if (action == release) {
 			registry.players.get(player).is_firing = false;
+			registry.players.get(player).fire_length_ms = 0.0f;
 		}
 	}
 }

@@ -29,5 +29,5 @@ Entity createLine(vec2 position, vec2 size);
 // the background
 Entity createBackground(RenderSystem* renderer, vec2 position);
 // a single projectile
-Entity createProjectile(RenderSystem* renderer, vec2 position, float angle);
+Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length);
 

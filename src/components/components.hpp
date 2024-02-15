@@ -8,6 +8,7 @@
 struct Player
 {
 	bool is_firing = false; // player is currently firing projectiles
+	float fire_length_ms = 0.0f; // time the player has been firing
 };
 
 // Obstacle component
@@ -155,7 +156,8 @@ enum class TEXTURE_ASSET_ID {
 	OBSTACLE = PLAYER + 1,
 	BULLET = OBSTACLE + 1,
 	LEVEL1_BACKGROUND = BULLET + 1,
-	LEVEL1_WALL = LEVEL1_BACKGROUND + 1,
+	LEVEL1_FULL_WALL = LEVEL1_BACKGROUND + 1,
+	LEVEL1_WALL = LEVEL1_FULL_WALL + 1,
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_WALL + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
