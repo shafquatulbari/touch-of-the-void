@@ -78,35 +78,13 @@ Entity createObstacle(RenderSystem *renderer, vec2 position)
 	return entity;
 }
 
-Entity createLine(vec2 position, vec2 scale)
-{
-	Entity entity = Entity();
-
-	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	registry.renderRequests.insert(
-			entity,
-			{TEXTURE_ASSET_ID::TEXTURE_COUNT,
-			 EFFECT_ASSET_ID::EGG,
-			 GEOMETRY_BUFFER_ID::DEBUG_LINE});
-
-	// Create motion
-	Motion &motion = registry.motions.emplace(entity);
-	motion.look_angle = 0.f;
-	motion.velocity = {0, 0};
-	motion.position = position;
-	motion.scale = scale;
-
-	registry.debugComponents.emplace(entity);
-	return entity;
-}
-
-Entity createBackground(RenderSystem *renderer, vec2 position)
+Entity createBackground(RenderSystem *renderer)
 {
 	auto entity = Entity();
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
-	motion.position = position;
+	motion.position = { window_width_px / 2, window_height_px / 2 };
 	motion.scale = vec2({BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT});
 
 	registry.renderRequests.insert(
@@ -114,6 +92,8 @@ Entity createBackground(RenderSystem *renderer, vec2 position)
 			{TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE});
+
+	createRoom(renderer);
 
 	return Entity();
 }
@@ -143,6 +123,169 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 			{TEXTURE_ASSET_ID::BULLET,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+// TODO: figure out whether invidiual components are smart and whether this should be moved to a separate file
+void createWalls(RenderSystem* render)
+{
+	auto topWall = Entity();
+	auto bottomWall = Entity();
+	auto leftWall = Entity();
+	auto rightWall = Entity();
+
+	float x_mid = window_width_px / 2;
+	float y_mid = window_height_px / 2;
+	float x_delta = game_window_size_px / 2 - 16;
+	float y_delta = game_window_size_px / 2 - 16;
+	float x_max = x_mid + x_delta;
+	float x_min = x_mid - x_delta;
+	float y_max = y_mid + y_delta;
+	float y_min = y_mid - y_delta;
+
+	// top wall
+	Motion& top_motion = registry.motions.emplace(topWall);
+	top_motion.position = vec2({ x_mid, y_min });
+	top_motion.scale = vec2({ game_window_size_px - 64, 32 });
+
+	registry.obstacles.emplace(topWall);
+	registry.renderRequests.insert(
+		topWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	// bottom wall
+	Motion& bottom_motion = registry.motions.emplace(bottomWall);
+	bottom_motion.position = vec2({ x_mid, y_max });
+	bottom_motion.scale = vec2({ game_window_size_px - 64, -32 });
+
+	registry.obstacles.emplace(bottomWall);
+	registry.renderRequests.insert(
+		bottomWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+					EFFECT_ASSET_ID::TEXTURED,
+					GEOMETRY_BUFFER_ID::SPRITE });
+
+	// left wall
+	Motion& left_motion = registry.motions.emplace(leftWall);
+	left_motion.position = vec2({ x_min, y_mid });
+	left_motion.look_angle = M_PI / 2;
+	left_motion.scale = vec2({ game_window_size_px - 64, -32 });
+
+	registry.obstacles.emplace(leftWall);
+	registry.renderRequests.insert(
+		leftWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+							EFFECT_ASSET_ID::TEXTURED,
+							GEOMETRY_BUFFER_ID::SPRITE });
+
+	// right wall
+	Motion& right_motion = registry.motions.emplace(rightWall);
+	right_motion.position = vec2({ x_max, y_mid });
+	right_motion.look_angle = M_PI / 2;
+	right_motion.scale = vec2({ game_window_size_px - 64, 32 });
+
+	registry.obstacles.emplace(rightWall);
+	registry.renderRequests.insert(
+		rightWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE });
+
+	// corners
+	auto topLeftWall = Entity();
+	auto topRightWall = Entity();
+	auto bottomLeftWall = Entity();
+	auto bottomRightWall = Entity();
+
+	// top left wall
+	Motion& topLeft_motion = registry.motions.emplace(topLeftWall);
+	topLeft_motion.position = vec2({ x_min, y_min });
+	topLeft_motion.scale = vec2({ -32, 32 });
+
+	registry.obstacles.emplace(topLeftWall);
+	registry.renderRequests.insert(
+		topLeftWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
+					EFFECT_ASSET_ID::TEXTURED,
+					GEOMETRY_BUFFER_ID::SPRITE });
+
+	// top right wall
+	Motion& topRight_motion = registry.motions.emplace(topRightWall);
+	topRight_motion.position = vec2({ x_max, y_min });
+	topRight_motion.scale = vec2({ 32, 32 });
+
+	registry.obstacles.emplace(topRightWall);
+	registry.renderRequests.insert(
+		topRightWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
+							EFFECT_ASSET_ID::TEXTURED,
+							GEOMETRY_BUFFER_ID::SPRITE });
+
+	// bottom left wall
+	Motion& bottomLeft_motion = registry.motions.emplace(bottomLeftWall);
+	bottomLeft_motion.position = vec2({ x_min, y_max });
+	bottomLeft_motion.scale = vec2({ -32, 32 });
+
+	registry.obstacles.emplace(bottomLeftWall);
+	registry.renderRequests.insert(
+		bottomLeftWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
+							EFFECT_ASSET_ID::TEXTURED,
+							GEOMETRY_BUFFER_ID::SPRITE });
+
+	// bottom right wall
+	Motion& bottomRight_motion = registry.motions.emplace(bottomRightWall);
+	bottomRight_motion.position = vec2({ x_max, y_max });
+	bottomRight_motion.scale = vec2({ 32, 32 });
+
+	registry.obstacles.emplace(bottomRightWall);
+	registry.renderRequests.insert(
+		bottomRightWall,
+		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
+									EFFECT_ASSET_ID::TEXTURED,
+									GEOMETRY_BUFFER_ID::SPRITE });
+
+}
+
+Entity createRoom(RenderSystem* render)
+{
+	auto entity = Entity();
+
+	// A wall is four walls on the edges of the game play screen
+	// The walls are obstacles
+
+	Room& room = registry.rooms.emplace(entity);
+	// TODO: Generate room info randomly
+	// world_generator.generateRoom(Room& room, float rng);
+	room.is_cleared = true;
+	room.obstacle_count = 10;
+	room.obstacle_positions = {
+		vec2(1,1),
+		vec2(2,2),
+		vec2(3,3),
+		vec2(4,4),
+		vec2(5,5),
+		vec2(9,9),
+		vec2(10,10),
+		vec2(11,11),
+		vec2(12,12),
+		vec2(13,13)
+	};
+
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+
+	for (auto& pos : room.obstacle_positions)
+	{
+		float x = x_origin + pos.x * game_window_block_size;
+		float y = y_origin + pos.y * game_window_block_size;
+		createObstacle(render, vec2(x, y));
+	}
+
+	createWalls(render);
 
 	return entity;
 }

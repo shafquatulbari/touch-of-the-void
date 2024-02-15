@@ -7,24 +7,27 @@
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion &motion)
 {
-	// abs is to avoid negative scale due to the facing direction.
-	return {abs(motion.scale.x), abs(motion.scale.y)};
+	// abs is to avoid negative scale due to the facing direction, account for rotation i.e motion.look_angle
+	float x_scale = abs(motion.scale.x) * cos(motion.look_angle) + abs(motion.scale.y) * sin(motion.look_angle);
+	float y_scale = abs(motion.scale.x) * sin(motion.look_angle) + abs(motion.scale.y) * cos(motion.look_angle);
+
+	return {x_scale, y_scale};
 }
 
-// This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
-// if the center point of either object is inside the other's bounding-box-circle. You can
+// This is a SUPER APPROXIMATE check that puts bounding boxes around the objects and sees
+// if the boxes points are within the other box. This is a very rough approximation and should
 // surely implement a more accurate detection
 bool collides(const Motion &motion1, const Motion &motion2)
 {
 	vec2 dp = motion1.position - motion2.position;
-	float dist_squared = dot(dp, dp);
-	const vec2 other_bonding_box = get_bounding_box(motion1) / 2.f;
-	const float other_r_squared = dot(other_bonding_box, other_bonding_box);
-	const vec2 my_bonding_box = get_bounding_box(motion2) / 2.f;
-	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
-	const float r_squared = max(other_r_squared, my_r_squared);
-	if (dist_squared < r_squared)
+	vec2 bb1 = get_bounding_box(motion1);
+	vec2 bb2 = get_bounding_box(motion2);
+
+	// Check if the bounding boxes overlap
+	if (abs(dp.x) < (bb1.x + bb2.x) / 2 && abs(dp.y) < (bb1.y + bb2.y) / 2)
+	{
 		return true;
+	}
 	return false;
 }
 
