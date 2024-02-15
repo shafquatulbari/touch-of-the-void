@@ -65,7 +65,7 @@ Entity createObstacle(RenderSystem *renderer, vec2 position, float health_points
 	Health& health = registry.healths.emplace(entity);
 	health.value = health_points; // obstacle health 
 
-	registry.players.emplace(entity);
+	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::OBSTACLE,
