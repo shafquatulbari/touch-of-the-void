@@ -128,7 +128,7 @@ Entity createBackground(RenderSystem *renderer, vec2 position)
 	return Entity();
 }
 
-Entity createProjectile(RenderSystem *render, vec2 position, float angle)
+Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length)
 {
 	auto entity = Entity();
 
@@ -136,10 +136,9 @@ Entity createProjectile(RenderSystem *render, vec2 position, float angle)
 	Mesh &mesh = render->getMesh(GEOMETRY_BUFFER_ID::SPRITE);
 	registry.meshPtrs.emplace(entity, &mesh);
 
-	// actual firing angle is randomly perturbed based off the accuracy
-	// TODO: figure out how to use the rng from the game state
-	float accuracy = 0.3f;
-	angle += (rand() % 1000 - 500) / 1000.f * accuracy;
+	// actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	angle += (rng - 0.5f) * accuracy;
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
