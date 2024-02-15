@@ -80,7 +80,6 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_button_redirect);
-
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -131,6 +130,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
 
+	if (registry.players.get(player).is_firing) {
+		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2);
+	}
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
@@ -408,12 +410,11 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 	// TODO: Change to fire until clip is empty then auto reload
 	if (button == left_click) {
 		if (action == press) {
-			// start firing
-			// example of one bullet
-			createProjectile(renderer, registry.motions.get(player).position, registry.motions.get(player).look_angle - M_PI / 2);
+			// player is firing 
+			registry.players.get(player).is_firing = true;
 		}
-		if (action == release) {
-			// stop firing
+		else if (action == release) {
+			registry.players.get(player).is_firing = false;
 		}
 	}
 }

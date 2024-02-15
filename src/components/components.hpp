@@ -7,7 +7,7 @@
 // Player component
 struct Player
 {
-
+	bool is_firing = false; // player is currently firing projectiles
 };
 
 // Obstacle component
