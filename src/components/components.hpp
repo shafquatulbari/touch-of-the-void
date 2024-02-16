@@ -7,14 +7,13 @@
 // Player component
 struct Player
 {
-
+	bool is_firing = false; // player is currently firing projectiles
+	float fire_length_ms = 0.0f; // time the player has been firing
 };
 
 // Obstacle component
 struct Obstacle
 {
-	bool is_damaged = false;
-    float damage_intensity = 0.0f; // Range [0.0, 1.0], where 0 is no damage and 1 is maximum damage
 };
 
 // Projectile component
@@ -30,24 +29,20 @@ struct Deadly
 	float damage = 0.0f; // damage to be dealt to the other entity on collision
 };
 
-//This component can track whether the entity is currently showing damage feedback and how much longer it should do so.
-struct Damaged {
-    bool is_damaged = false;
-    float damage_time_left = 0.0f; // Time in milliseconds
-    vec3 original_color;
-    vec3 damaged_color = {1.0f, 0.0f, 0.0f}; // Example: turn red when damaged
-};
-
 // Health component 
 struct Health
 {
-	float value = 100.0f; // "health points" of an entity. default to 100 
+	float current_health = 100.0f; // health points of an entity
+	float max_health = 100.0f; // maximum health points of an entity
 };
 
 // Shield component 
 struct Shield
 {
-	float value = 100.0f; // regenerable "shield points" of an entity
+	float current_shield = 100.0f; // shield points of an entity
+	float max_shield = 100.0f; // maximum shield points of an entity
+	float recharge_rate = 0.0f; // rate at which the shield recharges
+	float recharge_delay = 0.0f; // delay before the shield starts recharging
 };
 
 // All data relevant to the shape and motion of entities
@@ -161,7 +156,8 @@ enum class TEXTURE_ASSET_ID {
 	OBSTACLE = PLAYER + 1,
 	BULLET = OBSTACLE + 1,
 	LEVEL1_BACKGROUND = BULLET + 1,
-	LEVEL1_WALL = LEVEL1_BACKGROUND + 1,
+	LEVEL1_FULL_WALL = LEVEL1_BACKGROUND + 1,
+	LEVEL1_WALL = LEVEL1_FULL_WALL + 1,
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_WALL + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
