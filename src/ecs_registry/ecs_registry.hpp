@@ -25,6 +25,7 @@ public:
 	ComponentContainer<vec3> colors;
 	ComponentContainer<Health> healths;
 	ComponentContainer<Shield> shields;
+	ComponentContainer<Room> rooms;
 
 
 	// constructor that adds all containers for looping over them
@@ -45,6 +46,7 @@ public:
 		registry_list.push_back(&projectiles);
 		registry_list.push_back(&healths);
 		registry_list.push_back(&shields);
+		registry_list.push_back(&rooms);
 	}
 
 	void clear_all_components() {
