@@ -69,33 +69,17 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		gl_has_errors();
 
 	}
-	else if (render_request.used_effect == EFFECT_ASSET_ID::EGG)
-	{
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_color_loc = glGetAttribLocation(program, "in_color");
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(ColoredVertex), (void*)0);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_color_loc);
-		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(ColoredVertex), (void*)sizeof(vec3));
-		gl_has_errors();
-
-	}
 	else
 	{
 		assert(false && "Type of render request not supported");
 	}
 
 	// change color based on damage intensity
-	if (registry.obstacles.has(entity)) {
+	if (registry.obstacles.has(entity) && registry.healths.has(entity)) {
 		const Obstacle& obstacle = registry.obstacles.get(entity);
+		const Health& health = registry.healths.get(entity);
 		GLint damageIntensityLoc = glGetUniformLocation(program, "damageIntensity");
-		glUniform1f(damageIntensityLoc, obstacle.is_damaged ? obstacle.damage_intensity : 0.0f);
+		glUniform1f(damageIntensityLoc, 1.0f - (health.current_health / health.max_health));
 	}
 	else {
 		// Ensure it's set to zero for non-obstacle entities
