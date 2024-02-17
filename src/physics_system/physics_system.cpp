@@ -14,21 +14,22 @@ vec2 get_bounding_box(const Motion &motion)
 	return {x_scale, y_scale};
 }
 
-// This is a SUPER APPROXIMATE check that puts bounding boxes around the objects and sees
-// if the boxes points are within the other box. This is a very rough approximation and should
-// surely implement a more accurate detection
+// Returns whether two entities collide based on AABB collision detection
 bool collides(const Motion &motion1, const Motion &motion2)
 {
-	vec2 dp = motion1.position - motion2.position;
-	vec2 bb1 = get_bounding_box(motion1);
-	vec2 bb2 = get_bounding_box(motion2);
+	const float& x1 = motion1.position.x;
+	const float& y1 = motion1.position.y;
+	const float& w1 = motion1.scale.x;
+	const float& h1 = motion1.scale.y;
 
-	// Check if the bounding boxes overlap
-	if (abs(dp.x) < (bb1.x + bb2.x) / 2 && abs(dp.y) < (bb1.y + bb2.y) / 2)
-	{
-		return true;
-	}
-	return false;
+	const float& x2 = motion2.position.x;
+	const float& y2 = motion2.position.y;
+	const float& w2 = motion2.scale.x;
+	const float& h2 = motion2.scale.y;
+
+	return
+		(x1 - 0.5f*w1 < x2 + 0.5f*w2 && y1 - 0.5f*h1 < y2 + 0.5*h2) &&
+		(x2 - 0.5f*w2 < x1 + 0.5f*w1 && y2 - 0.5f*h2 < y1 + 0.5f*h1);
 }
 
 void update_motion(Motion &motion, float step_seconds)

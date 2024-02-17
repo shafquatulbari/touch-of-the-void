@@ -249,6 +249,21 @@ void WorldSystem::handle_collisions() {
 				registry.remove_all_components_of(entity);
 			}
 		}
+
+		// Handle collisions projectiles and obstacles
+		if (registry.projectiles.has(entity)) {
+			if (registry.obstacles.has(entity_other)) {
+				Health& obstacle_health = registry.healths.get(entity_other);
+				Projectile& projectile = registry.projectiles.get(entity);
+
+				obstacle_health.value -= projectile.damage;
+				registry.remove_all_components_of(entity);
+
+				if (obstacle_health.value <= 0) {
+					registry.remove_all_components_of(entity_other);
+				}
+			}
+		}
 	}
 
 	// Remove all collisions from this simulation step
