@@ -75,8 +75,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	}
 
 	// change color based on damage intensity
-	if (registry.obstacles.has(entity) && registry.healths.has(entity)) {
-		const Obstacle& obstacle = registry.obstacles.get(entity);
+	if (registry.healths.has(entity)) {
 		const Health& health = registry.healths.get(entity);
 		GLint damageIntensityLoc = glGetUniformLocation(program, "damageIntensity");
 		glUniform1f(damageIntensityLoc, 1.0f - (health.current_health / health.max_health));
