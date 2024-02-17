@@ -19,13 +19,13 @@ bool collides(const Motion &motion1, const Motion &motion2)
 {
 	const float& x1 = motion1.position.x;
 	const float& y1 = motion1.position.y;
-	const float& w1 = abs(motion1.scale.x) * cos(motion1.look_angle) + abs(motion1.scale.y) * sin(motion1.look_angle);
-	const float& h1 = abs(motion1.scale.x) * sin(motion1.look_angle) + abs(motion1.scale.y) * cos(motion1.look_angle);
+	const float& w1 = abs(abs(motion1.scale.x) * cos(motion1.look_angle) + abs(motion1.scale.y) * sin(motion1.look_angle));
+	const float& h1 = abs(abs(motion1.scale.x) * sin(motion1.look_angle) + abs(motion1.scale.y) * cos(motion1.look_angle));
 
 	const float& x2 = motion2.position.x;
 	const float& y2 = motion2.position.y;
-	const float& w2 = abs(motion2.scale.x) * cos(motion2.look_angle) + abs(motion2.scale.y) * sin(motion2.look_angle);
-	const float& h2 = abs(motion2.scale.x) * sin(motion2.look_angle) + abs(motion2.scale.y) * cos(motion2.look_angle);
+	const float& w2 = abs(abs(motion2.scale.x) * cos(motion2.look_angle) + abs(motion2.scale.y) * sin(motion2.look_angle));
+	const float& h2 = abs(abs(motion2.scale.x) * sin(motion2.look_angle) + abs(motion2.scale.y) * cos(motion2.look_angle));
 
 	return
 		(x1 - 0.5f*w1 < x2 + 0.5f*w2 && y1 - 0.5f*h1 < y2 + 0.5*h2) &&
