@@ -7,25 +7,29 @@
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion &motion)
 {
-	// abs is to avoid negative scale due to the facing direction.
-	return {abs(motion.scale.x), abs(motion.scale.y)};
+	// abs is to avoid negative scale due to the facing direction, account for rotation i.e motion.look_angle
+	float x_scale = abs(motion.scale.x) * cos(motion.look_angle) + abs(motion.scale.y) * sin(motion.look_angle);
+	float y_scale = abs(motion.scale.x) * sin(motion.look_angle) + abs(motion.scale.y) * cos(motion.look_angle);
+
+	return {x_scale, y_scale};
 }
 
-// This is a SUPER APPROXIMATE check that puts a circle around the bounding boxes and sees
-// if the center point of either object is inside the other's bounding-box-circle. You can
-// surely implement a more accurate detection
+// Returns whether two entities collide based on AABB collision detection
 bool collides(const Motion &motion1, const Motion &motion2)
 {
-	vec2 dp = motion1.position - motion2.position;
-	float dist_squared = dot(dp, dp);
-	const vec2 other_bonding_box = get_bounding_box(motion1) / 2.f;
-	const float other_r_squared = dot(other_bonding_box, other_bonding_box);
-	const vec2 my_bonding_box = get_bounding_box(motion2) / 2.f;
-	const float my_r_squared = dot(my_bonding_box, my_bonding_box);
-	const float r_squared = max(other_r_squared, my_r_squared);
-	if (dist_squared < r_squared)
-		return true;
-	return false;
+	const float& x1 = motion1.position.x;
+	const float& y1 = motion1.position.y;
+	const float& w1 = abs(motion1.scale.x) * cos(motion1.look_angle) + abs(motion1.scale.y) * sin(motion1.look_angle);
+	const float& h1 = abs(motion1.scale.x) * sin(motion1.look_angle) + abs(motion1.scale.y) * cos(motion1.look_angle);
+
+	const float& x2 = motion2.position.x;
+	const float& y2 = motion2.position.y;
+	const float& w2 = abs(motion2.scale.x) * cos(motion2.look_angle) + abs(motion2.scale.y) * sin(motion2.look_angle);
+	const float& h2 = abs(motion2.scale.x) * sin(motion2.look_angle) + abs(motion2.scale.y) * cos(motion2.look_angle);
+
+	return
+		(x1 - 0.5f*w1 < x2 + 0.5f*w2 && y1 - 0.5f*h1 < y2 + 0.5*h2) &&
+		(x2 - 0.5f*w2 < x1 + 0.5f*w1 && y2 - 0.5f*h2 < y1 + 0.5f*h1);
 }
 
 void update_motion(Motion &motion, float step_seconds)

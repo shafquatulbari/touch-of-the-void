@@ -160,26 +160,33 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	ScreenState& screen = registry.screenStates.components[0];
 
-    // Gradually darken the screen if the player is dead
-    if (registry.healths.get(player).current_health <= 0) {
-        if (screen.darken_screen_factor > 0 && screen.darken_screen_factor < 1.0f) {
-            // Increase darken_screen_factor gradually to simulate darkening over time
-            screen.darken_screen_factor += (elapsed_ms_since_last_update / 1000.0f) * 0.5f; // Adjust speed here
-            screen.darken_screen_factor = std::min(screen.darken_screen_factor, 1.0f);
-        } else if (screen.darken_screen_factor >= 1.0f) {
-            // Reset game after screen is fully darkened
-            restart_game();
-            return true;
-        }
-    }
+	float min_counter_ms = 3000.f;
+	for (Entity entity : registry.deathTimers.entities) {
+		// progress timer
+		DeathTimer& counter = registry.deathTimers.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+		if (counter.counter_ms < min_counter_ms) {
+			min_counter_ms = counter.counter_ms;
+		}
 
+		// restart the game once the death timer expired
+		if (counter.counter_ms < 0) {
+			registry.deathTimers.remove(entity);
+			screen.darken_screen_factor = 0;
+			restart_game();
+			return true;
+		}
+	}
+	// reduce window brightness if any of the player is dying
+	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
+
+	// heal obstacles over time
 	for (auto& obstacle : registry.obstacles.entities) {
         if (registry.healths.has(obstacle)) {
 			Health& health = registry.healths.get(obstacle);
 			if (health.current_health < health.max_health) {
-				// Heal damage over time
-				health.current_health += (elapsed_ms_since_last_update / 1000.0f) * 10.0f; // Adjust speed here
-				health.current_health = std::min(health.current_health, health.max_health);
+				health.current_health += (elapsed_ms_since_last_update / 1000.0f) * 50.0f; // Adjust speed here
+				health.current_health = std::min(health.current_health, health.max_health); // don't exceed max health
 			}
         }
     }
@@ -209,13 +216,10 @@ void WorldSystem::restart_game() {
 	registry.list_all_components();
 
 	// Create a level
-	createBackground(renderer, { window_width_px / 2, window_height_px / 2 });
+	createBackground(renderer);
 
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
-
-	// Create an enemy
-	createEnemy(renderer, { (window_width_px / 2) + (game_window_block_size * 2), (window_height_px / 2) + (game_window_block_size * 2) }, 100.0f);
 }
 
 // Compute collisions between entities
@@ -230,21 +234,20 @@ void WorldSystem::handle_collisions() {
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
 				//on collision with an obstacle, the player should take damage and bounce back
 				apply_damage_and_bounce_back(entity, entity_other);
-        }
+			}
 
 		// Handle collisions projectiles and obstacles
-		if (registry.projectiles.has(entity)) {
-			if (registry.obstacles.has(entity_other)) {
-				Health& obstacle_health = registry.healths.get(entity_other);
+		if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
-
-				obstacle_health.current_health -= projectile.damage;
-				registry.remove_all_components_of(entity);
-
-				if (obstacle_health.current_health <= 0) {
-					registry.remove_all_components_of(entity_other);
+				if (registry.healths.has(entity_other)) {
+					Deadly& deadly = registry.deadlies.get(entity);
+					Health& obstacle_health = registry.healths.get(entity_other);
+					obstacle_health.current_health -= deadly.damage;
+					if (obstacle_health.current_health <= 0) {
+						registry.remove_all_components_of(entity_other);
+					}
 				}
-			}
+				registry.remove_all_components_of(entity);
 		}
 	}
 
@@ -353,19 +356,29 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
-		// Apply damage to the player
-		Health& playerHealth = registry.healths.get(player);
-		playerHealth.current_health -= 10; // Example damage value
+	// Apply damage to the player
+	Health& playerHealth = registry.healths.get(player);
+	if (registry.deadlies.has(obstacle)) {
+		Deadly& deadly = registry.deadlies.get(obstacle);
+		playerHealth.current_health -= deadly.damage;
 		if (playerHealth.current_health <= 0) {
 			// Trigger darkening immediately, but actual effect is controlled in step
-			ScreenState& screen = registry.screenStates.components[0];
-			screen.darken_screen_factor = 0.01f; // Start the darkening process
-		} else {
-			// Bounce back functionality by moving back by a bit
-			Motion& playerMotion = registry.motions.get(player);
-			playerMotion.velocity *= -1;
-			playerMotion.position += playerMotion.velocity * 0.1f;
+			if (!registry.deathTimers.has(player)) {
+				// cease motion
+				Motion& motion = registry.motions.get(player);
+				motion.velocity = { 0, 0 };
+				motion.is_moving_up = false;
+				motion.is_moving_down = false;
+				motion.is_moving_left = false;
+				motion.is_moving_right = false;
+				registry.deathTimers.emplace(player);
+			}
 		}
+	}
+	// Bounce back functionality by moving back by a bit
+	Motion& playerMotion = registry.motions.get(player);
+	playerMotion.velocity *= -1;
+	playerMotion.position += playerMotion.velocity * 0.1f;
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {

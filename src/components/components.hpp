@@ -19,7 +19,6 @@ struct Obstacle
 // Projectile component
 struct Projectile 
 {
-	float damage = 0.0f;	// damage when projectile hits an entity
 	float lifetime = 0.0f;	// time before the projectile disappears
 };
 
@@ -66,6 +65,37 @@ struct Motion {
 	float turn_rate = 0.0f;		// how fast the entity can turn
 };
 
+// All data relevant to the contents of a game room
+struct Room {
+	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
+
+	// The number of enemies in the room
+	int enemy_count = 0;
+	// the positions of the enemies in the room
+	std::vector<vec2> enemy_positions;
+
+	// The number of obstacles in the room
+	int obstacle_count = 0;
+	// the positions of the obstacles in the room
+	std::vector<vec2> obstacle_positions;
+
+	// The number of powerups in the room
+	int powerup_count = 0;
+	// the positions of the powerups in the room
+	std::vector<vec2> powerup_positions;
+
+	// fields concerning the doors of the room
+	bool has_left_door = false;
+	bool has_right_door = false;
+	bool has_top_door = false;
+	bool has_bottom_door = false;
+
+	// neighbouring rooms
+	Entity left_room;
+	Entity right_room;
+	Entity top_room;
+	Entity bottom_room;
+};
 struct ReloadTimer
 {
 	float counter_ms = 0.0f;
@@ -153,7 +183,8 @@ struct Mesh
 
 enum class TEXTURE_ASSET_ID {
 	PLAYER = 0,
-	OBSTACLE = PLAYER + 1,
+	ENEMY = PLAYER + 1,
+	OBSTACLE = ENEMY + 1,
 	BULLET = OBSTACLE + 1,
 	LEVEL1_BACKGROUND = BULLET + 1,
 	LEVEL1_FULL_WALL = LEVEL1_BACKGROUND + 1,
@@ -167,8 +198,7 @@ const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
 enum class EFFECT_ASSET_ID {
 	COLOURED = 0,
-	EGG = COLOURED + 1,
-	TEXTURED = EGG + 1,
+	TEXTURED = COLOURED + 1,
 	POST_PROCESS = TEXTURED + 1,
 	EFFECT_COUNT = POST_PROCESS + 1
 };
@@ -176,9 +206,7 @@ const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
 enum class GEOMETRY_BUFFER_ID {
 	SPRITE = 0,
-	EGG = SPRITE + 1,
-	DEBUG_LINE = EGG + 1,
-	SCREEN_TRIANGLE = DEBUG_LINE + 1,
+	SCREEN_TRIANGLE = SPRITE + 1,
 	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;

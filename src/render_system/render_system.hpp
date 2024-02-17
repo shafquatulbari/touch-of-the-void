@@ -18,7 +18,7 @@ class RenderSystem {
 	 * it is easier to debug and faster to execute for the computer.
 	 */
 	std::array<GLuint, texture_count> texture_gl_handles;
-	std::array<ivec2, texture_count> texture_dimensions; // TODO: figure out how to use this, doesn't seem to be working
+	std::array<ivec2, texture_count> texture_dimensions; 
 
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	// Associated id with .obj path
@@ -32,6 +32,7 @@ class RenderSystem {
 	const std::array<std::string, texture_count> texture_paths = {
 		// TODO: specify textures of other assets here like so:
 		textures_path("player.png"),
+		textures_path("enemy.png"),
 		textures_path("obstacle.png"),
 		textures_path("bullet.png"),
 		textures_path("lvl1_background.png"),
@@ -47,7 +48,6 @@ class RenderSystem {
 	const std::array<std::string, effect_count> effect_paths = {
 		// TODO: specify shader scripts here like so:
 		shader_path("coloured"),
-		shader_path("egg"),
 		shader_path("textured"),
 		shader_path("post_process")
 	};

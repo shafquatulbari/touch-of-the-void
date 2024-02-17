@@ -9,6 +9,9 @@
 const float PLAYER_BB_WIDTH = 32.0f;
 const float PLAYER_BB_HEIGHT = 32.0f;
 
+const float ENEMY_BB_WIDTH = 32.0f;
+const float ENEMY_BB_HEIGHT = 32.0f;
+
 const float OBSTACLE_BB_WIDTH = 32.0f;
 const float OBSTACLE_BB_HEIGHT = 32.0f;
 
@@ -24,10 +27,9 @@ Entity createPlayer(RenderSystem* renderer, vec2 pos);
 Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points);
 // the obstacle
 Entity createObstacle(RenderSystem* renderer, vec2 position);
-// a red line for debugging purposes
-Entity createLine(vec2 position, vec2 size);
 // the background
-Entity createBackground(RenderSystem* renderer, vec2 position);
+Entity createBackground(RenderSystem* renderer);
 // a single projectile
 Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length);
-
+// a hard coded room
+Entity createRoom(RenderSystem* renderer);
