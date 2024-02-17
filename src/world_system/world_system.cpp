@@ -356,9 +356,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
-		// Apply damage to the player
-		Health& playerHealth = registry.healths.get(player);
-		playerHealth.current_health -= 10; // Example damage value
+	// Apply damage to the player
+	Health& playerHealth = registry.healths.get(player);
+	if (registry.deadlies.has(obstacle)) {
+		Deadly& deadly = registry.deadlies.get(obstacle);
+		playerHealth.current_health -= deadly.damage;
 		if (playerHealth.current_health <= 0) {
 			// Trigger darkening immediately, but actual effect is controlled in step
 			if (!registry.deathTimers.has(player)) {
@@ -371,12 +373,12 @@ void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
 				motion.is_moving_right = false;
 				registry.deathTimers.emplace(player);
 			}
-		} else {
-			// Bounce back functionality by moving back by a bit
-			Motion& playerMotion = registry.motions.get(player);
-			playerMotion.velocity *= -1;
-			playerMotion.position += playerMotion.velocity * 0.1f;
 		}
+	}
+	// Bounce back functionality by moving back by a bit
+	Motion& playerMotion = registry.motions.get(player);
+	playerMotion.velocity *= -1;
+	playerMotion.position += playerMotion.velocity * 0.1f;
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {

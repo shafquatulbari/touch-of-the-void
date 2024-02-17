@@ -46,6 +46,9 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	health.current_health = health_points;
 	health.max_health = health_points; 
 
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 10.0f;
+
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
