@@ -19,7 +19,6 @@ struct Obstacle
 // Projectile component
 struct Projectile 
 {
-	float damage = 0.0f;	// damage when projectile hits an entity
 	float lifetime = 0.0f;	// time before the projectile disappears
 };
 
@@ -184,7 +183,8 @@ struct Mesh
 
 enum class TEXTURE_ASSET_ID {
 	PLAYER = 0,
-	OBSTACLE = PLAYER + 1,
+	ENEMY = PLAYER + 1,
+	OBSTACLE = ENEMY + 1,
 	BULLET = OBSTACLE + 1,
 	LEVEL1_BACKGROUND = BULLET + 1,
 	LEVEL1_FULL_WALL = LEVEL1_BACKGROUND + 1,

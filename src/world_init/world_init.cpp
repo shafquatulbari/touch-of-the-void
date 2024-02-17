@@ -40,7 +40,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = position;
 	motion.complex = false;
-	motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
+	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
 
 	Health& health = registry.healths.emplace(entity);
 	health.current_health = health_points;
@@ -49,7 +49,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::OBSTACLE,
+		{ TEXTURE_ASSET_ID::ENEMY,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -115,7 +115,8 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	motion.velocity = vec2({500.0f * cos(angle), 500.0f * sin(angle)});
 
 	// TODO: change the damage value and lifetime into constant variables
-	projectile.damage = 10.0f; 
+	Deadly &deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 10.0f;
 	projectile.lifetime = 1000.0f;
 
 	registry.renderRequests.insert(
@@ -275,6 +276,13 @@ Entity createRoom(RenderSystem* render)
 		vec2(13,13)
 	};
 
+	room.enemy_count = 3;
+	room.enemy_positions = {
+		vec2(3,6),
+		vec2(2,9),
+		vec2(12,4)
+	};
+
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
 
@@ -283,6 +291,13 @@ Entity createRoom(RenderSystem* render)
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
 		createObstacle(render, vec2(x, y));
+	}
+
+	for (auto& pos : room.enemy_positions)
+	{
+		float x = x_origin + pos.x * game_window_block_size;
+		float y = y_origin + pos.y * game_window_block_size;
+		createEnemy(render, vec2(x, y), 500.0f);
 	}
 
 	createWalls(render);
