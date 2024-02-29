@@ -36,7 +36,8 @@ int main()
 	// setup fonts
 	std::string font_filename = fonts_path("Vermin_Vibes_1989.ttf");
 	unsigned int font_default_size = 48;
-	renderer.fontInit(font_filename, font_default_size);
+	// TODO FIX THIS
+	//renderer.fontInit(window, font_filename, font_default_size);
 
 	// variable timestep loop
 	auto t = Clock::now();
@@ -57,8 +58,8 @@ int main()
 
 		renderer.draw();
 
-		// this breaks the code
-		// renderer.renderText("test", 0.0f, 0.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+		// TODO FIX THIS
+		//renderer.renderText("THIS IS A FONT TEST", 100.0f, 100.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 
 	return EXIT_SUCCESS;

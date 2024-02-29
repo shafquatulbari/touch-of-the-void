@@ -85,7 +85,7 @@ public:
 	mat3 createProjectionMatrix();
 
 	// Fonts
-	bool fontInit(const std::string& font_filename, unsigned int font_default_size);
+	bool fontInit(GLFWwindow* window, const std::string& font_filename, unsigned int font_default_size);
 	void renderText(std::string text, float x, float y, float scale, const glm::vec3& color);
 
 private:
