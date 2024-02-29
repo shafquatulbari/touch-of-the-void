@@ -135,6 +135,28 @@ elseif (IS_OS_WINDOWS)
     )
 endif()
 
+# Add FreeType - Windows-specific; not tested on Linux or macOS
+set (FREETYPE_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/ext/freetype/include")
+set (FREETYPE_LIBRARY "${CMAKE_CURRENT_SOURCE_DIR}/ext/freetype/release static/vs2015-2022/win64/freetype.lib")
+# set (SDL2_LIBRARIES "${CMAKE_CURRENT_SOURCE_DIR}/ext/sdl/lib/SDL2-x86.lib")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/ext/freetype/include")
+
+find_package(Freetype REQUIRED)
+
+if(TARGET Freetype AND NOT TARGET Freetype::Freetype)
+     add_library(Freetype::Freetype ALIAS freetype) # target freetype is defined by freetype-targets.cmake
+     # might need to add freetype to global scope if cmake errors here
+     # alternativly if the above does not work for you you can use
+     # add_library(Freetype::Freetype INTERFACE IMPORTED)
+     # target_link_libraries(Freetype::Freetype INTERFACE freetype)
+ endif()
+ if(NOT TARGET Freetype::Freetype)
+     # insert error here
+     # or create the target correctly (see cmakes newer FindFreetype.cmake)
+     message(FATAL_ERROR "Can't find FreeType (fonts)." )
+ endif()
+ # target_link_libraries(mylib PRIVATE Freetype::Freetype)
+
 # Can't find the include and lib. Quit.
 if (NOT GLFW_FOUND OR NOT SDL2_FOUND)
    if (NOT GLFW_FOUND)
