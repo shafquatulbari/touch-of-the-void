@@ -13,6 +13,11 @@
 #include <iostream>
 #include <sstream>
 
+// fonts
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <map>
+
 // World initialization
 bool RenderSystem::init(GLFWwindow* window_arg)
 {
@@ -59,6 +64,7 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	initializeGlTextures();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
+	initializeFonts();
 
 	return true;
 }
@@ -226,6 +232,95 @@ bool RenderSystem::initScreenTexture()
 	return true;
 }
 
+// fonts
+std::map<char, Character> m_ftCharacters;
+GLuint m_font_VAO;
+GLuint m_font_VBO;
+
+void RenderSystem::initializeFonts() {
+	for (uint i = 0; i < font_paths.size(); i++)
+	{
+		// Initialize each font
+		FONT_ASSET_ID font_index = (FONT_ASSET_ID)i;
+		const std::string name = font_paths[i];
+		bool is_valid = loadFontFromFile(name, 48);
+		assert(is_valid);
+		fprintf(stderr, "Loaded font %s\n", name.c_str());
+	}
+}
+
+bool loadFontFromFile(const std::string& font_filename, unsigned int font_default_size) {
+	// Load font
+	FT_Library ft;
+	if (FT_Init_FreeType(&ft))
+	{
+		fprintf(stderr, "ERROR::FREETYPE: Could not init FreeType Library\n");
+		return false;
+	}
+
+	FT_Face face;
+	if (FT_New_Face(ft, font_filename.c_str(), 0, &face))
+	{
+		fprintf(stderr, "ERROR::FREETYPE: Failed to load font\n");
+		return false;
+	}
+
+	FT_Set_Pixel_Sizes(face, 0, font_default_size);
+
+	// disable byte-alignment restriction in OpenGL
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	for (unsigned char c = 0; c < 128; c++)
+	{
+		// Load character glyph 
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+		{
+			fprintf(stderr, "ERROR::FREETYTPE: Failed to load Glyph\n");
+			continue;
+		}
+
+		// generate texture
+		unsigned int texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RED,
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows,
+			0,
+			GL_RED,
+			GL_UNSIGNED_BYTE,
+			face->glyph->bitmap.buffer
+		);
+
+		// Set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// Now store character for later use
+		Character character = {
+			texture,
+			{face->glyph->bitmap.width, face->glyph->bitmap.rows},
+			{face->glyph->bitmap_left, face->glyph->bitmap_top},
+			face->glyph->advance.x
+		};
+
+		m_ftCharacters.insert(std::pair<char, Character>(c, character));
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// clean up
+	FT_Done_Face(face);
+	FT_Done_FreeType(ft);
+
+	return true;
+}
+
 bool gl_compile_shader(GLuint shader)
 {
 	glCompileShader(shader);
@@ -327,4 +422,3 @@ bool loadEffectFromFile(
 
 	return true;
 }
-

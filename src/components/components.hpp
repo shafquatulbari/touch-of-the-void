@@ -157,6 +157,20 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+struct Text
+{
+	std::string content;
+};
+
+// A structure to store the font data of a single character
+struct Character {
+	unsigned int TextureID;  // ID handle of the glyph texture
+	glm::ivec2   Size;       // Size of glyph
+	glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
+	unsigned int Advance;    // Offset to advance to next glyph
+	char character;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -196,11 +210,18 @@ enum class TEXTURE_ASSET_ID {
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
+enum class FONT_ASSET_ID {
+	VERMIN_VIBES_1989 = 0,
+	FONT_COUNT = VERMIN_VIBES_1989 + 1
+};
+const int font_count = (int)FONT_ASSET_ID::FONT_COUNT;
+
 enum class EFFECT_ASSET_ID {
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
 	POST_PROCESS = TEXTURED + 1,
-	EFFECT_COUNT = POST_PROCESS + 1
+	FONT = POST_PROCESS + 1,
+	EFFECT_COUNT = FONT + 1
 };
 const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 
@@ -215,5 +236,6 @@ struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+	FONT_ASSET_ID used_font = FONT_ASSET_ID::FONT_COUNT;
 };
 

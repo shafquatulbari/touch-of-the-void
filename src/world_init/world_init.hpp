@@ -33,3 +33,5 @@ Entity createBackground(RenderSystem* renderer);
 Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length);
 // a hard coded room
 Entity createRoom(RenderSystem* renderer);
+// a hard coded text object
+Entity createText(RenderSystem* renderer, std::string content);

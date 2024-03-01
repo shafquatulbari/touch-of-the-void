@@ -307,3 +307,21 @@ Entity createRoom(RenderSystem* render)
 
 	return entity;
 }
+
+Entity createText(RenderSystem* render, std::string content)
+{
+	auto entity = Entity();
+
+	Text& text = registry.texts.emplace(entity);
+	text.content = content;
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px - 32 };
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			EFFECT_ASSET_ID::FONT,
+			GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}

@@ -33,12 +33,7 @@ int main()
 	renderer.init(window);
 	world.init(&renderer);
 
-	// setup fonts
-	std::string font_filename = fonts_path("Vermin_Vibes_1989.ttf");
-	unsigned int font_default_size = 48;
-	// TODO FIX THIS
-	//renderer.fontInit(window, font_filename, font_default_size);
-
+	
 	// variable timestep loop
 	auto t = Clock::now();
 	while (!world.is_over()) {

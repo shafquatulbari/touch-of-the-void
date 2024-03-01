@@ -49,7 +49,14 @@ class RenderSystem {
 		// TODO: specify shader scripts here like so:
 		shader_path("coloured"),
 		shader_path("textured"),
-		shader_path("post_process")
+		shader_path("post_process"),
+		shader_path("font")
+	};
+
+	std::array<GLuint, font_count> fonts;
+	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
+	const std::array<std::string, font_count> font_paths = {
+		fonts_path("Vermin_Vibes_1989.ttf")
 	};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
@@ -68,6 +75,10 @@ public:
 	void initializeGlEffects();
 
 	void initializeGlMeshes();
+
+	void initializeFonts();
+
+
 	Mesh& getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
 
 	void initializeGlGeometryBuffers();
@@ -83,10 +94,6 @@ public:
 	void draw();
 
 	mat3 createProjectionMatrix();
-
-	// Fonts
-	bool fontInit(GLFWwindow* window, const std::string& font_filename, unsigned int font_default_size);
-	void renderText(std::string text, float x, float y, float scale, const glm::vec3& color);
 
 private:
 	// Internal drawing functions for each entity type
@@ -106,3 +113,6 @@ private:
 
 bool loadEffectFromFile(
 	const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
+
+bool loadFontFromFile(
+	const std::string& font_path, unsigned int font_default_size);
