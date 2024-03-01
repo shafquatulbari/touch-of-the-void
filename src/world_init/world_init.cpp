@@ -321,7 +321,8 @@ Entity createText(RenderSystem* render, std::string content)
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			EFFECT_ASSET_ID::FONT,
-			GEOMETRY_BUFFER_ID::SPRITE});
+			GEOMETRY_BUFFER_ID::SPRITE,
+			FONT_ASSET_ID::VERMIN_VIBES_1989});
 
 	return entity;
 }

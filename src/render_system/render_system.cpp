@@ -76,6 +76,14 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		const Text& t = registry.texts.get(entity);
 		std::string text = t.content;
 		std::cout << "Rendering text: " << text << std::endl;
+		switch (render_request.used_font) {
+			case FONT_ASSET_ID::FONT_COUNT:
+				assert(false && "Invalid font asset");
+				break;
+			case FONT_ASSET_ID::VERMIN_VIBES_1989:
+				std::cout << "Using font: Vermin Vibes 1989" << std::endl;
+				break;
+		}
 		return;
 		// activate the shaders!
 		//glUseProgram(m_font_shaderProgram);

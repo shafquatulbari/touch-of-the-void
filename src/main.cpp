@@ -53,8 +53,6 @@ int main()
 
 		renderer.draw();
 
-		// TODO FIX THIS
-		//renderer.renderText("THIS IS A FONT TEST", 100.0f, 100.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 	}
 
 	return EXIT_SUCCESS;
