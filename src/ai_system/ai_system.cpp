@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 #include <map>
+#include <world_init/world_init.hpp>
 
 const int WIDTH = 480;
 const int HEIGHT = 32;
@@ -44,10 +45,6 @@ void AISystem::step(float elapsed_ms)
                 //printf("Active state\n");
                 activeState(entity, motion, elapsed_ms);
                 break;
-            case AI::AIState::ATTACK:
-                printf("Attack state\n");
-                attackingState(entity, motion, elapsed_ms);
-                break;
             default:
                 printf("Default state\n");
                 break;
@@ -61,26 +58,58 @@ void AISystem::step(float elapsed_ms)
 }
 
 void AISystem:: idleState(Entity entity, Motion& motion) {
-    
+	// No movement in idle state
+	motion.velocity = vec2(0.0f, 0.0f);
 }
 
 void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
     vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
     std::vector<vec2> path = findPath(motion.position, playerPosition);
+    AI& ai = registry.ais.get(entity);
 
-    if (!path.empty() && path.size() > 1) { // Path includes start and next step at least
-        vec2 nextStep = path[1]; // Assuming path[0] is the current position
-        vec2 direction = normalize(nextStep - motion.position);
-        float speed = 10.0f; // Define a suitable speed value for your game
-        motion.velocity = direction * speed;
-        motion.position += motion.velocity * (elapsed_ms / 1000.0f); // Apply movement
+    if (ai.type == AI::AIType::RANGED) {
+        handleRangedAI(entity, motion, ai, elapsed_ms);
+    }
+    else if (ai.type == AI::AIType::MELEE) {
+		if (!path.empty() && path.size() > 1) { // Path includes start and next step at least
+			vec2 nextStep = path[1]; // Assuming path[0] is the current position
+			vec2 direction = normalize(nextStep - motion.position);
+			float speed = 10.0f; // Define a suitable speed value for your game
+			motion.velocity = direction * speed;
+			motion.position += motion.velocity * (elapsed_ms / 1000.0f); // Apply movement
+		}
+	}
+}
+
+//Handle ranged AI behavior
+void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms) {
+    vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
+
+    // Calculate direction and angle towards the player
+    vec2 direction = normalize(playerPosition - motion.position);
+    float angle = atan2(direction.y, direction.x);
+
+    // Check if the ranged enemy has a clear line of sight to the player
+    if (lineOfSightClear(motion.position, playerPosition)) {
+        // Rotate towards player
+        motion.look_angle = angle;
+        createProjectileForEnemy(motion.position, angle);
     }
 }
 
+//Check line of sight 
+bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
+    // Implement based on grid system, return true if clear
+    return true;
+}
 
-void AISystem::attackingState(Entity entity, Motion& motion, float elapsed_ms) {
-    // Attack behavior (e.g., stop moving, play attack animation, deal damage)
-    // ... Logic for attacks and handling damage to the player 
+// Create projectile for enemy
+void AISystem::createProjectileForEnemy(vec2 position, float angle) {
+    // Utilize createProjectile with adjustments for the enemy
+    // Adjust angle, position, and possibly texture for the enemy's projectiles
+    float rng = 0.0f; // Assuming no randomness for enemy shots, adjust as needed
+    float fire_length = 0.0f; // Not used for enemies in this context
+    createProjectile(nullptr, position, angle, rng, fire_length);
 }
 
 

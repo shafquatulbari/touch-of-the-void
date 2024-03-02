@@ -31,7 +31,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType)
 {
 	// Reserve en entity
 	auto entity = Entity();
@@ -39,7 +39,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	AI& ai = registry.ais.emplace(entity);
-	ai.type = AI::AIType::MELEE;
+	ai.type = aiType; // based on passed parameter
 	ai.state = AI::AIState::ACTIVE;
 	motion.position = position;
 	motion.complex = false;
@@ -299,11 +299,14 @@ Entity createRoom(RenderSystem* render)
 		createObstacle(render, vec2(x, y));
 	}
 
-	for (auto& pos : room.enemy_positions)
-	{
-		float x = x_origin + pos.x * game_window_block_size;
-		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f);
+	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::MELEE };
+
+	// Create each enemy with their specified type
+	for (size_t i = 0; i < room.enemy_positions.size(); i++) {
+		float x = x_origin + room.enemy_positions[i].x * game_window_block_size;
+		float y = y_origin + room.enemy_positions[i].y * game_window_block_size;
+		createEnemy(render, vec2(x, y), 500.0f, enemy_types[i]);
 	}
 
 	createWalls(render);

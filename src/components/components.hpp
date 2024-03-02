@@ -26,7 +26,7 @@ struct AI
 {
 	enum class AIType {MELEE, RANGED};
 	AIType type = AIType::MELEE;
-	enum class AIState {IDLE, ACTIVE, ATTACK};
+	enum class AIState {IDLE, ACTIVE};
 	AIState state = AIState::ACTIVE;
 	int frequency = 0; // the frequency of the AI, direction should be changed every frequency frames
 	int counter = 0; // the counter to keep track of the frames
