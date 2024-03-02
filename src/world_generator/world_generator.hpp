@@ -6,7 +6,7 @@ class WorldGenerator
 {
 public:
 	// creates a random Room entity and adds it to rooms components registry
-	Room& generateRoom(Room& room, float rng);
+	Room& generateRoom(Room& room);
 
 	WorldGenerator()
 	{

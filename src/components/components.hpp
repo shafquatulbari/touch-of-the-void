@@ -65,24 +65,36 @@ struct Motion {
 	float turn_rate = 0.0f;		// how fast the entity can turn
 };
 
+struct vec2comp {
+	bool operator() (vec2 lhs, vec2 rhs) const
+	{
+		if (lhs.x < rhs.x) return true;
+		if (lhs.x == rhs.x && lhs.y < rhs.y) return true;
+		return false;
+	}
+};
 // All data relevant to the contents of a game room
 struct Room {
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
 	// The number of enemies in the room
 	int enemy_count = 0;
+
+	// the positions of all entities in the room
+	std::set<vec2, vec2comp> all_positions;
+
 	// the positions of the enemies in the room
-	std::vector<vec2> enemy_positions;
+	std::set<vec2, vec2comp> enemy_positions;
 
 	// The number of obstacles in the room
 	int obstacle_count = 0;
 	// the positions of the obstacles in the room
-	std::vector<vec2> obstacle_positions;
+	std::set<vec2, vec2comp> obstacle_positions;
 
 	// The number of powerups in the room
 	int powerup_count = 0;
 	// the positions of the powerups in the room
-	std::vector<vec2> powerup_positions;
+	std::set<vec2, vec2comp> powerup_positions;
 
 	// fields concerning the doors of the room
 	bool has_left_door = false;
@@ -96,6 +108,8 @@ struct Room {
 	struct Room* top_room;
 	struct Room* bottom_room;
 };
+
+
 struct ReloadTimer
 {
 	float counter_ms = 0.0f;

@@ -1,6 +1,7 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
 #include "world_generator/world_generator.hpp"
+#include <world_system/world_system.hpp>
 
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
@@ -265,7 +266,7 @@ Entity createRoom(RenderSystem* render)
 	Room& room = registry.rooms.emplace(entity);
 	WorldGenerator world_generator;
 	// TODO: Generate room info randomly
-	world_generator.generateRoom(room, 0.0);
+	world_generator.generateRoom(room);
 
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
