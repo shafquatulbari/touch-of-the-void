@@ -52,7 +52,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::ENEMY,
+		{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -74,7 +74,7 @@ Entity createObstacle(RenderSystem *renderer, vec2 position)
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::OBSTACLE,
+		{ TEXTURE_ASSET_ID::LEVEL1_OBSTACLE,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -156,7 +156,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(topWall);
 	registry.renderRequests.insert(
 		topWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -168,7 +168,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
 		bottomWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -181,7 +181,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
 		leftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -194,7 +194,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
 		rightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
