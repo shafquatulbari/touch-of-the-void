@@ -4,6 +4,10 @@
 #include "ecs_registry/ecs_registry.hpp"
 #include <iostream>
 
+// matrices
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void RenderSystem::drawTexturedMesh(Entity entity,
 	const mat3& projection)
@@ -34,6 +38,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
 	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
 
+	// setting VAO
+	glBindVertexArray(vao);
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -70,84 +76,6 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		gl_has_errors();
 
 	}
-	else if (render_request.used_effect == EFFECT_ASSET_ID::FONT) {
-		// TODO: Implement font rendering here
-		assert(registry.texts.has(entity));
-		const Text& t = registry.texts.get(entity);
-		std::string text = t.content;
-		std::cout << "Rendering text: " << text << std::endl;
-		switch (render_request.used_font) {
-			case FONT_ASSET_ID::FONT_COUNT:
-				assert(false && "Invalid font asset");
-				break;
-			case FONT_ASSET_ID::VERMIN_VIBES_1989:
-				std::cout << "Using font: Vermin Vibes 1989" << std::endl;
-				break;
-		}
-		return;
-		// activate the shaders!
-		//glUseProgram(m_font_shaderProgram);
-
-		//unsigned int textColor_location =
-		//	glGetUniformLocation(
-		//		m_font_shaderProgram,
-		//		"textColor"
-		//	);
-		//assert(textColor_location >= 0);
-		//glUniform3f(textColor_location, color.x, color.y, color.z);
-
-		//auto transform_location = glGetUniformLocation(
-		//	m_font_shaderProgram,
-		//	"transform"
-		//);
-		//assert(transform_location > -1);
-		//glUniformMatrix4fv(transform_location, 1, GL_FALSE, glm::value_ptr(trans));
-
-		//glBindVertexArray(m_font_VAO);
-
-		//// iterate through all characters
-		//std::string::const_iterator c;
-		//for (c = text.begin(); c != text.end(); c++)
-		//{
-		//	Character ch = m_ftCharacters[*c];
-
-		//	float xpos = x + ch.Bearing.x * scale;
-		//	float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
-
-		//	float w = ch.Size.x * scale;
-		//	float h = ch.Size.y * scale;
-
-		//	// update VBO for each character
-		//	float vertices[6][4] = {
-		//		{ xpos,     ypos + h,   0.0f, 0.0f },
-		//		{ xpos,     ypos,       0.0f, 1.0f },
-		//		{ xpos + w, ypos,       1.0f, 1.0f },
-
-		//		{ xpos,     ypos + h,   0.0f, 0.0f },
-		//		{ xpos + w, ypos,       1.0f, 1.0f },
-		//		{ xpos + w, ypos + h,   1.0f, 0.0f }
-		//	};
-
-		//	// render glyph texture over quad
-		//	glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-		//	// std::cout << "binding texture: " << ch.character << " = " << ch.TextureID << std::endl;
-
-		//	// update content of VBO memory
-		//	glBindBuffer(GL_ARRAY_BUFFER, m_font_VBO);
-		//	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-		//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		//	// render quad
-		//	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		//	// now advance cursors for next glyph (note that advance is number of 1/64 pixels)
-		//	x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
-		//}
-
-		//glBindVertexArray(0);
-		//glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
 	else
 	{
 		assert(false && "Type of render request not supported");
@@ -195,17 +123,15 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // wind
-void RenderSystem::drawToScreen()
+void RenderSystem::drawToScreen(const mat3& projection)
 {
 	// Setting shaders
 	// get the wind texture, sprite mesh, and program
+	glBindVertexArray(vao);
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS]);
-
 	
 	GLuint postProcessShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS];
     glUseProgram(postProcessShaderProgram);
-	
-
 
 	gl_has_errors();
 	// Clearing backbuffer
@@ -255,6 +181,89 @@ void RenderSystem::drawToScreen()
 		nullptr); // one triangle = 3 vertices; nullptr indicates that there is
 	// no offset from the bound index buffer
 	gl_has_errors();
+
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void RenderSystem::drawText(const mat3& projection)
+{
+	// Setting shaders
+	glUseProgram(m_font_shaderProgram);
+	gl_has_errors();
+
+
+	// Draw all text entities
+	/*for (Entity entity : registry.texts.entities)
+	{
+		if (!registry.motions.has(entity))
+			continue;*/
+
+		GLint colorLocation = glGetUniformLocation(m_font_shaderProgram, "textColor");
+		assert(colorLocation >= 0);
+		glUniform3f(colorLocation, 1.0f, 0.0f, 0.0f); // red for visibility
+
+		GLint transformLocation = glGetUniformLocation(m_font_shaderProgram, "transform");
+		assert(transformLocation >= 0);
+		// convert projection to mat4
+		glm::mat4 p = glm::mat4(projection[0][0], projection[0][1], 0, projection[0][2],
+			projection[1][0], projection[1][1], 0, projection[1][2],
+			projection[2][0], projection[2][1], 0, projection[2][2],
+			0, 0, 0, 1);
+		glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(p));
+
+		glBindVertexArray(m_font_VAO);
+
+		//const Text& t = registry.texts.get(entity);
+		std::string text = "TEST CONTENT TEST CONTENT";//t.content;
+		float x = 0.f;
+		float y = 0.f;
+		float scale = 1.f;
+
+		// iterate through all characters
+		std::string::const_iterator c;
+		for (c = text.begin(); c != text.end(); c++)
+		{
+			Character ch = m_ftCharacters[*c];
+
+			float xpos = x + ch.Bearing.x * scale;
+			float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+			float w = ch.Size.x * scale;
+			float h = ch.Size.y * scale;
+
+			// update VBO for each character
+			float vertices[6][4] = {
+				{ xpos,     ypos + h,   0.0f, 0.0f },
+				{ xpos,     ypos,       0.0f, 1.0f },
+				{ xpos + w, ypos,       1.0f, 1.0f },
+
+				{ xpos,     ypos + h,   0.0f, 0.0f },
+				{ xpos + w, ypos,       1.0f, 1.0f },
+				{ xpos + w, ypos + h,   1.0f, 0.0f }
+			};
+
+			// render glyph texture over quad
+			glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+			// std::cout << "binding texture: " << ch.character << " = " << ch.TextureID << std::endl;
+
+			// update content of VBO memory
+			glBindBuffer(GL_ARRAY_BUFFER, m_font_VBO);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			// render quad
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			// now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+			x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+		}
+
+		printf("Drawing text\n");
+
+		glBindVertexArray(0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	//}
 }
 
 // Render our game world
@@ -271,7 +280,7 @@ void RenderSystem::draw()
 	// Clearing backbuffer
 	glViewport(0, 0, w, h);
 	glDepthRange(0.00001, 10);
-	glClearColor(0.0, 0.0, 0.0, 1.0); // TODO: Set background color to black
+	glClearColor(0.0, 0.0, 1.0, 1.0); // TODO: Set background color to black, set to blue for debugging
 	glClearDepth(10.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -288,11 +297,14 @@ void RenderSystem::draw()
 			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
+
 		drawTexturedMesh(entity, projection_2D);
 	}
 
-	// Truely render to the screen
-	drawToScreen();
+	//// Truely render to the screen
+	drawToScreen(projection_2D);
+
+	drawText(projection_2D);
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);

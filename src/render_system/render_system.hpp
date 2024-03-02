@@ -2,6 +2,7 @@
 
 #include <array>
 #include <utility>
+#include <map>
 
 #include "common/common.hpp"
 #include "components/components.hpp"
@@ -50,7 +51,6 @@ class RenderSystem {
 		shader_path("coloured"),
 		shader_path("textured"),
 		shader_path("post_process"),
-		shader_path("font")
 	};
 
 	std::array<GLuint, font_count> fonts;
@@ -76,7 +76,7 @@ public:
 
 	void initializeGlMeshes();
 
-	void initializeFonts();
+	bool initializeFonts();
 
 
 	Mesh& getMesh(GEOMETRY_BUFFER_ID id) { return meshes[(int)id]; };
@@ -93,12 +93,21 @@ public:
 	// Draw all entities
 	void draw();
 
+	// Draw all text entities
+	void drawText(const mat3& projection);
+
 	mat3 createProjectionMatrix();
+
+	bool loadEffectFromFile(
+		const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
+
+	bool loadFontFromFile(
+		const std::string& font_path, unsigned int font_default_size);
 
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
-	void drawToScreen();
+	void drawToScreen(const mat3& projection);
 
 	// Window handle
 	GLFWwindow* window;
@@ -109,10 +118,12 @@ private:
 	GLuint off_screen_render_buffer_depth;
 
 	Entity screen_state_entity;
+
+	GLuint vao;
+	GLuint vbo;
+
+	std::map<char, Character> m_ftCharacters;
+	GLuint m_font_shaderProgram;
+	GLuint m_font_VAO;
+	GLuint m_font_VBO;
 };
-
-bool loadEffectFromFile(
-	const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
-
-bool loadFontFromFile(
-	const std::string& font_path, unsigned int font_default_size);

@@ -317,12 +317,7 @@ Entity createText(RenderSystem* render, std::string content)
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = { window_width_px / 2, window_height_px - 32 };
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-			EFFECT_ASSET_ID::FONT,
-			GEOMETRY_BUFFER_ID::SPRITE,
-			FONT_ASSET_ID::VERMIN_VIBES_1989});
+	motion.scale = vec2({ 1, 1 });
 
 	return entity;
 }
