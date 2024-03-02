@@ -10,10 +10,10 @@
 #include <map>
 #include <world_init/world_init.hpp>
 
-const int WIDTH = 480;
+const int WIDTH = 32;
 const int HEIGHT = 32;
 
-const int GRID_SIZE_X = 480; // according to your game's layout
+const int GRID_SIZE_X = 32; // according to your game's layout
 const int GRID_SIZE_Y = 32; // according to your game's layout
 std::vector<std::vector<bool>> grid(GRID_SIZE_X, std::vector<bool>(GRID_SIZE_Y, true)); // true for walkable, false for blocked
 
@@ -30,6 +30,15 @@ void AISystem::step(float elapsed_ms)
     for (uint i = 0; i < ai_registry.size(); i++)
 	{
         updateGrid();
+        // Debug print the grid after updating it
+        for (int i = 0; i < GRID_SIZE_X; i++) {
+            for (int j = 0; j < GRID_SIZE_Y; j++) {
+                if (!grid[i][j]) {
+                    printf("Obstacle at grid position: (%d, %d)\n", i, j);
+                }
+            }
+            printf("\n"); // New line for each row for better visibility
+        }
         AI& ai = ai_registry.components[i];
 		Entity entity = ai_registry.entities[i];
 		         
@@ -71,13 +80,20 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         handleRangedAI(entity, motion, ai, elapsed_ms);
     }
     else if (ai.type == AI::AIType::MELEE) {
-		if (!path.empty() && path.size() > 1) { // Path includes start and next step at least
-			vec2 nextStep = path[1]; // Assuming path[0] is the current position
-			vec2 direction = normalize(nextStep - motion.position);
-			float speed = 10.0f; // Define a suitable speed value for your game
-			motion.velocity = direction * speed;
-			motion.position += motion.velocity * (elapsed_ms / 1000.0f); // Apply movement
-		}
+        if (!path.empty() && path.size() > 1) {
+            vec2 nextStep = path[1]; // Assuming path[0] is the current position
+            vec2 direction = normalize(nextStep - motion.position);
+            float speed = 10.0f; // Define a suitable speed value for your game
+
+            vec2 gridPos = worldToGrid(nextStep);
+            if (grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)]) {
+                motion.velocity = direction * speed;
+                motion.position += motion.velocity * (elapsed_ms / 1000.0f); // Corrected application
+            }
+            else {
+                motion.velocity = vec2(0.0f, 0.0f); // Stop movement if next step is not walkable
+            }
+        }
 	}
 }
 
@@ -100,19 +116,30 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
 
 // A simple algorithm to check for line of sight
 bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
+    // Normalize direction for consistent stepping
     vec2 direction = normalize(end - start);
-	float distance = length(end - start);
-	float step = 0.1f; // Adjust as needed
-    for (float i = 0.0f; i < distance; i += step) {
-		vec2 position = start + direction * i;
-		vec2 gridPos = worldToGrid(position);
-        if (gridPos.x >= 0 && gridPos.x < GRID_SIZE_X && gridPos.y >= 0 && gridPos.y < GRID_SIZE_Y) {
-            if (!grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)]) {
-				return false; // Hit an obstacle
-			}
-		}
-	}
-	return true; // No obstacles found
+    float distance = length(end - start);
+
+    // Reduce step size for higher precision, it should be small enough to catch all grid cells
+    float step = game_window_block_size * 0.1f; // Step size set to a fraction of the block size
+
+    vec2 currentPosition = start;
+    for (float i = 0; i <= distance; i += step) {
+        currentPosition += direction * step; // move the current position
+        vec2 gridPos = worldToGrid(currentPosition); // convert to grid position
+
+        // Check grid bounds
+        if (gridPos.x < 0 || gridPos.x >= GRID_SIZE_X || gridPos.y < 0 || gridPos.y >= GRID_SIZE_Y) {
+            return false; // Out of grid bounds
+        }
+
+        // Check if there's an obstacle
+        if (!grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)]) {
+            return false; // Obstacle detected
+        }
+    }
+
+    return true; // No obstacle detected in line of sight
 }
 
 // Create projectile for enemy
@@ -124,23 +151,36 @@ void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity sourc
     createProjectile(nullptr, position, angle, rng, fire_length, source);
 }
 
-
 vec2 AISystem::worldToGrid(const vec2& pos) {
-    return vec2(floor(pos.x / (window_width_px / GRID_SIZE_X)), floor(pos.y / (window_height_px / GRID_SIZE_Y)));
+    // Offset the position by the game window origin before dividing by block size
+    float x_offset = (window_width_px / 2) - (game_window_size_px / 2);
+    float y_offset = (window_height_px / 2) - (game_window_size_px / 2);
+    int gridX = static_cast<int>((pos.x - x_offset) / game_window_block_size);
+    int gridY = static_cast<int>((pos.y - y_offset) / game_window_block_size);
+    return vec2(gridX, gridY);
 }
 
 vec2 AISystem::gridToWorld(const vec2& gridPos) {
-    return vec2(gridPos.x * (window_width_px / WIDTH), gridPos.y * (window_height_px / HEIGHT));
+    // Add the game window origin to the block position
+    float x_offset = (window_width_px / 2) - (game_window_size_px / 2);
+    float y_offset = (window_height_px / 2) - (game_window_size_px / 2);
+    float x = gridPos.x * game_window_block_size + x_offset + game_window_block_size / 2.0f;
+    float y = gridPos.y * game_window_block_size + y_offset + game_window_block_size / 2.0f;
+    return vec2(x, y);
 }
+
 void AISystem::updateGrid() {
     // Reset grid
     for (auto& row : grid) std::fill(row.begin(), row.end(), true);
 
-    // Mark obstacles in the grid
-    for (const auto& obstaclePos : registry.rooms.get(registry.rooms.entities[0]).obstacle_positions) {
-        vec2 gridPos = worldToGrid(obstaclePos);
+    // Mark obstacles 
+    for (Entity entity : registry.obstacles.entities) {
+        Motion& motion = registry.motions.get(entity);
+        vec2 gridPos = worldToGrid(motion.position);
+
+        // Bounds Check
         if (gridPos.x >= 0 && gridPos.x < GRID_SIZE_X && gridPos.y >= 0 && gridPos.y < GRID_SIZE_Y) {
-            grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)] = false; // Mark as non-walkable
+            grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)] = false;
         }
     }
 }

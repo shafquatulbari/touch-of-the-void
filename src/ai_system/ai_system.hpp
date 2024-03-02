@@ -7,12 +7,6 @@
 
 class AISystem
 {
-private:
-	//Entity player = registry.players.entities[0];
-	const int window_width_px = 1024;
-	const int window_height_px = 512;
-	const int game_window_size_px = 480;
-	const int game_window_block_size = 32;
 public:
 	void step(float elapsed_ms);
 	void idleState(Entity entity, Motion& motion);
