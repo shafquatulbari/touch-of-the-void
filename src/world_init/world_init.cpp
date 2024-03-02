@@ -104,7 +104,7 @@ Entity createBackground(RenderSystem *renderer)
 	return Entity();
 }
 
-Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length)
+Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
 {
 	auto entity = Entity();
 
@@ -119,6 +119,8 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	motion.look_angle = angle + M_PI / 4;
 	motion.scale = vec2({BULLET_BB_WIDTH, BULLET_BB_HEIGHT});
 	motion.velocity = vec2({500.0f * cos(angle), 500.0f * sin(angle)});
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
 
 	// TODO: change the damage value and lifetime into constant variables
 	Deadly &deadly = registry.deadlies.emplace(entity);

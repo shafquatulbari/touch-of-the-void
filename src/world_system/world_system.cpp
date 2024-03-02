@@ -133,7 +133,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (registry.players.get(player).is_firing) {
 		// increase the counter of fire length
 		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
-		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms);
+		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms, player);
 	}
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
@@ -232,10 +232,72 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
-				//on collision with an obstacle, the player should take damage and bounce back
-				apply_damage_and_bounce_back(entity, entity_other);
+			// Apply damage to the player
+			Health& playerHealth = registry.healths.get(player);
+			if (registry.deadlies.has(entity_other)) {
+				Deadly& deadly = registry.deadlies.get(entity_other);
+				playerHealth.current_health -= deadly.damage;
+				if (playerHealth.current_health <= 0) {
+					// Trigger darkening immediately, but actual effect is controlled in step
+					if (!registry.deathTimers.has(player)) {
+						// cease motion
+						Motion& motion = registry.motions.get(player);
+						motion.velocity = { 0, 0 };
+						motion.is_moving_up = false;
+						motion.is_moving_down = false;
+						motion.is_moving_left = false;
+						motion.is_moving_right = false;
+						registry.deathTimers.emplace(player);
+					}
+				}
+			}
+			bounce_back(player, entity_other);
+		}
+		if (registry.projectiles.has(entity)) {
+			Projectile& projectile = registry.projectiles.get(entity);
+			Entity projectileSource = projectile.source;
+
+			// Collision logic for player projectiles hitting enemies
+			if (registry.players.has(projectileSource) && registry.ais.has(entity_other)) {
+				// Apply damage to the enemy
+				if (registry.healths.has(entity_other)) {
+					Deadly& deadly = registry.deadlies.get(entity);
+					Health& enemyHealth = registry.healths.get(entity_other);
+					enemyHealth.current_health -= deadly.damage;
+					if (enemyHealth.current_health <= 0) {
+						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
+					}
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
 
+			// Collision logic for enemy projectiles hitting the player
+			else if (registry.ais.has(projectileSource) && registry.players.has(entity_other)) {
+				// Apply damage to the player
+				if (registry.healths.has(entity_other)) {
+					Deadly& deadly = registry.deadlies.get(entity);
+					Health& playerHealth = registry.healths.get(entity_other);
+					playerHealth.current_health -= 0.05; //hardcoded damage
+					if (playerHealth.current_health <= 0) {
+						// Trigger darkening immediately, but actual effect is controlled in step
+						if (!registry.deathTimers.has(player)) {
+							// cease motion
+							Motion& motion = registry.motions.get(player);
+							motion.velocity = { 0, 0 };
+							motion.is_moving_up = false;
+							motion.is_moving_down = false;
+							motion.is_moving_left = false;
+							motion.is_moving_right = false;
+							registry.deathTimers.emplace(player);
+						}
+					}
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+			}
+
+			// Additional collision handling logic can be added here
+		}
+		/*
 		// Handle collisions projectiles and obstacles
 		if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
@@ -249,6 +311,7 @@ void WorldSystem::handle_collisions() {
 				}
 				registry.remove_all_components_of(entity);
 		}
+		*/
 	}
 
 	// Remove all collisions from this simulation step
@@ -355,30 +418,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 }
 
-void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
-	// Apply damage to the player
-	Health& playerHealth = registry.healths.get(player);
-	if (registry.deadlies.has(obstacle)) {
-		Deadly& deadly = registry.deadlies.get(obstacle);
-		playerHealth.current_health -= deadly.damage;
-		if (playerHealth.current_health <= 0) {
-			// Trigger darkening immediately, but actual effect is controlled in step
-			if (!registry.deathTimers.has(player)) {
-				// cease motion
-				Motion& motion = registry.motions.get(player);
-				motion.velocity = { 0, 0 };
-				motion.is_moving_up = false;
-				motion.is_moving_down = false;
-				motion.is_moving_left = false;
-				motion.is_moving_right = false;
-				registry.deathTimers.emplace(player);
-			}
-		}
-	}
+void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	// Bounce back functionality by moving back by a bit
 	Motion& playerMotion = registry.motions.get(player);
 	playerMotion.velocity *= -1;
-	playerMotion.position += playerMotion.velocity * 0.1f;
+	playerMotion.position += playerMotion.velocity * 0.01f;
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {

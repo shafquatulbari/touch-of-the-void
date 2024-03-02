@@ -93,7 +93,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     if (lineOfSightClear(motion.position, playerPosition)) {
         // Rotate towards player
         motion.look_angle = angle;
-        createProjectileForEnemy(motion.position, angle);
+        createProjectileForEnemy(motion.position, angle, entity);
     }
 }
 
@@ -104,12 +104,12 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
 }
 
 // Create projectile for enemy
-void AISystem::createProjectileForEnemy(vec2 position, float angle) {
+void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity source) {
     // Utilize createProjectile with adjustments for the enemy
     // Adjust angle, position, and possibly texture for the enemy's projectiles
     float rng = 0.0f; // Assuming no randomness for enemy shots, adjust as needed
     float fire_length = 0.0f; // Not used for enemies in this context
-    createProjectile(nullptr, position, angle, rng, fire_length);
+    createProjectile(nullptr, position, angle, rng, fire_length, source);
 }
 
 

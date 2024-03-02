@@ -19,7 +19,7 @@ public:
 	void activeState(Entity entity, Motion& motion, float elapsed_ms);
 	void handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms);
 	bool lineOfSightClear(const vec2& start, const vec2& end);
-	void createProjectileForEnemy(vec2 position, float angle);
+	void createProjectileForEnemy(vec2 position, float angle, Entity source);
 	vec2 worldToGrid(const vec2& pos);
 	vec2 gridToWorld(const vec2& gridPos);
 	void updateGrid();

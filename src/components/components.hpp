@@ -20,6 +20,7 @@ struct Obstacle
 struct Projectile 
 {
 	float lifetime = 0.0f;	// time before the projectile disappears
+	Entity source; // New attribute to store the source entity of the projectile
 };
 
 struct AI
