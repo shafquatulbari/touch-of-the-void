@@ -91,10 +91,10 @@ struct Room {
 	bool has_bottom_door = false;
 
 	// neighbouring rooms
-	Entity left_room;
-	Entity right_room;
-	Entity top_room;
-	Entity bottom_room;
+	struct Room* left_room;
+	struct Room* right_room;
+	struct Room* top_room;
+	struct Room* bottom_room;
 };
 struct ReloadTimer
 {
