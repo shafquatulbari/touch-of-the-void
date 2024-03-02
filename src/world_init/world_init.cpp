@@ -33,13 +33,16 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType)
 {
 	// Reserve en entity
 	auto entity = Entity();
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
+	AI& ai = registry.ais.emplace(entity);
+	ai.type = aiType; // based on passed parameter
+	ai.state = AI::AIState::ACTIVE;
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
@@ -103,7 +106,7 @@ Entity createBackground(RenderSystem *renderer)
 	return Entity();
 }
 
-Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length)
+Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
 {
 	auto entity = Entity();
 
@@ -118,6 +121,8 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	motion.look_angle = angle + M_PI / 4;
 	motion.scale = vec2({BULLET_BB_WIDTH, BULLET_BB_HEIGHT});
 	motion.velocity = vec2({500.0f * cos(angle), 500.0f * sin(angle)});
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
 
 	// TODO: change the damage value and lifetime into constant variables
 	Deadly &deadly = registry.deadlies.emplace(entity);
@@ -279,11 +284,15 @@ Entity createRoom(RenderSystem* render)
 		createObstacle(render, vec2(x, y));
 	}
 
-	for (auto& pos : room.enemy_positions)
-	{
+	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::MELEE };
+
+	// Create each enemy with their specified type
+	for (auto& pos : room.enemy_positions) {
+		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f);
+		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
 	createWalls(render);

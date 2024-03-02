@@ -20,6 +20,18 @@ struct Obstacle
 struct Projectile 
 {
 	float lifetime = 0.0f;	// time before the projectile disappears
+	Entity source; // New attribute to store the source entity of the projectile
+};
+
+struct AI
+{
+	enum class AIType {MELEE, RANGED};
+	AIType type = AIType::MELEE;
+	enum class AIState {IDLE, ACTIVE};
+	AIState state = AIState::ACTIVE;
+	int frequency = 0; // the frequency of the AI, direction should be changed every frequency frames
+	int counter = 0; // the counter to keep track of the frames
+	float safe_distance = 0.f; // the distance that the AI will start behaving from the player
 };
 
 // Harmful collision component
