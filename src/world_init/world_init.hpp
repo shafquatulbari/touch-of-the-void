@@ -24,12 +24,12 @@ const float BULLET_BB_HEIGHT = 8.0f;
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points);
+Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points, AI::AIType aiType);
 // the obstacle
 Entity createObstacle(RenderSystem* renderer, vec2 position);
 // the background
 Entity createBackground(RenderSystem* renderer);
 // a single projectile
-Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length);
+Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // a hard coded room
 Entity createRoom(RenderSystem* renderer);

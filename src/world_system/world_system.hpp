@@ -36,7 +36,8 @@ public:
 
 	// Check for collisions
 	void handle_collisions();
-	void apply_damage_and_bounce_back(Entity player, Entity obstacle);
+
+	void bounce_back(Entity player, Entity obstacle);
 
 	// Should the game be over ?
 	bool is_over()const;
