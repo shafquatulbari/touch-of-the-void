@@ -288,12 +288,12 @@ Entity createRoom(RenderSystem* render)
 	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::MELEE };
 
 	// Create each enemy with their specified type
-	for (size_t i = 0; i < room.enemy_positions.size(); i++)
-	{
-		float x = x_origin + room.enemy_positions.begin()->x * game_window_block_size;
-		float y = y_origin + room.enemy_positions.begin()->y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 100.0f, enemy_types[i]);
-	}	
+	for (auto& pos : room.enemy_positions) {
+		//enemy positions is a set of vec2
+		float x = x_origin + pos.x * game_window_block_size;
+		float y = y_origin + pos.y * game_window_block_size;
+		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+	}
 
 	createWalls(render);
 
