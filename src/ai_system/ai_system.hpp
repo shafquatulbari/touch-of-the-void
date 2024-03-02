@@ -7,6 +7,19 @@
 
 class AISystem
 {
+private:
+	//Entity player = registry.players.entities[0];
+	const int window_width_px = 1024;
+	const int window_height_px = 512;
+	const int game_window_size_px = 480;
+	const int game_window_block_size = 32;
 public:
 	void step(float elapsed_ms);
+	void idleState(Entity entity, Motion& motion);
+	void activeState(Entity entity, Motion& motion, float elapsed_ms);
+	void attackingState(Entity entity, Motion& motion, float elapsed_ms);
+	vec2 worldToGrid(const vec2& pos);
+	vec2 gridToWorld(const vec2& gridPos);
+	void updateGrid();
+	std::vector<vec2> findPath(const vec2& startWorld, const vec2& goalWorld);
 };

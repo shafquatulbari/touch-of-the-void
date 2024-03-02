@@ -38,6 +38,9 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
+	AI& ai = registry.ais.emplace(entity);
+	ai.type = AI::AIType::MELEE;
+	ai.state = AI::AIState::ACTIVE;
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
