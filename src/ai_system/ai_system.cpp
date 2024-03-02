@@ -30,6 +30,7 @@ void AISystem::step(float elapsed_ms)
     for (uint i = 0; i < ai_registry.size(); i++)
 	{
         updateGrid();
+        /*
         // Debug print the grid after updating it
         for (int i = 0; i < GRID_SIZE_X; i++) {
             for (int j = 0; j < GRID_SIZE_Y; j++) {
@@ -39,6 +40,7 @@ void AISystem::step(float elapsed_ms)
             }
             printf("\n"); // New line for each row for better visibility
         }
+        */
         AI& ai = ai_registry.components[i];
 		Entity entity = ai_registry.entities[i];
 		         
