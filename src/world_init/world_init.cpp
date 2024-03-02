@@ -1,5 +1,7 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
+#include "world_generator/world_generator.hpp"
+#include <world_system/world_system.hpp>
 
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
@@ -262,29 +264,10 @@ Entity createRoom(RenderSystem* render)
 	// The walls are obstacles
 
 	Room& room = registry.rooms.emplace(entity);
+	WorldGenerator world_generator;
 	// TODO: Generate room info randomly
-	// world_generator.generateRoom(Room& room, float rng);
-	room.is_cleared = true;
-	room.obstacle_count = 10;
-	room.obstacle_positions = {
-		vec2(1,1),
-		vec2(2,2),
-		vec2(3,3),
-		vec2(4,4),
-		vec2(5,5),
-		vec2(9,9),
-		vec2(10,10),
-		vec2(11,11),
-		vec2(12,12),
-		vec2(13,13)
-	};
+	world_generator.generateRoom(room);
 
-	room.enemy_count = 3;
-	room.enemy_positions = {
-		vec2(3,6),
-		vec2(2,9),
-		vec2(12,4)
-	};
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
