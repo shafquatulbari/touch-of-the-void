@@ -85,22 +85,34 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms) {
     vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
 
-    // Calculate direction and angle towards the player
-    vec2 direction = normalize(playerPosition - motion.position);
-    float angle = atan2(direction.y, direction.x);
-
-    // Check if the ranged enemy has a clear line of sight to the player
     if (lineOfSightClear(motion.position, playerPosition)) {
+        // There's a clear line of sight to the player, rotate and shoot
+        vec2 direction = normalize(playerPosition - motion.position);
+        float angle = atan2(direction.y, direction.x);
+
         // Rotate towards player
         motion.look_angle = angle;
-        createProjectileForEnemy(motion.position, angle, entity);
+
+        // Shoot projectile towards player
+        createProjectileForEnemy(motion.position, angle, entity); // Assuming createProjectileForEnemy takes the enemy as source
     }
 }
 
-//Check line of sight 
+// A simple algorithm to check for line of sight
 bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
-    // Implement based on grid system, return true if clear
-    return true;
+    vec2 direction = normalize(end - start);
+	float distance = length(end - start);
+	float step = 0.1f; // Adjust as needed
+    for (float i = 0.0f; i < distance; i += step) {
+		vec2 position = start + direction * i;
+		vec2 gridPos = worldToGrid(position);
+        if (gridPos.x >= 0 && gridPos.x < GRID_SIZE_X && gridPos.y >= 0 && gridPos.y < GRID_SIZE_Y) {
+            if (!grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)]) {
+				return false; // Hit an obstacle
+			}
+		}
+	}
+	return true; // No obstacles found
 }
 
 // Create projectile for enemy
@@ -114,7 +126,7 @@ void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity sourc
 
 
 vec2 AISystem::worldToGrid(const vec2& pos) {
-    return vec2(round(pos.x / (window_width_px / WIDTH)), round(pos.y / (window_height_px / HEIGHT)));
+    return vec2(floor(pos.x / (window_width_px / GRID_SIZE_X)), floor(pos.y / (window_height_px / GRID_SIZE_Y)));
 }
 
 vec2 AISystem::gridToWorld(const vec2& gridPos) {
