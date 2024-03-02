@@ -1,5 +1,7 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
+#include "world_generator/world_generator.hpp"
+#include <world_system/world_system.hpp>
 
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
@@ -55,7 +57,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::ENEMY,
+		{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -77,7 +79,7 @@ Entity createObstacle(RenderSystem *renderer, vec2 position)
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::OBSTACLE,
+		{ TEXTURE_ASSET_ID::LEVEL1_OBSTACLE,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -161,7 +163,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(topWall);
 	registry.renderRequests.insert(
 		topWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -173,7 +175,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
 		bottomWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -186,7 +188,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
 		leftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -199,7 +201,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
 		rightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -267,29 +269,10 @@ Entity createRoom(RenderSystem* render)
 	// The walls are obstacles
 
 	Room& room = registry.rooms.emplace(entity);
+	WorldGenerator world_generator;
 	// TODO: Generate room info randomly
-	// world_generator.generateRoom(Room& room, float rng);
-	room.is_cleared = true;
-	room.obstacle_count = 10;
-	room.obstacle_positions = {
-		vec2(1,1),
-		vec2(2,2),
-		vec2(3,3),
-		vec2(4,4),
-		vec2(5,5),
-		vec2(9,9),
-		vec2(10,10),
-		vec2(11,11),
-		vec2(12,12),
-		vec2(13,13)
-	};
+	world_generator.generateRoom(room);
 
-	room.enemy_count = 3;
-	room.enemy_positions = {
-		vec2(3,6),
-		vec2(2,9),
-		vec2(12,4)
-	};
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
