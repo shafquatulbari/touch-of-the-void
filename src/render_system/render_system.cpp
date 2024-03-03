@@ -212,13 +212,8 @@ void RenderSystem::drawText(const mat3& projection)
 
 		GLint transformLocation = glGetUniformLocation(m_font_shaderProgram, "transform");
 		assert(transformLocation >= 0);
-		// convert projection to mat4
-		glm::mat4 p = glm::mat4(projection[0][0], projection[0][1], 0, projection[0][2],
-			projection[1][0], projection[1][1], 0, projection[1][2],
-			projection[2][0], projection[2][1], 0, projection[2][2],
-			0, 0, 0, 1);
+		glm::mat4 p = glm::mat4(1.0f); // not sure why but this works, dont try to pass in transformation matrix, won't work
 		glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(p));
-
 		glBindVertexArray(m_font_VAO);
 
 		// iterate through all characters
@@ -302,10 +297,10 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
+	drawText(projection_2D);
 	// Truely render to the screen
 	drawToScreen(projection_2D);
 
-	drawText(projection_2D);
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
