@@ -126,6 +126,7 @@ private:
 	GLuint vao;
 	GLuint vbo;
 
+	// Fonts
 	std::map<char, Character> m_ftCharacters;
 	GLuint m_font_shaderProgram;
 	GLuint m_font_VAO;

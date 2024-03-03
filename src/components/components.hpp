@@ -185,6 +185,7 @@ struct Mesh
 struct Text
 {
 	std::string content;
+	vec3 color;
 };
 
 // A structure to store the font data of a single character

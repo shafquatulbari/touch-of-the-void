@@ -300,16 +300,17 @@ Entity createRoom(RenderSystem* render)
 	return entity;
 }
 
-Entity createText(RenderSystem* render, std::string content)
+Entity createText(RenderSystem* render, std::string content, vec2 pos, vec2 scale, vec3 color)
 {
 	auto entity = Entity();
 
 	Text& text = registry.texts.emplace(entity);
 	text.content = content;
+	text.color = color;
 
 	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { window_width_px / 2, window_height_px - 32 };
-	motion.scale = vec2({ 1, 1 });
+	motion.position = { pos.x, pos.y };
+	motion.scale = vec2({ scale.x, scale.y });
 
 	return entity;
 }

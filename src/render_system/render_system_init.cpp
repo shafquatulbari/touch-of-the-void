@@ -276,7 +276,6 @@ bool RenderSystem::initializeFonts() {
 	// font vertex shader
 	unsigned int font_vertexShader;
 	font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
 	glShaderSource(font_vertexShader, 1, &fontVertexShaderSource, NULL);
 	glCompileShader(font_vertexShader);
 
@@ -305,6 +304,7 @@ bool RenderSystem::initializeFonts() {
 	assert(project_location > -1);
 	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
 
+	// init FreeType fonts
 	for (uint i = 0; i < font_paths.size(); i++)
 	{
 		// Initialize each font

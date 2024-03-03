@@ -194,14 +194,21 @@ void RenderSystem::drawText(const mat3& projection)
 
 
 	// Draw all text entities
-	/*for (Entity entity : registry.texts.entities)
+	for (Entity entity : registry.texts.entities)
 	{
 		if (!registry.motions.has(entity))
-			continue;*/
+			continue;
+
+		Motion& motion = registry.motions.get(entity);
+		Text& text_component = registry.texts.get(entity);
+		std::string text = text_component.content;
+		float x = motion.position.x;
+		float y = motion.position.y;
+		float scale = motion.scale.x;
 
 		GLint colorLocation = glGetUniformLocation(m_font_shaderProgram, "textColor");
 		assert(colorLocation >= 0);
-		glUniform3f(colorLocation, 1.0f, 0.0f, 0.0f); // red for visibility
+		glUniform3f(colorLocation, text_component.color.x, text_component.color.y, text_component.color.z);
 
 		GLint transformLocation = glGetUniformLocation(m_font_shaderProgram, "transform");
 		assert(transformLocation >= 0);
@@ -213,12 +220,6 @@ void RenderSystem::drawText(const mat3& projection)
 		glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(p));
 
 		glBindVertexArray(m_font_VAO);
-
-		//const Text& t = registry.texts.get(entity);
-		std::string text = "TEST CONTENT TEST CONTENT";//t.content;
-		float x = 0.f;
-		float y = 0.f;
-		float scale = 1.f;
 
 		// iterate through all characters
 		std::string::const_iterator c;
@@ -259,11 +260,11 @@ void RenderSystem::drawText(const mat3& projection)
 			x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
 		}
 
-		printf("Drawing text\n");
+		std::cout << "Drawing Text: " << text_component.content << std::endl;
 
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
-	//}
+	}
 }
 
 // Render our game world
@@ -293,7 +294,7 @@ void RenderSystem::draw()
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.renderRequests.entities)
 	{
-		if (!registry.motions.has(entity))
+		if (!registry.motions.has(entity) || registry.texts.has(entity))
 			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
@@ -301,7 +302,7 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
-	//// Truely render to the screen
+	// Truely render to the screen
 	drawToScreen(projection_2D);
 
 	drawText(projection_2D);
