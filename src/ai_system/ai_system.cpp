@@ -75,28 +75,42 @@ void AISystem:: idleState(Entity entity, Motion& motion) {
 
 void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
     vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
-    std::vector<vec2> path = findPath(motion.position, playerPosition);
-    AI& ai = registry.ais.get(entity);
 
-    if (ai.type == AI::AIType::RANGED) {
-        handleRangedAI(entity, motion, ai, elapsed_ms);
-    }
-    else if (ai.type == AI::AIType::MELEE) {
-        if (!path.empty() && path.size() > 1) {
-            vec2 nextStep = path[1]; // Assuming path[0] is the current position
-            vec2 direction = normalize(nextStep - motion.position);
-            float speed = 10.0f; // Define a suitable speed value for your game
+    // Check for line of sight for both ranged and melee types
+    if (lineOfSightClear(motion.position, playerPosition)) {
+        // Rotate towards player for both melee and ranged if in line of sight
+        vec2 direction = normalize(playerPosition - motion.position);
+        float angle = atan2(direction.y, direction.x);
+        motion.look_angle = angle; // Rotate towards player
 
-            vec2 gridPos = worldToGrid(nextStep);
-            if (grid[static_cast<int>(gridPos.x)][static_cast<int>(gridPos.y)]) {
-                motion.velocity = direction * speed;
-                motion.position += motion.velocity * (elapsed_ms / 1000.0f); // Corrected application
-            }
-            else {
-                motion.velocity = vec2(0.0f, 0.0f); // Stop movement if next step is not walkable
+        AI& ai = registry.ais.get(entity);
+        if (ai.type == AI::AIType::RANGED) {
+            handleRangedAI(entity, motion, ai, elapsed_ms);
+        }
+        else if (ai.type == AI::AIType::MELEE) {
+            std::vector<vec2> path = findPath(motion.position, playerPosition);
+            if (!path.empty() && path.size() > 1) {
+                vec2 nextStep = path[1]; // Assuming path[0] is the current position
+
+                direction = normalize(nextStep - motion.position);
+                float angle = atan2(direction.y, direction.x);
+                motion.look_angle = angle; // Rotate towards player
+                float speed = 10.0f; // a suitable speed value for the game
+                
+                if (grid[static_cast<int>(worldToGrid(nextStep).x)][static_cast<int>(worldToGrid(nextStep).y)]) {
+                    motion.velocity = direction * speed;
+                    motion.position += motion.velocity * (elapsed_ms / 1000.0f); // Corrected application
+                }
+                else {
+                    motion.velocity = vec2(0.0f, 0.0f); // Stop movement if next step is not walkable
+                }
             }
         }
-	}
+    }
+    else if (registry.ais.get(entity).type == AI::AIType::MELEE) {
+        // If there's no line of sight and it's a melee enemy, stop movement
+        motion.velocity = vec2(0.0f, 0.0f);
+    }
 }
 
 //Handle ranged AI behavior
@@ -104,27 +118,42 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     // Convert elapsed_ms to seconds for consistency
     float elapsed_seconds = elapsed_ms / 1000.0f;
 
-    // Always attempt to face the player if there is a line of sight
     vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
+    vec2 direction = normalize(playerPosition - motion.position);
+    float distanceToPlayer = length(playerPosition - motion.position);
+    float safeDistance = ai.safe_distance; 
+
     if (lineOfSightClear(motion.position, playerPosition)) {
-        vec2 direction = normalize(playerPosition - motion.position);
         float angle = atan2(direction.y, direction.x);
-        motion.look_angle = angle; // Rotate towards player regardless of shooting cooldown
+        motion.look_angle = angle; // Rotate towards player
+        float speed = 10.0f; // a suitable speed value for the game
+        if (distanceToPlayer > safeDistance) {
+            // Enemy moves closer to the player until within safe distance
+            std::vector<vec2> path = findPath(motion.position, playerPosition);
+            if (!path.empty() && path.size() > 1) {
+                vec2 nextStep = path[1]; // Next step towards the player
+                direction = normalize(nextStep - motion.position);
+                motion.velocity = direction * speed; // this multiplier is the movement speed
+            }
+        }
+        else {
+            // Within safe distance, prepare to shoot
+            motion.velocity = vec2(0.0f, 0.0f); // Stop moving
 
-        // Decrease the shooting cooldown by the elapsed time
-        ai.shootingCooldown -= elapsed_seconds;
-
-        // Check if it's time to shoot
-        if (ai.shootingCooldown <= 0) {
-            // Shoot projectile towards player
-            createProjectileForEnemy(motion.position, angle, entity); // Assuming createProjectileForEnemy takes the enemy as source
-
-            // Reset the cooldown timer after shooting
-            ai.shootingCooldown = 0.25f; // Decrease the cooldown duration to make shooting rate faster
+            // Handle shooting with cooldown
+            ai.shootingCooldown -= elapsed_seconds;
+            if (ai.shootingCooldown <= 0) {
+                createProjectileForEnemy(motion.position, angle, entity);
+                ai.shootingCooldown = 0.25f; // Reset cooldown, adjust as needed
+            }
         }
     }
+    else {
+        // No line of sight, stop movement and reset cooldown
+        motion.velocity = vec2(0.0f, 0.0f);
+        ai.shootingCooldown = 0.25f; // Reset cooldown as a precaution
+    }
 }
-
 
 
 // A simple algorithm to check for line of sight
@@ -134,7 +163,7 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
     float distance = length(end - start);
 
     // Reduce step size for higher precision, it should be small enough to catch all grid cells
-    float step = game_window_block_size * 1.0f; // Step size set to a fraction of the block size
+    float step = game_window_block_size * 2.0f; // Step size set to a fraction of the block size
 
     vec2 currentPosition = start;
     for (float i = 0; i <= distance; i += step) {
