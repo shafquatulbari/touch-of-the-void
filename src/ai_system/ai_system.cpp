@@ -101,20 +101,31 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
 
 //Handle ranged AI behavior
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms) {
-    vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
+    // Convert elapsed_ms to seconds for consistency
+    float elapsed_seconds = elapsed_ms / 1000.0f;
 
+    // Always attempt to face the player if there is a line of sight
+    vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
     if (lineOfSightClear(motion.position, playerPosition)) {
-        // There's a clear line of sight to the player, rotate and shoot
         vec2 direction = normalize(playerPosition - motion.position);
         float angle = atan2(direction.y, direction.x);
+        motion.look_angle = angle; // Rotate towards player regardless of shooting cooldown
 
-        // Rotate towards player
-        motion.look_angle = angle;
+        // Decrease the shooting cooldown by the elapsed time
+        ai.shootingCooldown -= elapsed_seconds;
 
-        // Shoot projectile towards player
-        createProjectileForEnemy(motion.position, angle, entity); // Assuming createProjectileForEnemy takes the enemy as source
+        // Check if it's time to shoot
+        if (ai.shootingCooldown <= 0) {
+            // Shoot projectile towards player
+            createProjectileForEnemy(motion.position, angle, entity); // Assuming createProjectileForEnemy takes the enemy as source
+
+            // Reset the cooldown timer after shooting
+            ai.shootingCooldown = 0.25f; // Decrease the cooldown duration to make shooting rate faster
+        }
     }
 }
+
+
 
 // A simple algorithm to check for line of sight
 bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
@@ -123,7 +134,7 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
     float distance = length(end - start);
 
     // Reduce step size for higher precision, it should be small enough to catch all grid cells
-    float step = game_window_block_size * 0.1f; // Step size set to a fraction of the block size
+    float step = game_window_block_size * 1.0f; // Step size set to a fraction of the block size
 
     vec2 currentPosition = start;
     for (float i = 0; i <= distance; i += step) {

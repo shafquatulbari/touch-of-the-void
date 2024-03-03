@@ -191,6 +191,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
         }
     }
 
+	//heal player over timne
+	if (registry.healths.has(player)) {
+		Health& playerHealth = registry.healths.get(player);
+		if (playerHealth.current_health < playerHealth.max_health) {
+			playerHealth.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5; // Adjust speed here
+			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
+		}
+	}
+
 	return true;
 }
 
@@ -277,7 +286,7 @@ void WorldSystem::handle_collisions() {
 				if (registry.healths.has(entity_other)) {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& playerHealth = registry.healths.get(entity_other);
-					playerHealth.current_health -= 0.05; //hardcoded damage
+					playerHealth.current_health -= 1; //hardcoded damage
 					if (playerHealth.current_health <= 0) {
 						// Trigger darkening immediately, but actual effect is controlled in step
 						if (!registry.deathTimers.has(player)) {
