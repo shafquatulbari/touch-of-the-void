@@ -259,7 +259,7 @@ void WorldSystem::restart_game() {
 	// Create a level
 	createBackground(renderer);
 
-	createText(renderer, "hello world", { window_width_px / 2, 0 }, {2.f, .5f}, {1, 0, 0});
+	createText(renderer, "hello world", { window_width_px / 2, 0 }, 2.f, {1, 0, 0});
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 }
