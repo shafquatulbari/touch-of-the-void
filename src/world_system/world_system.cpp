@@ -16,6 +16,9 @@
 WorldSystem::WorldSystem()
 {
 	// TODO: world initialization here
+	
+	//max fps 
+	maxFps = 144.0f;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -104,14 +107,17 @@ GLFWwindow* WorldSystem::create_window() {
 	//	return nullptr;
 	//}
 
+
 	return window;
 }
 
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
-	std::stringstream title_ss;
-	title_ss << "Touch of the Void";
-	glfwSetWindowTitle(window, title_ss.str().c_str());
+	//std::stringstream title_ss;
+	//title_ss << "Touch of the Void";
+	//glfwSetWindowTitle(window, title_ss.str().c_str());
+
+
 	// TODO: Setup background music to play indefinitely
 	//Mix_PlayMusic(background_music, -1);
 	//fprintf(stderr, "Loaded music\n");
@@ -133,7 +139,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	if (registry.players.get(player).is_firing) {
 		// increase the counter of fire length
 		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
-		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms);
+		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms, player);
 	}
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
@@ -190,6 +196,41 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			}
         }
     }
+	// measure the current frame time
+	float startTicks = SDL_GetTicks();
+
+	fpsCalculate();
+
+	static int frameCounter = 0;
+	frameCounter++;
+	//update fps every 50 frames 
+	if (frameCounter == 25) {
+		//std::cout << "FPS: "<<  fps << std::endl;
+
+		std::stringstream ss;
+		ss << "Touch of the Void" << " [FPS: " << std::floor(fps) << "]";
+		glfwSetWindowTitle(window, ss.str().c_str());
+
+		frameCounter = 0;
+	}
+
+	float frameTicks = SDL_GetTicks() - startTicks;
+
+
+	//fps limiter. 
+	/*if ((1000.0f / maxFps) > frameTicks) {
+		SDL_Delay((1000.0f / maxFps) - frameTicks);
+	}*/
+
+
+	//heal player over timne
+	if (registry.healths.has(player)) {
+		Health& playerHealth = registry.healths.get(player);
+		if (playerHealth.current_health < playerHealth.max_health) {
+			playerHealth.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5; // Adjust speed here
+			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
+		}
+	}
 
 	return true;
 }
@@ -234,10 +275,72 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
-				//on collision with an obstacle, the player should take damage and bounce back
-				apply_damage_and_bounce_back(entity, entity_other);
+			// Apply damage to the player
+			Health& playerHealth = registry.healths.get(player);
+			if (registry.deadlies.has(entity_other)) {
+				Deadly& deadly = registry.deadlies.get(entity_other);
+				playerHealth.current_health -= deadly.damage;
+				if (playerHealth.current_health <= 0) {
+					// Trigger darkening immediately, but actual effect is controlled in step
+					if (!registry.deathTimers.has(player)) {
+						// cease motion
+						Motion& motion = registry.motions.get(player);
+						motion.velocity = { 0, 0 };
+						motion.is_moving_up = false;
+						motion.is_moving_down = false;
+						motion.is_moving_left = false;
+						motion.is_moving_right = false;
+						registry.deathTimers.emplace(player);
+					}
+				}
+			}
+			bounce_back(player, entity_other);
+		}
+		if (registry.projectiles.has(entity)) {
+			Projectile& projectile = registry.projectiles.get(entity);
+			Entity projectileSource = projectile.source;
+
+			// Collision logic for player projectiles hitting enemies
+			if (registry.players.has(projectileSource) && registry.ais.has(entity_other)) {
+				// Apply damage to the enemy
+				if (registry.healths.has(entity_other)) {
+					Deadly& deadly = registry.deadlies.get(entity);
+					Health& enemyHealth = registry.healths.get(entity_other);
+					enemyHealth.current_health -= deadly.damage;
+					if (enemyHealth.current_health <= 0) {
+						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
+					}
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
 
+			// Collision logic for enemy projectiles hitting the player
+			else if (registry.ais.has(projectileSource) && registry.players.has(entity_other)) {
+				// Apply damage to the player
+				if (registry.healths.has(entity_other)) {
+					Deadly& deadly = registry.deadlies.get(entity);
+					Health& playerHealth = registry.healths.get(entity_other);
+					playerHealth.current_health -= 1; //hardcoded damage
+					if (playerHealth.current_health <= 0) {
+						// Trigger darkening immediately, but actual effect is controlled in step
+						if (!registry.deathTimers.has(player)) {
+							// cease motion
+							Motion& motion = registry.motions.get(player);
+							motion.velocity = { 0, 0 };
+							motion.is_moving_up = false;
+							motion.is_moving_down = false;
+							motion.is_moving_left = false;
+							motion.is_moving_right = false;
+							registry.deathTimers.emplace(player);
+						}
+					}
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+			}
+
+			// Additional collision handling logic can be added here
+		}
+		/*
 		// Handle collisions projectiles and obstacles
 		if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
@@ -251,6 +354,7 @@ void WorldSystem::handle_collisions() {
 				}
 				registry.remove_all_components_of(entity);
 		}
+		*/
 	}
 
 	// Remove all collisions from this simulation step
@@ -357,30 +461,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 }
 
-void WorldSystem::apply_damage_and_bounce_back(Entity player, Entity obstacle) {
-	// Apply damage to the player
-	Health& playerHealth = registry.healths.get(player);
-	if (registry.deadlies.has(obstacle)) {
-		Deadly& deadly = registry.deadlies.get(obstacle);
-		playerHealth.current_health -= deadly.damage;
-		if (playerHealth.current_health <= 0) {
-			// Trigger darkening immediately, but actual effect is controlled in step
-			if (!registry.deathTimers.has(player)) {
-				// cease motion
-				Motion& motion = registry.motions.get(player);
-				motion.velocity = { 0, 0 };
-				motion.is_moving_up = false;
-				motion.is_moving_down = false;
-				motion.is_moving_left = false;
-				motion.is_moving_right = false;
-				registry.deathTimers.emplace(player);
-			}
-		}
-	}
+void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	// Bounce back functionality by moving back by a bit
 	Motion& playerMotion = registry.motions.get(player);
 	playerMotion.velocity *= -1;
-	playerMotion.position += playerMotion.velocity * 0.1f;
+	playerMotion.position += playerMotion.velocity * 0.01f;
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {
@@ -414,4 +499,49 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			registry.players.get(player).fire_length_ms = 0.0f;
 		}
 	}
+}
+
+void WorldSystem::fpsCalculate() {
+	//average these many samples to change the frames smoother
+	static const int num_samples = 10; 
+	//buffer, array of the frames
+	static float frameTimes[num_samples];
+	static int currentFrame = 0;
+
+	static float prevTicks = SDL_GetTicks();
+	
+	float currentTicks;
+	currentTicks = SDL_GetTicks();
+
+	frameTime = currentTicks - prevTicks;//note: first few ticks will be wrong
+	frameTimes[currentFrame % num_samples] = frameTime; 
+
+	//need to set ticks again. after current tick is done, it becomes prev ticks
+	prevTicks = currentTicks;
+	int count;
+//	currentFrame++;
+
+	if (currentFrame < num_samples) {
+		count = currentFrame;
+	}
+	else {
+		count = num_samples;
+	}
+
+	float averageFrameTime = 0;
+	for (int i = 0; i < count; i++) {
+		averageFrameTime += frameTimes[i];
+
+	}
+	averageFrameTime /= count;
+
+	if (averageFrameTime > 0) {
+		fps = 1000.0f / averageFrameTime;
+		// ms/s divided by ms/f returns frames/second which is fps
+	}
+	else {
+		//shouldn't ever reach this else case 
+		fps = 60.0f;
+	}
+	currentFrame++;
 }

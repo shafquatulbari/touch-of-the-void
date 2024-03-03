@@ -1,5 +1,7 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
+#include "world_generator/world_generator.hpp"
+#include <world_system/world_system.hpp>
 
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
@@ -31,13 +33,16 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType)
 {
 	// Reserve en entity
 	auto entity = Entity();
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
+	AI& ai = registry.ais.emplace(entity);
+	ai.type = aiType; // based on passed parameter
+	ai.state = AI::AIState::ACTIVE;
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
@@ -52,7 +57,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points)
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::ENEMY,
+		{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -74,7 +79,7 @@ Entity createObstacle(RenderSystem *renderer, vec2 position)
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::OBSTACLE,
+		{ TEXTURE_ASSET_ID::LEVEL1_OBSTACLE,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -101,7 +106,7 @@ Entity createBackground(RenderSystem *renderer)
 	return Entity();
 }
 
-Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length)
+Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
 {
 	auto entity = Entity();
 
@@ -116,6 +121,8 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	motion.look_angle = angle + M_PI / 4;
 	motion.scale = vec2({BULLET_BB_WIDTH, BULLET_BB_HEIGHT});
 	motion.velocity = vec2({500.0f * cos(angle), 500.0f * sin(angle)});
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
 
 	// TODO: change the damage value and lifetime into constant variables
 	Deadly &deadly = registry.deadlies.emplace(entity);
@@ -156,7 +163,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(topWall);
 	registry.renderRequests.insert(
 		topWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -168,7 +175,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
 		bottomWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -181,7 +188,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
 		leftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -194,7 +201,7 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
 		rightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL,
+		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -262,29 +269,10 @@ Entity createRoom(RenderSystem* render)
 	// The walls are obstacles
 
 	Room& room = registry.rooms.emplace(entity);
+	WorldGenerator world_generator;
 	// TODO: Generate room info randomly
-	// world_generator.generateRoom(Room& room, float rng);
-	room.is_cleared = true;
-	room.obstacle_count = 10;
-	room.obstacle_positions = {
-		vec2(1,1),
-		vec2(2,2),
-		vec2(3,3),
-		vec2(4,4),
-		vec2(5,5),
-		vec2(9,9),
-		vec2(10,10),
-		vec2(11,11),
-		vec2(12,12),
-		vec2(13,13)
-	};
+	world_generator.generateRoom(room);
 
-	room.enemy_count = 3;
-	room.enemy_positions = {
-		vec2(3,6),
-		vec2(2,9),
-		vec2(12,4)
-	};
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
@@ -296,11 +284,15 @@ Entity createRoom(RenderSystem* render)
 		createObstacle(render, vec2(x, y));
 	}
 
-	for (auto& pos : room.enemy_positions)
-	{
+	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
+
+	// Create each enemy with their specified type
+	for (auto& pos : room.enemy_positions) {
+		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f);
+		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
 	createWalls(render);

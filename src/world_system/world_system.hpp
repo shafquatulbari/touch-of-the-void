@@ -36,7 +36,8 @@ public:
 
 	// Check for collisions
 	void handle_collisions();
-	void apply_damage_and_bounce_back(Entity player, Entity obstacle);
+
+	void bounce_back(Entity player, Entity obstacle);
 
 	// Should the game be over ?
 	bool is_over()const;
@@ -49,6 +50,8 @@ private:
 	// restart level
 	void restart_game();
 
+	//fps
+	void fpsCalculate();
 	// OpenGL window handle
 	GLFWwindow* window;
 
@@ -60,6 +63,11 @@ private:
 	// TODO: Global game state goes here
 	float current_speed;
 	Entity player;
+
+	//FPS 
+	float fps;
+	float maxFps;
+	float frameTime;
 
 	// music references
 	// TODO: ADD OUR SOUND REFERENCES AS Mix_Music* or Mix_Chunk* 

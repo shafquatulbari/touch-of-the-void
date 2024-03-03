@@ -20,6 +20,17 @@ struct Obstacle
 struct Projectile 
 {
 	float lifetime = 0.0f;	// time before the projectile disappears
+	Entity source; // New attribute to store the source entity of the projectile
+};
+
+struct AI
+{
+	enum class AIType {MELEE, RANGED};
+	AIType type = AIType::MELEE;
+	enum class AIState {IDLE, ACTIVE};
+	AIState state = AIState::ACTIVE;
+	float safe_distance = 150.0f; // the distance that the AI will start behaving from the player
+	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
 };
 
 // Harmful collision component
@@ -65,24 +76,36 @@ struct Motion {
 	float turn_rate = 0.0f;		// how fast the entity can turn
 };
 
+struct vec2comp {
+	bool operator() (vec2 lhs, vec2 rhs) const
+	{
+		if (lhs.x < rhs.x) return true;
+		if (lhs.x == rhs.x && lhs.y < rhs.y) return true;
+		return false;
+	}
+};
 // All data relevant to the contents of a game room
 struct Room {
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
 	// The number of enemies in the room
 	int enemy_count = 0;
+
+	// the positions of all entities in the room
+	std::set<vec2, vec2comp> all_positions;
+
 	// the positions of the enemies in the room
-	std::vector<vec2> enemy_positions;
+	std::set<vec2, vec2comp> enemy_positions;
 
 	// The number of obstacles in the room
 	int obstacle_count = 0;
 	// the positions of the obstacles in the room
-	std::vector<vec2> obstacle_positions;
+	std::set<vec2, vec2comp> obstacle_positions;
 
 	// The number of powerups in the room
 	int powerup_count = 0;
 	// the positions of the powerups in the room
-	std::vector<vec2> powerup_positions;
+	std::set<vec2, vec2comp> powerup_positions;
 
 	// fields concerning the doors of the room
 	bool has_left_door = false;
@@ -91,11 +114,13 @@ struct Room {
 	bool has_bottom_door = false;
 
 	// neighbouring rooms
-	Entity left_room;
-	Entity right_room;
-	Entity top_room;
-	Entity bottom_room;
+	struct Room* left_room;
+	struct Room* right_room;
+	struct Room* top_room;
+	struct Room* bottom_room;
 };
+
+
 struct ReloadTimer
 {
 	float counter_ms = 0.0f;
@@ -196,17 +221,20 @@ struct Character {
  */
 
 enum class TEXTURE_ASSET_ID {
-	PLAYER = 0,
-	ENEMY = PLAYER + 1,
-	OBSTACLE = ENEMY + 1,
-	BULLET = OBSTACLE + 1,
-	LEVEL1_BACKGROUND = BULLET + 1,
-	LEVEL1_FULL_WALL = LEVEL1_BACKGROUND + 1,
-	LEVEL1_WALL = LEVEL1_FULL_WALL + 1,
-	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_WALL + 1,
+	BULLET = 0,
+	ENEMY_SPITTER = BULLET + 1,
+	LEVEL1_BACKGROUND = ENEMY_SPITTER + 1,
+	LEVEL1_DOORS = LEVEL1_BACKGROUND + 1,
+	LEVEL1_FULL_WALL_CLOSED_DOOR = LEVEL1_DOORS + 1,
+	LEVEL1_FULL_WALL_NO_DOOR = LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+	LEVEL1_FULL_WALL_OPEN_DOOR = LEVEL1_FULL_WALL_NO_DOOR + 1,
+	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_OPEN_DOOR + 1,
+	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
-	TEXTURE_COUNT = LEVEL1_WALL_TOP_CORNER + 1
+	LEVEL1_WALL = LEVEL1_WALL_TOP_CORNER + 1,
+	PLAYER = LEVEL1_WALL + 1,
+	TEXTURE_COUNT = PLAYER + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
