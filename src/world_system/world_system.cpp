@@ -16,6 +16,9 @@
 WorldSystem::WorldSystem()
 {
 	// TODO: world initialization here
+	
+	//max fps 
+	maxFps = 144.0f;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -104,14 +107,17 @@ GLFWwindow* WorldSystem::create_window() {
 	//	return nullptr;
 	//}
 
+
 	return window;
 }
 
 void WorldSystem::init(RenderSystem* renderer_arg) {
 	this->renderer = renderer_arg;
-	std::stringstream title_ss;
-	title_ss << "Touch of the Void";
-	glfwSetWindowTitle(window, title_ss.str().c_str());
+	//std::stringstream title_ss;
+	//title_ss << "Touch of the Void";
+	//glfwSetWindowTitle(window, title_ss.str().c_str());
+
+
 	// TODO: Setup background music to play indefinitely
 	//Mix_PlayMusic(background_music, -1);
 	//fprintf(stderr, "Loaded music\n");
@@ -190,6 +196,41 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			}
         }
     }
+	// measure the current frame time
+	float startTicks = SDL_GetTicks();
+
+	fpsCalculate();
+
+	static int frameCounter = 0;
+	frameCounter++;
+	//update fps every 50 frames 
+	if (frameCounter == 25) {
+		//std::cout << "FPS: "<<  fps << std::endl;
+
+		std::stringstream ss;
+		ss << "Touch of the Void" << " [FPS: " << std::floor(fps) << "]";
+		glfwSetWindowTitle(window, ss.str().c_str());
+
+		frameCounter = 0;
+	}
+
+	float frameTicks = SDL_GetTicks() - startTicks;
+
+
+	//fps limiter. 
+	/*if ((1000.0f / maxFps) > frameTicks) {
+		SDL_Delay((1000.0f / maxFps) - frameTicks);
+	}*/
+
+
+	//heal player over timne
+	if (registry.healths.has(player)) {
+		Health& playerHealth = registry.healths.get(player);
+		if (playerHealth.current_health < playerHealth.max_health) {
+			playerHealth.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5; // Adjust speed here
+			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
+		}
+	}
 
 	return true;
 }
@@ -277,7 +318,7 @@ void WorldSystem::handle_collisions() {
 				if (registry.healths.has(entity_other)) {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& playerHealth = registry.healths.get(entity_other);
-					playerHealth.current_health -= 0.05; //hardcoded damage
+					playerHealth.current_health -= 1; //hardcoded damage
 					if (playerHealth.current_health <= 0) {
 						// Trigger darkening immediately, but actual effect is controlled in step
 						if (!registry.deathTimers.has(player)) {
@@ -456,4 +497,49 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 			registry.players.get(player).fire_length_ms = 0.0f;
 		}
 	}
+}
+
+void WorldSystem::fpsCalculate() {
+	//average these many samples to change the frames smoother
+	static const int num_samples = 10; 
+	//buffer, array of the frames
+	static float frameTimes[num_samples];
+	static int currentFrame = 0;
+
+	static float prevTicks = SDL_GetTicks();
+	
+	float currentTicks;
+	currentTicks = SDL_GetTicks();
+
+	frameTime = currentTicks - prevTicks;//note: first few ticks will be wrong
+	frameTimes[currentFrame % num_samples] = frameTime; 
+
+	//need to set ticks again. after current tick is done, it becomes prev ticks
+	prevTicks = currentTicks;
+	int count;
+//	currentFrame++;
+
+	if (currentFrame < num_samples) {
+		count = currentFrame;
+	}
+	else {
+		count = num_samples;
+	}
+
+	float averageFrameTime = 0;
+	for (int i = 0; i < count; i++) {
+		averageFrameTime += frameTimes[i];
+
+	}
+	averageFrameTime /= count;
+
+	if (averageFrameTime > 0) {
+		fps = 1000.0f / averageFrameTime;
+		// ms/s divided by ms/f returns frames/second which is fps
+	}
+	else {
+		//shouldn't ever reach this else case 
+		fps = 60.0f;
+	}
+	currentFrame++;
 }
