@@ -107,6 +107,7 @@ GLFWwindow* WorldSystem::create_window() {
 	//	return nullptr;
 	//}
 
+
 	return window;
 }
 
@@ -204,7 +205,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	frameCounter++;
 	//update fps every 50 frames 
 	if (frameCounter == 25) {
-		std::cout << "FPS: "<<  fps << std::endl;
+		//std::cout << "FPS: "<<  fps << std::endl;
 
 		std::stringstream ss;
 		ss << "Touch of the Void" << " [FPS: " << std::floor(fps) << "]";
