@@ -50,6 +50,8 @@ private:
 	// restart level
 	void restart_game();
 
+	//fps
+	void fpsCalculate();
 	// OpenGL window handle
 	GLFWwindow* window;
 
@@ -61,6 +63,11 @@ private:
 	// TODO: Global game state goes here
 	float current_speed;
 	Entity player;
+
+	//FPS 
+	float fps;
+	float maxFps;
+	float frameTime;
 
 	// music references
 	// TODO: ADD OUR SOUND REFERENCES AS Mix_Music* or Mix_Chunk* 
