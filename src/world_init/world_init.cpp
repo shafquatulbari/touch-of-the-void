@@ -7,6 +7,9 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
 	auto entity = Entity();
 
+	Mesh& p_mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::PLAYER_CH);
+	registry.meshPtrs.emplace(entity, &p_mesh);
+
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -15,6 +18,8 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	motion.deceleration_rate = 10.0f;
 	motion.max_velocity = 200.0f;
 	motion.scale = vec2({PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT});
+
+	
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
@@ -113,6 +118,9 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	// actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
 	angle += (rng - 0.5f) * accuracy;
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
