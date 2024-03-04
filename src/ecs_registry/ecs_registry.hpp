@@ -28,6 +28,8 @@ public:
 	ComponentContainer<Room> rooms;
 	ComponentContainer<Text> texts;
 	ComponentContainer<AI> ais;
+	ComponentContainer<Animation> animations;
+	ComponentContainer<AnimationTimer> animationTimers;
 
 
 
@@ -52,6 +54,7 @@ public:
 		registry_list.push_back(&rooms);
 		registry_list.push_back(&texts);
 		registry_list.push_back(&ais);
+		registry_list.push_back(&animations);
 	}
 
 	void clear_all_components() {

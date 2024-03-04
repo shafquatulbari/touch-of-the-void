@@ -197,6 +197,27 @@ struct Character {
 	char character;
 };
 
+// A structure to store the data concerning a single sprite sheet texture
+struct Sprite {
+	unsigned int TextureID;
+	vec2 size;
+	vec2 offset;
+};
+
+// A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
+struct Animation {
+	std::vector<std::pair<int, int>> sprites;
+	std::vector<float> frame_durations_ms;
+	float total_frames;
+	float current_frame;
+	bool loop;
+};
+
+struct AnimationTimer
+{
+	float counter_ms = 0.0f;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -260,9 +281,22 @@ enum class GEOMETRY_BUFFER_ID {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
+enum class SPRITE_SHEET_ID {
+	//BLUE_EFFECT = 0,
+	//ENEMY_EXPLODER = BLUE_EFFECT + 1,
+	EXPLOSION = 0,
+	//GREEN_EFFECT = EXPLOSION + 1,
+	//PURPLE_EFFECT = GREEN_EFFECT + 1,
+	//RED_EFFECT = PURPLE_EFFECT + 1,
+	//YELLOW_EFFECT = RED_EFFECT + 1,
+	SPRITE_SHEET_COUNT = EXPLOSION + 1
+};
+const int sheet_count = (int)SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
+
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
+	SPRITE_SHEET_ID used_sheet = SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
 };
 

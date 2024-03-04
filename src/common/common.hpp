@@ -30,6 +30,7 @@ inline std::string textures_path(const std::string &name) { return data_path() +
 inline std::string fonts_path(const std::string& name) { return data_path() + "/fonts/" + std::string(name); };
 inline std::string audio_path(const std::string &name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string mesh_path(const std::string &name) { return data_path() + "/meshes/" + std::string(name); };
+inline std::string sheets_path(const std::string &name) { return data_path() + "/sheets/" + std::string(name); };
 
 // game artstyle was generated for 1024x512 window
 const int window_width_px = 1024;

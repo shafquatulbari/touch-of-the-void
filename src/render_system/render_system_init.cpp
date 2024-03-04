@@ -65,6 +65,7 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 
 	initScreenTexture();
 	initializeGlTextures();
+	initializeGlSheets();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
 
@@ -98,6 +99,51 @@ void RenderSystem::initializeGlTextures()
 	}
 	gl_has_errors();
 }
+
+void RenderSystem::initializeGlSheets()
+{
+	for (uint i = 0; i < sheet_paths.size(); i++)
+	{
+		const std::string& path = sheet_paths[i];
+		ivec2& dimensions = sheet_dimensions[i]; // width, height of one sprite
+		ivec2& count = sheet_sprite_count[i]; // (rows, columns) of the sheet
+
+		stbi_uc* data;
+		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, NULL, 4);
+
+		if (data == NULL)
+		{
+			const std::string message = "Could not load the file " + path + ".";
+			fprintf(stderr, "%s", message.c_str());
+			assert(false);
+		}
+
+		// iterate through each sprite in the sheet
+		for (int y = 0; y < count.y; y++)
+		{
+			for (int x = 0; x < count.x; x++)
+			{
+				// calculate the position of the sprite in the sheet
+				int x_offset = x * dimensions.x;
+				int y_offset = y * dimensions.y;
+
+				// create a new texture for the sprite
+				GLuint texture;
+				glGenTextures(1, &texture);
+				glBindTexture(GL_TEXTURE_2D, texture);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data + (4 * (x_offset + y_offset * dimensions.x)));
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				gl_has_errors();
+
+				Sprite sprite = { texture, dimensions, {x_offset, y_offset}};
+				m_ftSprites.insert(std::pair<std::pair<int, int>, Sprite>(std::pair<int, int>(x, y), sprite)); // this data type can't handle multiple sheets
+			}
+		}
+		stbi_image_free(data);
+	}
+	gl_has_errors();
+}	
 
 void RenderSystem::initializeGlEffects()
 {

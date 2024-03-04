@@ -186,6 +186,40 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// reduce window brightness if any of the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
+	for (Entity entity : registry.animationTimers.entities) {
+				// progress timer
+		AnimationTimer& counter = registry.animationTimers.get(entity);
+		Animation& animation = registry.animations.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+
+		if (counter.counter_ms < 0) {
+			registry.animationTimers.remove(entity);
+			// check if finished
+			if (animation.current_frame == animation.total_frames - 1) {
+				if (animation.loop) {
+					// restart animation
+					std::cout << "Restarting animation" << std::endl;
+					animation.current_frame = 0;
+					AnimationTimer& timer = registry.animationTimers.emplace(entity);
+					timer.counter_ms = animation.frame_durations_ms[0];
+				}
+				else {
+					// done animating
+					std::cout << "Done animating" << std::endl;
+					registry.animationTimers.remove(entity);
+					registry.animations.remove(entity);
+				}
+			}
+			else {
+				// progress to next frame
+				std::cout << "Progressing to next frame" << std::endl;
+				animation.current_frame++;
+				AnimationTimer& timer = registry.animationTimers.emplace(entity);
+				timer.counter_ms = animation.frame_durations_ms[animation.current_frame];
+			}
+		}
+	}
+
 	// heal obstacles over time
 	for (auto& obstacle : registry.obstacles.entities) {
         if (registry.healths.has(obstacle)) {
@@ -260,6 +294,9 @@ void WorldSystem::restart_game() {
 	createBackground(renderer);
 
 	createText(renderer, "hello world", { window_width_px / 2, 0 }, 2.f, {1, 0, 0});
+
+	createExplosion(renderer, { window_width_px / 2, window_height_px / 2 }, 1.f);
+
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 }
