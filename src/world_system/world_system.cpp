@@ -296,6 +296,10 @@ void WorldSystem::handle_collisions() {
 		Entity entity_other = collisionsRegistry.components[i].other;
 
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
+			if (registry.obstacles.get(entity_other).is_passable)
+			{
+				registry.players.get(entity).is_moving_rooms = true;
+			}
 			// Apply damage to the player
 			Health& playerHealth = registry.healths.get(player);
 			if (registry.deadlies.has(entity_other)) {

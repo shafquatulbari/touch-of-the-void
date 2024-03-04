@@ -139,7 +139,7 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 }
 
 // TODO: figure out whether invidiual components are smart and whether this should be moved to a separate file
-void createWalls(RenderSystem* render)
+void createWalls(RenderSystem* render, Room& room)
 {
 	auto topWall = Entity();
 	auto bottomWall = Entity();
@@ -163,10 +163,25 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(topWall);
 	registry.renderRequests.insert(
 		topWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ room.has_top_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
+			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
-
+	// create the door if room should have one
+	if (room.has_top_door) {
+		auto top_door = Entity();
+		Motion& top_door_motion = registry.motions.emplace(top_door);
+		top_door_motion.position = { x_mid, y_min };
+		// fix this scale
+		top_door_motion.scale = { 32,32 };
+		Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
+		top_door_obstacle.is_passable = true;
+		registry.renderRequests.insert(
+			top_door,
+			{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+				EFFECT_ASSET_ID::TEXTURED,
+				GEOMETRY_BUFFER_ID::SPRITE });
+	}
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
 	bottom_motion.position = vec2({ x_mid, y_max });
@@ -175,10 +190,12 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
 		bottomWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ room.has_bottom_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
+			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
-
+	// player can pass through the door if it exists
+	if (room.has_bottom_door) registry.obstacles.get(topWall).is_passable = true;
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
 	left_motion.position = vec2({ x_min, y_mid });
@@ -188,7 +205,8 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
 		leftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ room.has_left_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
+			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR ,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -201,7 +219,8 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
 		rightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ room.has_right_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
+			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR ,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -263,21 +282,60 @@ void createWalls(RenderSystem* render)
 
 Entity createRoom(RenderSystem* render)
 {
-	auto entity = Entity();
+	// create a starting room with a room on each side
+	auto starting_room_entity = Entity();
+	auto bottom_room_entity = Entity();
+	auto top_room_entity = Entity();
+	auto left_room_entity = Entity();
+	auto right_room_entity = Entity();
 
-	// A wall is four walls on the edges of the game play screen
-	// The walls are obstacles
 
-	Room& room = registry.rooms.emplace(entity);
+	Room& starting_room = registry.rooms.emplace(starting_room_entity);
+	printf("rooms2 size: %llu", registry.rooms.size());
+	
 	WorldGenerator world_generator;
 	// TODO: Generate room info randomly
-	world_generator.generateRoom(room);
+	world_generator.generateRoom(starting_room);
+	// set doors for starting room and point them to the respective entity
+	starting_room.has_bottom_door = true;
+	starting_room.bottom_room = bottom_room_entity;
+	starting_room.has_top_door = true;
+	starting_room.top_room = top_room_entity;
+	starting_room.has_right_door = true;
+	starting_room.right_room = right_room_entity;
+	starting_room.has_left_door = true;
+	starting_room.left_room = left_room_entity;
+	// Important note!!! when the rooms registry is emplacing an entity, the reference to the last entity is freed
+	// For example at this point, we cannot reference starting_room unless we retrieve it from the registry 
+	Room& bottom_room = registry.rooms.emplace(bottom_room_entity);
+	world_generator.generateRoom(bottom_room);
+	bottom_room.has_top_door = true;
+	bottom_room.top_room = starting_room_entity;
 
+	Room& top_room = registry.rooms.emplace(top_room_entity);
+	world_generator.generateRoom(top_room);
+	top_room.has_bottom_door = true;
+	top_room.bottom_room = starting_room_entity;
+
+	Room& left_room = registry.rooms.emplace(left_room_entity);
+	world_generator.generateRoom(left_room);
+	top_room.has_right_door = true;
+	top_room.right_room = starting_room_entity;
+
+	Room& right_room = registry.rooms.emplace(right_room_entity);
+	world_generator.generateRoom(right_room);
+	top_room.has_left_door = true;
+	top_room.left_room = starting_room_entity;
+
+	printf("rooms3 size: %llu", registry.rooms.size());
+
+	Room& room1 = registry.rooms.get(starting_room_entity);
+	Room& leftroom = registry.rooms.get(room1.left_room);
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
 
-	for (auto& pos : room.obstacle_positions)
+	for (auto& pos : room1.obstacle_positions)
 	{
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
@@ -288,16 +346,16 @@ Entity createRoom(RenderSystem* render)
 	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
 
 	// Create each enemy with their specified type
-	for (auto& pos : room.enemy_positions) {
+	for (auto& pos : room1.enemy_positions) {
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
 		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
-	createWalls(render);
+	createWalls(render, room1);
 
-	return entity;
+	return starting_room_entity;
 }
 
 Entity createText(RenderSystem* render, std::string content, vec2 pos, float scale, vec3 color)

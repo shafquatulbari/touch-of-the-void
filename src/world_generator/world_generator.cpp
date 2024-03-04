@@ -13,8 +13,8 @@ Room& WorldGenerator::generateRoom(Room& room)
 	room.is_cleared = true;
 	room.obstacle_count = 8;
 	room.enemy_count = 3;
-	room.obstacle_positions = {};
-	room.all_positions = {};
+	//room.obstacle_positions = {};
+	//room.all_positions = {};
 	std::default_random_engine rng = std::default_random_engine(std::random_device()());
 
 	// number between 1..12 (don't spawn obstacles too close to where we start)
@@ -33,19 +33,7 @@ Room& WorldGenerator::generateRoom(Room& room)
 			room.all_positions.insert(vec2(rand_x, rand_y));
 		}
 	}
-	
-	/*room.obstacle_positions = {
-		vec2(1,1),
-		vec2(2,2),
-		vec2(3,3),
-		vec2(4,4),
-		vec2(5,5),
-		vec2(9,9),
-		vec2(10,10),
-		vec2(11,11),
-		vec2(12,12),
-		vec2(13,13)
-	};*/
+
 	while (room.enemy_positions.size() < room.enemy_count) {
 		int rand_x = std::rint(obstacle_uniform_dist(rng));
 		int rand_y = std::rint(obstacle_uniform_dist(rng));
@@ -57,13 +45,6 @@ Room& WorldGenerator::generateRoom(Room& room)
 		}
 		
 	}
-
-
-	//room.enemy_positions = {
-	//	vec2(3,6),
-	//	vec2(2,9),
-	//	vec2(12,4)
-	//};
 
 	return room;
 }

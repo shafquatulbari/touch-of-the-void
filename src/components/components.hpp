@@ -40,7 +40,8 @@ struct Player
 	int ammo_count;
 	bool is_reloading = false; // player is currently reloading and cannot fire
 	float reload_timer_ms = 0.0f;
-
+	bool is_moving_rooms = false;
+	Entity current_room;
 	// Constructor to set the initial magazine size
 	Player() : max_ammo_count(magazine_sizes[weapon_type]), ammo_count(max_ammo_count), reload_timer_ms(reload_times[weapon_type]) {}
 };
@@ -48,6 +49,8 @@ struct Player
 // Obstacle component
 struct Obstacle
 {
+	// player can pass through this obstacle (i,e. a door)
+	bool is_passable = false;
 };
 
 // Projectile component
@@ -148,10 +151,10 @@ struct Room {
 	bool has_bottom_door = false;
 
 	// neighbouring rooms
-	struct Room* left_room;
-	struct Room* right_room;
-	struct Room* top_room;
-	struct Room* bottom_room;
+	Entity left_room;
+	Entity right_room;
+	Entity top_room;
+	Entity bottom_room;
 };
 
 // A time to track reload times
