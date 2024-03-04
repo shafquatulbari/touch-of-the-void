@@ -67,10 +67,12 @@ private:
 	Entity player;
 	
 	// HUD
+	Entity player_hp_text;
 	Entity weapon_text;
 	Entity ammo_text;
 
 	// FPS 
+	Entity fps_text;
 	float fps;
 	float maxFps;
 	float frameTime;

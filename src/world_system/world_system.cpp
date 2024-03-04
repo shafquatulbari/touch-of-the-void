@@ -133,62 +133,29 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
-	// Removing out of screen entities
+	// Update HUD
+	int roundedHealth = static_cast<int>(registry.healths.get(player).current_health); // round to nearest int so the HUD doesn't get cluttered
+	std::string healthText = "HP: " + std::to_string(roundedHealth) + " / 100";
+	registry.texts.get(player_hp_text).content = healthText;
+
 	auto& motions_registry = registry.motions;
 
+	Player& p = registry.players.get(player);
 	// Handle player firing
-	if (registry.players.get(player).is_firing && !registry.players.get(player).is_reloading) {
-		// Increase the counter of fire length
-		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
+	if (p.is_reloading) {
+		registry.texts.get(ammo_text).content = "Ammo: Reloading...";
+		p.reload_timer_ms -= elapsed_ms_since_last_update;
 
-		// Handle different types of firing depending on the selected weapon
-		switch (registry.players.get(player).weapon_type) {
-		case Player::WeaponType::MACHINE_GUN:
-			// TODO: Logic for firing machine gun
-			createProjectile(
-				renderer, 
-				motions_registry.get(player).position, 
-				motions_registry.get(player).look_angle - M_PI / 2, 
-				uniform_dist(rng), 
-				registry.players.get(player).fire_length_ms, 
-				player);
-			break;
-
-		case Player::WeaponType::SNIPER:
-			// TODO: Logic for firing sniper
-			createProjectile(
-				renderer,
-				motions_registry.get(player).position,
-				motions_registry.get(player).look_angle - M_PI / 2,
-				uniform_dist(rng),
-				registry.players.get(player).fire_length_ms,
-				player);
-			break;
-
-		case Player::WeaponType::SHOTGUN:
-			// TODO: Logic for firing shotgun
-			createProjectile(
-				renderer,
-				motions_registry.get(player).position,
-				motions_registry.get(player).look_angle - M_PI / 2,
-				uniform_dist(rng),
-				registry.players.get(player).fire_length_ms,
-				player);
-			break;
-
-		default:
-			// Handle an unknown weapon type (should never reach here, hopefully...)
-			break;
-		}
-		registry.players.get(player).ammo_count -= 1;
-		registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(registry.players.get(player).ammo_count) + " / " + std::to_string(registry.players.get(player).magazine_sizes[registry.players.get(player).weapon_type]);
-
-		if (registry.players.get(player).ammo_count <= 0) {
-			// TODO HANDLE RELOAD
-
+		if (p.reload_timer_ms < 0) {
+			// Reload complete, refill ammo
+			p.is_reloading = false;
+			p.reload_timer_ms = p.reload_times[p.weapon_type];
+			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
+			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 		}
 	}
 
+	// Removing out of screen entities
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
@@ -244,41 +211,33 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			}
         }
     }
-	// measure the current frame time
-	float startTicks = SDL_GetTicks();
 
-	fpsCalculate();
-
-	static int frameCounter = 0;
-	frameCounter++;
-	//update fps every 50 frames 
-	if (frameCounter == 25) {
-		//std::cout << "FPS: "<<  fps << std::endl;
-
-		std::stringstream ss;
-		ss << "Touch of the Void" << " [FPS: " << std::floor(fps) << "]";
-		glfwSetWindowTitle(window, ss.str().c_str());
-
-		frameCounter = 0;
-	}
-
-	float frameTicks = SDL_GetTicks() - startTicks;
-
-
-	//fps limiter. 
-	/*if ((1000.0f / maxFps) > frameTicks) {
-		SDL_Delay((1000.0f / maxFps) - frameTicks);
-	}*/
-
-
-	//heal player over timne
+	// heal player over timne
 	if (registry.healths.has(player)) {
 		Health& playerHealth = registry.healths.get(player);
 		if (playerHealth.current_health < playerHealth.max_health) {
 			playerHealth.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5; // Adjust speed here
 			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
 		}
+
 	}
+
+	// FPS
+	float startTicks = SDL_GetTicks();
+	fpsCalculate();
+	static int frameCounter = 0;
+	frameCounter++;
+	// update fps every 50 frames 
+	if (frameCounter == 25) {
+		registry.texts.get(fps_text).content = "FPS: " + std::to_string(static_cast<int>(fps));
+		frameCounter = 0;
+	}
+	float frameTicks = SDL_GetTicks() - startTicks;
+
+	//fps limiter. 
+	/*if ((1000.0f / maxFps) > frameTicks) {
+		SDL_Delay((1000.0f / maxFps) - frameTicks);
+	}*/
 
 	return true;
 }
@@ -310,9 +269,21 @@ void WorldSystem::restart_game() {
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
+	// Tutorial Text
+	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+
 	// Create HUD
-	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 400.0f}, 0.5f, { 0.26f, 0.97f, 0.19f });
-	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 360.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
+	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, { 1.0f, 0.15f, 0.15f });
+	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, { 0.26f, 0.97f, 0.19f });
+	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
+
+	// FPS
+	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
 }
 
 // Compute collisions between entities
@@ -426,7 +397,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_G) {
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
 
@@ -464,7 +435,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		// WEAPON CONTROLS
 		if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-			// TODO: initiate reload
+			registry.players.get(player).is_reloading = true;
 		}
 		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
 			cycle_weapon(-1);  // Cycle to the previous weapon
@@ -512,6 +483,8 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 // Function to cycle player weapons (-1 for previous, 1 for next)
 void WorldSystem::cycle_weapon(int direction) {
+	Player& p = registry.players.get(player);
+
 	// Get the current player's weapon type
 	Player::WeaponType currentWeapon = registry.players.get(player).weapon_type;
 
@@ -548,10 +521,12 @@ void WorldSystem::cycle_weapon(int direction) {
 		break;
 	}
 
-	// Print the current weapon
-	std::cout << "Current Weapon: " << weaponString << std::endl;
+	// Update ammo counters and reload timers
+	p.is_reloading = true;
+	p.reload_timer_ms = p.reload_times[p.weapon_type];
+	p.ammo_count = p.magazine_sizes[p.weapon_type];
 	registry.texts.get(weapon_text).content = weaponString;
-	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(registry.players.get(player).ammo_count) + " / " + std::to_string(registry.players.get(player).magazine_sizes[registry.players.get(player).weapon_type]);
+	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {
@@ -581,11 +556,63 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 	int press = 1;
 	int release = 0;
 
-	// TODO: Change to fire until clip is empty then auto reload
 	if (button == left_click) {
 		if (action == press) {
-			// player is firing 
-			registry.players.get(player).is_firing = true;
+			if (!registry.players.get(player).is_reloading) {
+				switch (registry.players.get(player).weapon_type) {
+				case Player::WeaponType::MACHINE_GUN:
+					// TODO: Logic for firing machine gun
+					createProjectile(
+						renderer,
+						registry.motions.get(player).position,
+						registry.motions.get(player).look_angle - M_PI / 2,
+						uniform_dist(rng),
+						registry.players.get(player).fire_length_ms,
+						player);
+					break;
+
+				case Player::WeaponType::SNIPER:
+					// TODO: Logic for firing sniper
+					createProjectile(
+						renderer,
+						registry.motions.get(player).position,
+						registry.motions.get(player).look_angle - M_PI / 2,
+						uniform_dist(rng),
+						registry.players.get(player).fire_length_ms,
+						player);
+					break;
+
+				case Player::WeaponType::SHOTGUN:
+					// TODO: Logic for firing shotgun
+					createProjectile(
+						renderer,
+						registry.motions.get(player).position,
+						registry.motions.get(player).look_angle - M_PI / 2,
+						uniform_dist(rng),
+						registry.players.get(player).fire_length_ms,
+						player);
+					break;
+
+				default:
+					// Handle an unknown weapon type (should never reach here, hopefully...)
+					break;
+				}
+				std::cout << registry.players.get(player).ammo_count << std::endl;
+				registry.players.get(player).ammo_count -= 1;
+
+				registry.texts.get(ammo_text).content =
+					"Ammo: " +
+					std::to_string(registry.players.get(player).ammo_count) +
+					" / " +
+					std::to_string(registry.players.get(player).magazine_sizes[registry.players.get(player).weapon_type]);
+
+				if (registry.players.get(player).ammo_count <= 0) {
+					registry.players.get(player).is_reloading = true;
+				}
+
+				// player is firing 
+				//registry.players.get(player).is_firing = true;
+			}
 		}
 		else if (action == release) {
 			registry.players.get(player).is_firing = false;
