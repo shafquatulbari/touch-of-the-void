@@ -118,26 +118,44 @@ void RenderSystem::initializeGlSheets()
 			assert(false);
 		}
 
-		// iterate through each sprite in the sheet
+		int sprite_width = dimensions.x / count.x;
+		int sprite_height = dimensions.y / count.y;
+
+		// create a new texture for the sprite
+		GLuint texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		//// generate texture
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			dimensions.x,
+			dimensions.y,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			data
+		);
+
+		// set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
 		for (int y = 0; y < count.y; y++)
 		{
 			for (int x = 0; x < count.x; x++)
 			{
 				// calculate the position of the sprite in the sheet
-				int x_offset = x * dimensions.x;
-				int y_offset = y * dimensions.y;
+				float x_offset = (float)x * sprite_width;
+				float y_offset = (float)y * sprite_height;
 
-				// create a new texture for the sprite
-				GLuint texture;
-				glGenTextures(1, &texture);
-				glBindTexture(GL_TEXTURE_2D, texture);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dimensions.x, dimensions.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data + (4 * (x_offset + y_offset * dimensions.x)));
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				gl_has_errors();
+				vec2 texcoord_min = { x_offset / dimensions.x, y_offset / dimensions.y };
+				vec2 texcoord_max = { (x_offset + sprite_width) / dimensions.x, (y_offset + sprite_height) / dimensions.y };
 
-				Sprite sprite = { texture, dimensions, {x_offset, y_offset}};
-				m_ftSprites.insert(std::pair<std::pair<int, int>, Sprite>(std::pair<int, int>(x, y), sprite)); // this data type can't handle multiple sheets
+				Sprite sprite = { texture, texcoord_min, texcoord_max };
+				m_ftSprites.insert(std::pair<std::pair<int, int>, Sprite>(std::pair<int, int>(x, y), sprite)); // TODO: change this data type as it can't handle multiple sheets
 			}
 		}
 		stbi_image_free(data);

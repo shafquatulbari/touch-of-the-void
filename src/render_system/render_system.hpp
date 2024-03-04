@@ -19,40 +19,13 @@ class RenderSystem {
 	 * it is easier to debug and faster to execute for the computer.
 	 */
 	std::array<GLuint, texture_count> texture_gl_handles;
-	std::array<ivec2, texture_count> texture_dimensions = { 
-		ivec2(8, 8), 
-		ivec2(32, 32), 
-		ivec2(480, 480), 
-		ivec2(96, 28), 
-		ivec2(416, 32), 
-		ivec2(416, 32),
-		ivec2(416, 32),
-		ivec2(32, 32),
-		ivec2(32, 32),
-		ivec2(32, 32),
-		ivec2(32, 32),
-		ivec2(64, 32),
-		ivec2(32, 32)
-		};
+	std::array<ivec2, texture_count> texture_dimensions;
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
-		//1,
-		//6,
+		//ivec2(6,1)
 		ivec2(12,1)
-		//1,
-		//1,
-		//1,
-		//1
 	};
-	std::array<ivec2, sheet_count> sheet_dimensions = { 
-		//ivec2(32, 32), 
-		//ivec2(32, 32), 
-		ivec2(96, 96)
-		//ivec2(32, 32), 
-		//ivec2(32, 32), 
-		//ivec2(32, 32), 
-		//ivec2(32, 32) 
-	};
+	std::array<ivec2, sheet_count> sheet_dimensions;
 
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	// Associated id with .obj path

@@ -45,29 +45,29 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 	gl_has_errors();
 
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
+	gl_has_errors();
+	assert(in_texcoord_loc >= 0);
+
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
+		sizeof(TexturedVertex), (void*)0);
+	gl_has_errors();
+
+	glEnableVertexAttribArray(in_texcoord_loc);
+	glVertexAttribPointer(
+		in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
+		(void*)sizeof(
+			vec3)); // note the stride to skip the preceeding vertex position
+
+	// Enabling and binding texture to slot 0
+	glActiveTexture(GL_TEXTURE0);
+	gl_has_errors();
+
 	// Input data location as in the vertex buffer
 	if (render_request.used_effect == EFFECT_ASSET_ID::TEXTURED)
 	{
-		GLint in_position_loc = glGetAttribLocation(program, "in_position");
-		GLint in_texcoord_loc = glGetAttribLocation(program, "in_texcoord");
-		gl_has_errors();
-		assert(in_texcoord_loc >= 0);
-
-		glEnableVertexAttribArray(in_position_loc);
-		glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE,
-			sizeof(TexturedVertex), (void*)0);
-		gl_has_errors();
-
-		glEnableVertexAttribArray(in_texcoord_loc);
-		glVertexAttribPointer(
-			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
-			(void*)sizeof(
-				vec3)); // note the stride to skip the preceeding vertex position
-
-		// Enabling and binding texture to slot 0
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
-
 		if (registry.animations.has(entity)) {
 			Animation& animation = registry.animations.get(entity);
 			// Get the current frame
@@ -75,27 +75,9 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			// Get the texture id of the current frame
 			std::pair<int, int> spriteLocation = animation.sprites[current_frame];
 			Sprite& sprite = m_ftSprites[spriteLocation];
-			// Bind the texture
-			vec2 size = sprite.size;
-			vec2 offset = sprite.offset;
-			float xpos = offset.x;
-			float ypos = offset.y;
-			float w = size.x;
-			float h = size.y;
-
-			float vertices[6][4] = {
-				{ xpos,     ypos + h,   0.0f, 0.0f },
-				{ xpos,     ypos,       0.0f, 1.0f },
-				{ xpos + w, ypos,       1.0f, 1.0f },
-
-				{ xpos,     ypos + h,   0.0f, 0.0f },
-				{ xpos + w, ypos,       1.0f, 1.0f },
-				{ xpos + w, ypos + h,   1.0f, 0.0f }
-			};
 
 			glBindTexture(GL_TEXTURE_2D, sprite.TextureID);
-			//glBindBuffer(GL_ARRAY_BUFFER, vbo);
-			//glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
 			gl_has_errors();
 		}
 		else {
@@ -147,6 +129,33 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, (float*)&transform.mat);
 	GLuint projection_loc = glGetUniformLocation(currProgram, "projection");
 	glUniformMatrix3fv(projection_loc, 1, GL_FALSE, (float*)&projection);
+
+	GLuint sprite_sheet_loc = glGetUniformLocation(currProgram, "isSpriteSheet");
+	assert(sprite_sheet_loc >= 0);
+	glUniform1i(sprite_sheet_loc, registry.animations.has(entity));
+	GLuint sprite_sheet_size_loc = glGetUniformLocation(currProgram, "spriteSheetSize");
+	assert(sprite_sheet_size_loc >= 0);
+
+	if (registry.animations.has(entity)) {
+		Animation& animation = registry.animations.get(entity);
+		int current_frame = animation.current_frame;
+
+		// Get the texture id of the current frame
+		std::pair<int, int> spriteLocation = animation.sprites[current_frame];
+		Sprite& sprite = m_ftSprites[spriteLocation];
+
+		GLuint x_min_loc = glGetUniformLocation(currProgram, "minTexcoord");
+		GLuint x_max_loc = glGetUniformLocation(currProgram, "maxTexcoord");
+
+		const vec2 minTexcoord = sprite.minTexCoords;
+		const vec2 maxTexcoord = sprite.maxTexCoords;
+
+		glUniform2fv(x_min_loc, 1, (float*)&minTexcoord);
+		glUniform2fv(x_max_loc, 1, (float*)&maxTexcoord);
+	}
+	else {
+		glUniform2f(sprite_sheet_size_loc, 1, 1);
+	}
 	gl_has_errors();
 	// Drawing of num_indices/3 triangles specified in the index buffer
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);

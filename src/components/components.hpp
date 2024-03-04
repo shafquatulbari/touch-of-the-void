@@ -200,8 +200,8 @@ struct Character {
 // A structure to store the data concerning a single sprite sheet texture
 struct Sprite {
 	unsigned int TextureID;
-	vec2 size;
-	vec2 offset;
+	vec2 minTexCoords;
+	vec2 maxTexCoords;
 };
 
 // A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
@@ -297,6 +297,5 @@ struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
-	SPRITE_SHEET_ID used_sheet = SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
 };
 

@@ -189,6 +189,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	for (Entity entity : registry.animationTimers.entities) {
 				// progress timer
 		AnimationTimer& counter = registry.animationTimers.get(entity);
+		if (!registry.animations.has(entity)) {
+			registry.animationTimers.remove(entity);
+			continue;
+		}
 		Animation& animation = registry.animations.get(entity);
 		counter.counter_ms -= elapsed_ms_since_last_update;
 
@@ -198,22 +202,19 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			if (animation.current_frame == animation.total_frames - 1) {
 				if (animation.loop) {
 					// restart animation
-					std::cout << "Restarting animation" << std::endl;
 					animation.current_frame = 0;
 					AnimationTimer& timer = registry.animationTimers.emplace(entity);
 					timer.counter_ms = animation.frame_durations_ms[0];
 				}
 				else {
 					// done animating
-					std::cout << "Done animating" << std::endl;
-					registry.animationTimers.remove(entity);
-					registry.animations.remove(entity);
+					registry.remove_all_components_of(entity);
 				}
 			}
 			else {
 				// progress to next frame
-				std::cout << "Progressing to next frame" << std::endl;
 				animation.current_frame++;
+				registry.animationTimers.remove(entity);
 				AnimationTimer& timer = registry.animationTimers.emplace(entity);
 				timer.counter_ms = animation.frame_durations_ms[animation.current_frame];
 			}
@@ -293,11 +294,9 @@ void WorldSystem::restart_game() {
 	// Create a level
 	createBackground(renderer);
 
-	createText(renderer, "hello world", { window_width_px / 2, 0 }, 2.f, {1, 0, 0});
+	//createText(renderer, "hello world", { window_width_px / 2, 0 }, 2.f, {1, 0, 0});
 
-	createExplosion(renderer, { window_width_px / 2, window_height_px / 2 }, 1.f);
-
-	// Create a new player
+	//// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 }
 
@@ -344,6 +343,11 @@ void WorldSystem::handle_collisions() {
 					Health& enemyHealth = registry.healths.get(entity_other);
 					enemyHealth.current_health -= deadly.damage;
 					if (enemyHealth.current_health <= 0) {
+						// enemy is dead, trigger an explosion animation
+						if (registry.motions.has(entity_other)) {
+							Motion& motion = registry.motions.get(entity_other);
+							createExplosion(renderer, motion.position, false); // Create explosion
+						}
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
 					}
 				}
