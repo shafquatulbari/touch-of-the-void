@@ -35,6 +35,10 @@ int main()
 	renderer.init(window);
 	world.init(&renderer);
 
+	renderer.initializeFonts();
+
+	printf("Initialization successful\n");
+
 	// variable timestep loop
 	auto t = Clock::now();
 	while (!world.is_over()) {
@@ -52,7 +56,9 @@ int main()
 		physics.step(elapsed_ms);
 		world.handle_collisions();
 
+
 		renderer.draw();
+
 	}
 
 	return EXIT_SUCCESS;

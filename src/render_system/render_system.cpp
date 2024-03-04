@@ -1,8 +1,13 @@
 // internal
 #include "render_system/render_system.hpp"
 #include <SDL.h>
-
 #include "ecs_registry/ecs_registry.hpp"
+#include <iostream>
+
+// matrices
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void RenderSystem::drawTexturedMesh(Entity entity,
 	const mat3& projection)
@@ -33,6 +38,8 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	const GLuint vbo = vertex_buffers[(GLuint)render_request.used_geometry];
 	const GLuint ibo = index_buffers[(GLuint)render_request.used_geometry];
 
+	// setting VAO
+	glBindVertexArray(vao);
 	// Setting vertex and index buffers
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -116,17 +123,15 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 // draw the intermediate texture to the screen, with some distortion to simulate
 // wind
-void RenderSystem::drawToScreen()
+void RenderSystem::drawToScreen(const mat3& projection)
 {
 	// Setting shaders
 	// get the wind texture, sprite mesh, and program
+	glBindVertexArray(vao);
 	glUseProgram(effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS]);
-
 	
 	GLuint postProcessShaderProgram = effects[(GLuint)EFFECT_ASSET_ID::POST_PROCESS];
     glUseProgram(postProcessShaderProgram);
-	
-
 
 	gl_has_errors();
 	// Clearing backbuffer
@@ -176,6 +181,85 @@ void RenderSystem::drawToScreen()
 		nullptr); // one triangle = 3 vertices; nullptr indicates that there is
 	// no offset from the bound index buffer
 	gl_has_errors();
+
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void RenderSystem::drawText(const mat3& projection)
+{
+	// Setting shaders
+	glUseProgram(m_font_shaderProgram);
+	gl_has_errors();
+
+
+	// Draw all text entities
+	for (Entity entity : registry.texts.entities)
+	{
+		if (!registry.motions.has(entity))
+			continue;
+
+		Motion& motion = registry.motions.get(entity);
+		Text& text_component = registry.texts.get(entity);
+		std::string text = text_component.content;
+		float x = motion.position.x;
+		float y = motion.position.y;
+		float scale = motion.scale.x;
+
+		GLint colorLocation = glGetUniformLocation(m_font_shaderProgram, "textColor");
+		assert(colorLocation >= 0);
+		glUniform3f(colorLocation, text_component.color.x, text_component.color.y, text_component.color.z);
+
+		GLint transformLocation = glGetUniformLocation(m_font_shaderProgram, "transform");
+		assert(transformLocation >= 0);
+		glm::mat4 p = glm::mat4(1.0f); // not sure why but this works, dont try to pass in transformation matrix, won't work
+		glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(p));
+		glBindVertexArray(m_font_VAO);
+
+		// iterate through all characters
+		std::string::const_iterator c;
+		for (c = text.begin(); c != text.end(); c++)
+		{
+			Character ch = m_ftCharacters[*c];
+
+			float xpos = x + ch.Bearing.x * scale;
+			float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+			float w = ch.Size.x * scale;
+			float h = ch.Size.y * scale;
+
+			// update VBO for each character
+			float vertices[6][4] = {
+				{ xpos,     ypos + h,   0.0f, 0.0f },
+				{ xpos,     ypos,       0.0f, 1.0f },
+				{ xpos + w, ypos,       1.0f, 1.0f },
+
+				{ xpos,     ypos + h,   0.0f, 0.0f },
+				{ xpos + w, ypos,       1.0f, 1.0f },
+				{ xpos + w, ypos + h,   1.0f, 0.0f }
+			};
+
+			// render glyph texture over quad
+			glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+			// std::cout << "binding texture: " << ch.character << " = " << ch.TextureID << std::endl;
+
+			// update content of VBO memory
+			glBindBuffer(GL_ARRAY_BUFFER, m_font_VBO);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			// render quad
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			// now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+			x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+		}
+
+		std::cout << "Drawing Text: " << text_component.content << std::endl;
+
+		glBindVertexArray(0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 }
 
 // Render our game world
@@ -192,7 +276,7 @@ void RenderSystem::draw()
 	// Clearing backbuffer
 	glViewport(0, 0, w, h);
 	glDepthRange(0.00001, 10);
-	glClearColor(0.0, 0.0, 0.0, 1.0); // TODO: Set background color to black
+	glClearColor(0.0, 0.0, 1.0, 1.0); // TODO: Set background color to black, set to blue for debugging
 	glClearDepth(10.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
@@ -205,15 +289,18 @@ void RenderSystem::draw()
 	// Draw all textured meshes that have a position and size component
 	for (Entity entity : registry.renderRequests.entities)
 	{
-		if (!registry.motions.has(entity))
+		if (!registry.motions.has(entity) || registry.texts.has(entity))
 			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
+
 		drawTexturedMesh(entity, projection_2D);
 	}
 
+	drawText(projection_2D);
 	// Truely render to the screen
-	drawToScreen();
+	drawToScreen(projection_2D);
+
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
@@ -236,3 +323,6 @@ mat3 RenderSystem::createProjectionMatrix()
 	float ty = -(top + bottom) / (top - bottom);
 	return { {sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f} };
 }
+
+
+
