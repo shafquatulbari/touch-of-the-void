@@ -59,6 +59,9 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	deadly.damage = 10.0f;
 
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
