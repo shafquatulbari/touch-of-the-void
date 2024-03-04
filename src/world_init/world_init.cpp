@@ -100,6 +100,8 @@ Entity createBackground(RenderSystem *renderer)
 	motion.position = { window_width_px / 2, window_height_px / 2 };
 	motion.scale = vec2({BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT});
 
+	registry.noCollisionChecks.emplace(entity);
+
 	registry.renderRequests.insert(
 			entity,
 			{TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,

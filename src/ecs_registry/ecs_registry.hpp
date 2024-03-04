@@ -27,7 +27,7 @@ public:
 	ComponentContainer<Shield> shields;
 	ComponentContainer<Room> rooms;
 	ComponentContainer<AI> ais;
-
+	ComponentContainer<NoCollisionCheck> noCollisionChecks;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -49,6 +49,7 @@ public:
 		registry_list.push_back(&shields);
 		registry_list.push_back(&rooms);
 		registry_list.push_back(&ais);
+		registry_list.push_back(&noCollisionChecks);
 	}
 
 	void clear_all_components() {

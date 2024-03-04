@@ -16,6 +16,12 @@ struct Obstacle
 {
 };
 
+// No collision check indicator component (for background)
+struct NoCollisionCheck 
+{
+
+};
+
 // Projectile component
 struct Projectile 
 {
@@ -76,7 +82,8 @@ struct Motion {
 	float turn_rate = 0.0f;		// how fast the entity can turn
 };
 
-struct vec2comp {
+struct vec2comp 
+{
 	bool operator() (vec2 lhs, vec2 rhs) const
 	{
 		if (lhs.x < rhs.x) return true;
@@ -84,8 +91,10 @@ struct vec2comp {
 		return false;
 	}
 };
+
 // All data relevant to the contents of a game room
-struct Room {
+struct Room 
+{
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
 	// The number of enemies in the room
@@ -135,7 +144,8 @@ struct Collision
 };
 
 // Data structure for toggling debug mode
-struct Debug {
+struct Debug 
+{
 	bool in_debug_mode = 0;
 	bool in_freeze_mode = 0;
 };

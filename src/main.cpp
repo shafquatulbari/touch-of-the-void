@@ -20,7 +20,7 @@ int main()
 	WorldSystem world;
 	RenderSystem renderer;
 	PhysicsSystem physics;
-	AISystem ai;
+	AISystem ai(&renderer);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window();

@@ -14,6 +14,11 @@ vec2 get_bounding_box(const Motion &motion)
 	return {x_scale, y_scale};
 }
 
+
+// Material for the SAT collision detection is sourced from the following blog post
+// https://code.tutsplus.com/collision-detection-using-the-separating-axis-theorem--gamedev-169t
+
+// Narrow check
 bool sat_collision_check(Entity e1, Entity e2) {
 	Motion& m1 = registry.motions.get(e1);
 	Motion& m2 = registry.motions.get(e2);
@@ -143,6 +148,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 	return true;
  }
 
+// Broad check
  bool aabb_collision_check(const Motion& motion1, const Motion& motion2) {
 	 const float& x1 = motion1.position.x;
 	 const float& y1 = motion1.position.y;
