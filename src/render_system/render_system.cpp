@@ -255,8 +255,6 @@ void RenderSystem::drawText(const mat3& projection)
 			x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
 		}
 
-		std::cout << "Drawing Text: " << text_component.content << std::endl;
-
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -276,7 +274,7 @@ void RenderSystem::draw()
 	// Clearing backbuffer
 	glViewport(0, 0, w, h);
 	glDepthRange(0.00001, 10);
-	glClearColor(0.0, 0.0, 1.0, 1.0); // TODO: Set background color to black, set to blue for debugging
+	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(10.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);

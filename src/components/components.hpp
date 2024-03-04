@@ -9,6 +9,40 @@ struct Player
 {
 	bool is_firing = false; // player is currently firing projectiles
 	float fire_length_ms = 0.0f; // time the player has been firing
+
+	enum class WeaponType {
+		MACHINE_GUN,
+		SNIPER,
+		SHOTGUN,
+		// Add more weapon types here
+		// Example: ROCKET_LAUNCHER, FLAMETHROWER, etc.
+		TOTAL_WEAPON_TYPES // Keep this as the last element
+	};
+
+	// Magazine sizes for each weapon
+	std::unordered_map<WeaponType, int> magazine_sizes = {
+		{WeaponType::MACHINE_GUN, 50},
+		{WeaponType::SNIPER, 1},
+		{WeaponType::SHOTGUN, 2},
+		// Add more weapon types and their magazine sizes here
+	};
+
+	// Reload times for each weapon
+	std::unordered_map<WeaponType, float> reload_times = {
+		{WeaponType::MACHINE_GUN, 4000.0f},
+		{WeaponType::SNIPER, 1000.0f},
+		{WeaponType::SHOTGUN, 1000.0f},
+		// Add more weapon types and their reload times here
+	};
+
+	WeaponType weapon_type = WeaponType::MACHINE_GUN;
+	int max_ammo_count;
+	int ammo_count;
+	bool is_reloading = false; // player is currently reloading and cannot fire
+	float reload_timer_ms = 0.0f;
+
+	// Constructor to set the initial magazine size
+	Player() : max_ammo_count(magazine_sizes[weapon_type]), ammo_count(max_ammo_count), reload_timer_ms(reload_times[weapon_type]) {}
 };
 
 // Obstacle component
@@ -120,10 +154,10 @@ struct Room {
 	struct Room* bottom_room;
 };
 
-
+// A time to track reload times
 struct ReloadTimer
 {
-	float counter_ms = 0.0f;
+	float counter_ms = 2000.0f;
 };
 
 // Stucture to store collision information
