@@ -136,11 +136,52 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// Removing out of screen entities
 	auto& motions_registry = registry.motions;
 
-	if (registry.players.get(player).is_firing) {
-		// increase the counter of fire length
+	// Handle player firing
+	if (registry.players.get(player).is_firing && !registry.players.get(player).is_reloading) {
+		// Increase the counter of fire length
 		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
-		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms, player);
+
+		// Handle different types of firing depending on the selected weapon
+		switch (registry.players.get(player).weapon_type) {
+		case Player::WeaponType::MACHINE_GUN:
+			// TODO: Logic for firing machine gun
+			createProjectile(
+				renderer, 
+				motions_registry.get(player).position, 
+				motions_registry.get(player).look_angle - M_PI / 2, 
+				uniform_dist(rng), 
+				registry.players.get(player).fire_length_ms, 
+				player);
+			break;
+
+		case Player::WeaponType::SNIPER:
+			// TODO: Logic for firing sniper
+			createProjectile(
+				renderer,
+				motions_registry.get(player).position,
+				motions_registry.get(player).look_angle - M_PI / 2,
+				uniform_dist(rng),
+				registry.players.get(player).fire_length_ms,
+				player);
+			break;
+
+		case Player::WeaponType::SHOTGUN:
+			// TODO: Logic for firing shotgun
+			createProjectile(
+				renderer,
+				motions_registry.get(player).position,
+				motions_registry.get(player).look_angle - M_PI / 2,
+				uniform_dist(rng),
+				registry.players.get(player).fire_length_ms,
+				player);
+			break;
+
+		default:
+			// Handle an unknown weapon type (should never reach here, hopefully...)
+			break;
+		}
 	}
+
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
@@ -415,12 +456,11 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			// TODO: initiate reload
 		}
 		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-			// TODO: Change weapon (scroll up)
+			cycleWeapon(-1);  // Cycle to the previous weapon
 		}
 		if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-			// TODO: Change weapon (scroll down)
+			cycleWeapon(1);  // Cycle to the next weapon
 		}
-
 
 		// MOVEMENT CONTROLS
 		if (key == GLFW_KEY_W) {
@@ -457,6 +497,49 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		}
 	}
 
+}
+
+// Function to cycle player weapons (-1 for previous, 1 for next)
+void WorldSystem::cycleWeapon(int direction) {
+	// Get the current player's weapon type
+	Player::WeaponType currentWeapon = registry.players.get(player).weapon_type;
+
+	// Get the total number of weapon types
+	int numWeapons = static_cast<int>(Player::WeaponType::TOTAL_WEAPON_TYPES);
+
+	// Calculate the new weapon index
+	int newWeaponIndex = static_cast<int>(currentWeapon) + direction;
+	if (newWeaponIndex < 0) {
+		newWeaponIndex = numWeapons - 1;  // Wrap around to the last weapon
+	}
+	else if (newWeaponIndex >= numWeapons) {
+		newWeaponIndex = 0;  // Wrap around to the first weapon
+	}
+
+	// Set the new weapon type
+	Player::WeaponType newWeapon = static_cast<Player::WeaponType>(newWeaponIndex);
+	registry.players.get(player).weapon_type = newWeapon;
+	
+	// Convert the enum value to a string for printing
+	std::string weaponString;
+	switch (newWeapon) {
+	case Player::WeaponType::MACHINE_GUN:
+		weaponString = "Machine Gun";
+		break;
+	case Player::WeaponType::SNIPER:
+		weaponString = "Sniper";
+		break;
+	case Player::WeaponType::SHOTGUN:
+		weaponString = "Shotgun";
+		break;
+	default:
+		weaponString = "Unknown Weapon";
+		break;
+	}
+
+	// TODO: Update the HUD with the current weapon (maybe just text for A2, we can add icons later)
+	// Print the current weapon
+	std::cout << "Current Weapon: " << weaponString << std::endl;
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {

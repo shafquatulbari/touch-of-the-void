@@ -37,6 +37,8 @@ public:
 	// Check for collisions
 	void handle_collisions();
 
+	void cycleWeapon(int direction);
+
 	void bounce_back(Entity player, Entity obstacle);
 
 	// Should the game be over ?
