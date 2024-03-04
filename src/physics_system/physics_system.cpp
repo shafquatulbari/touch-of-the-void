@@ -14,22 +14,162 @@ vec2 get_bounding_box(const Motion &motion)
 	return {x_scale, y_scale};
 }
 
+bool sat_collision_check(Entity e1, Entity e2) {
+	Motion& m1 = registry.motions.get(e1);
+	Motion& m2 = registry.motions.get(e2);
+
+	std::vector<vec2> e1_pts;
+	std::vector<vec2> e2_pts;
+
+	if (registry.meshPtrs.has(e1)) {
+		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e1)->vertices;
+		Transform t;
+		t.translate(m1.position);
+		t.rotate(m1.look_angle);
+		t.scale(m1.scale);
+
+		for (int i = 0; i < vertices.size(); i++) {
+			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
+			e1_pts.push_back({vert.x, vert.y});
+		}
+
+	} else {
+		e1_pts.push_back(vec2({ m1.position.x - m1.scale.x / 2, m1.position.y - m1.scale.y / 2 })); // top-left
+		e1_pts.push_back(vec2({ m1.position.x + m1.scale.x / 2, m1.position.y - m1.scale.y / 2 })); // top-right
+		e1_pts.push_back(vec2({ m1.position.x + m1.scale.x / 2, m1.position.y + m1.scale.y / 2 })); // bottom-right
+		e1_pts.push_back(vec2({ m1.position.x - m1.scale.x / 2, m1.position.y + m1.scale.y / 2 })); // bottom-left
+	}
+
+	if (registry.meshPtrs.has(e2)) {
+		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e2)->vertices;
+		Transform t;
+		t.translate(m2.position);
+		t.rotate(m2.look_angle);
+		t.scale(m2.scale);
+
+		for (int i = 0; i < vertices.size(); i++) {
+			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
+			e2_pts.push_back({ vert.x, vert.y });
+		}
+
+	} else {
+		e2_pts.push_back(vec2({ m2.position.x - m2.scale.x / 2, m2.position.y - m2.scale.y / 2 })); // top-left
+		e2_pts.push_back(vec2({ m2.position.x + m2.scale.x / 2, m2.position.y + m2.scale.y / 2 })); // top-right
+		e2_pts.push_back(vec2({ m2.position.x + m2.scale.x / 2, m2.position.y + m2.scale.y / 2 })); // bottom-right
+		e2_pts.push_back(vec2({ m2.position.x - m2.scale.x / 2, m2.position.y - m2.scale.y / 2 })); // bottom-left
+	}
+
+	std::vector<vec2> e1_normals;
+	std::vector<vec2> e2_normals;
+
+	for (int i = e1_pts.size() - 1; i >= 0; i--) {
+		vec2& p1 = e1_pts[i];
+		vec2& p2 = e1_pts[(i + 1) % e1_pts.size()];
+		
+		e1_normals.push_back(vec2({ -(p2.y - p1.y), p2.x - p1.x }));
+	}
+
+	for (int i = e2_pts.size() - 1; i >= 0; i--) {
+		vec2& p1 = e2_pts[i];
+		vec2& p2 = e2_pts[(i + 1) % e2_pts.size()];
+
+		e2_normals.push_back(vec2({ -(p2.y - p1.y), p2.x - p1.x }));
+	}
+
+	float min_e1;
+	float max_e1;
+	float min_e2;
+	float max_e2;
+
+	for (vec2& n : e1_normals) {
+		min_e1 = glm::dot(e1_pts[0], n);
+		max_e1 = min_e1;
+		min_e2 = glm::dot(e2_pts[0], n);
+		max_e2 = min_e2;
+
+		for (int i = 1; i < e1_pts.size(); i++) {
+			float dot_prod = glm::dot(e1_pts[i], n);
+			if (dot_prod < min_e1) {
+				min_e1 = dot_prod;
+			} else if (dot_prod > max_e1) {
+				max_e1 = dot_prod;
+			}
+		}
+
+		for (int i = 1; i < e2_pts.size(); i++) {
+			float dot_prod = glm::dot(e2_pts[i], n);
+			if (dot_prod < min_e2) {
+				min_e2 = dot_prod;
+			} else if (dot_prod > max_e2) {
+				max_e2 = dot_prod;
+			}
+		}
+
+		if (min_e1 > max_e2 || min_e2 > max_e1) {
+			return false;
+		}
+	}
+
+	
+	for (vec2& n : e2_normals) {
+		min_e1 = glm::dot(e1_pts[0], n);
+		max_e1 = min_e1;
+		min_e2 = glm::dot(e2_pts[0], n);
+		max_e2 = min_e2;
+
+		for (int i = 1; i < e1_pts.size(); i++) {
+			float dot_prod = glm::dot(e1_pts[i], n);
+			if (dot_prod < min_e1) {
+				min_e1 = dot_prod;
+			} else if (dot_prod > max_e1) {
+				max_e1 = dot_prod;
+			}
+		}
+
+		for (int i = 1; i < e2_pts.size(); i++) {
+			float dot_prod = glm::dot(e2_pts[i], n);
+			if (dot_prod < min_e2) {
+				min_e2 = dot_prod;
+			} else if (dot_prod > max_e2) {
+				max_e2 = dot_prod;
+			}
+		}
+
+		if (min_e1 > max_e2 || min_e2 > max_e1) {
+			return false;
+		}
+	}
+
+	return true;
+ }
+
+ bool aabb_collision_check(const Motion& motion1, const Motion& motion2) {
+	 const float& x1 = motion1.position.x;
+	 const float& y1 = motion1.position.y;
+	 const float& w1 = abs(abs(motion1.scale.x) * cos(motion1.look_angle) + abs(motion1.scale.y) * sin(motion1.look_angle));
+	 const float& h1 = abs(abs(motion1.scale.x) * sin(motion1.look_angle) + abs(motion1.scale.y) * cos(motion1.look_angle));
+
+	 const float& x2 = motion2.position.x;
+	 const float& y2 = motion2.position.y;
+	 const float& w2 = abs(abs(motion2.scale.x) * cos(motion2.look_angle) + abs(motion2.scale.y) * sin(motion2.look_angle));
+	 const float& h2 = abs(abs(motion2.scale.x) * sin(motion2.look_angle) + abs(motion2.scale.y) * cos(motion2.look_angle));
+
+	 return
+		 (x1 - 0.5f * w1 < x2 + 0.5f * w2 && y1 - 0.5f * h1 < y2 + 0.5 * h2) &&
+		 (x2 - 0.5f * w2 < x1 + 0.5f * w1 && y2 - 0.5f * h2 < y1 + 0.5f * h1);
+}
+
 // Returns whether two entities collide based on AABB collision detection
-bool collides(const Motion &motion1, const Motion &motion2)
+bool collides(const Entity entity1, const Entity entity2)
 {
-	const float& x1 = motion1.position.x;
-	const float& y1 = motion1.position.y;
-	const float& w1 = abs(abs(motion1.scale.x) * cos(motion1.look_angle) + abs(motion1.scale.y) * sin(motion1.look_angle));
-	const float& h1 = abs(abs(motion1.scale.x) * sin(motion1.look_angle) + abs(motion1.scale.y) * cos(motion1.look_angle));
+	Motion& m1 = registry.motions.get(entity1);
+	Motion& m2 = registry.motions.get(entity2);
 
-	const float& x2 = motion2.position.x;
-	const float& y2 = motion2.position.y;
-	const float& w2 = abs(abs(motion2.scale.x) * cos(motion2.look_angle) + abs(motion2.scale.y) * sin(motion2.look_angle));
-	const float& h2 = abs(abs(motion2.scale.x) * sin(motion2.look_angle) + abs(motion2.scale.y) * cos(motion2.look_angle));
+	if (!aabb_collision_check(m1, m2)) {
+		return false;
+	}
 
-	return
-		(x1 - 0.5f*w1 < x2 + 0.5f*w2 && y1 - 0.5f*h1 < y2 + 0.5*h2) &&
-		(x2 - 0.5f*w2 < x1 + 0.5f*w1 && y2 - 0.5f*h2 < y1 + 0.5f*h1);
+	return sat_collision_check(entity1, entity2);
 }
 
 void update_motion(Motion &motion, float step_seconds)
@@ -147,13 +287,21 @@ void PhysicsSystem::step(float elapsed_ms)
 		Motion &motion_i = motion_container.components[i];
 		Entity entity_i = motion_container.entities[i];
 
+		if (registry.noCollisionChecks.has(entity_i)) {
+			continue;
+		}
+
 		// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 		for (uint j = i + 1; j < motion_container.components.size(); j++)
 		{
-			Motion &motion_j = motion_container.components[j];
-			if (collides(motion_i, motion_j))
+			Entity entity_j = motion_container.entities[j];	
+
+			if (registry.noCollisionChecks.has(entity_j)) {
+				continue;
+			}
+
+			if (collides(entity_i, entity_j))
 			{
-				Entity entity_j = motion_container.entities[j];
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
 				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
