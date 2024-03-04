@@ -182,6 +182,21 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+struct Text
+{
+	std::string content;
+	vec3 color;
+};
+
+// A structure to store the font data of a single character
+struct Character {
+	unsigned int TextureID;  // ID handle of the glyph texture
+	glm::ivec2   Size;       // Size of glyph
+	glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
+	unsigned int Advance;    // Offset to advance to next glyph
+	char character;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -223,6 +238,12 @@ enum class TEXTURE_ASSET_ID {
 	TEXTURE_COUNT = PLAYER + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
+
+enum class FONT_ASSET_ID {
+	VERMIN_VIBES_1989 = 0,
+	FONT_COUNT = VERMIN_VIBES_1989 + 1
+};
+const int font_count = (int)FONT_ASSET_ID::FONT_COUNT;
 
 enum class EFFECT_ASSET_ID {
 	COLOURED = 0,
