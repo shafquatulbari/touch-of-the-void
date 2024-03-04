@@ -37,7 +37,7 @@ public:
 	// Check for collisions
 	void handle_collisions();
 
-	void cycleWeapon(int direction);
+	void cycle_weapon(int direction);
 
 	void bounce_back(Entity player, Entity obstacle);
 
@@ -65,8 +65,12 @@ private:
 	// TODO: Global game state goes here
 	float current_speed;
 	Entity player;
+	
+	// HUD
+	Entity weapon_text;
+	Entity ammo_text;
 
-	//FPS 
+	// FPS 
 	float fps;
 	float maxFps;
 	float frameTime;

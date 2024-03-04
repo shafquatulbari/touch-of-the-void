@@ -180,6 +180,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			// Handle an unknown weapon type (should never reach here, hopefully...)
 			break;
 		}
+		registry.players.get(player).ammo_count -= 1;
+		registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(registry.players.get(player).ammo_count) + " / " + std::to_string(registry.players.get(player).magazine_sizes[registry.players.get(player).weapon_type]);
+
+		if (registry.players.get(player).ammo_count <= 0) {
+			// TODO HANDLE RELOAD
+
+		}
 	}
 
 	// Remove entities that leave the screen on the left side
@@ -300,9 +307,12 @@ void WorldSystem::restart_game() {
 	// Create a level
 	createBackground(renderer);
 
-	createText(renderer, "hello world", { window_width_px / 2, 0 }, 2.f, {1, 0, 0});
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
+
+	// Create HUD
+	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 400.0f}, 0.5f, { 0.26f, 0.97f, 0.19f });
+	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 360.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
 }
 
 // Compute collisions between entities
@@ -457,10 +467,10 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 			// TODO: initiate reload
 		}
 		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-			cycleWeapon(-1);  // Cycle to the previous weapon
+			cycle_weapon(-1);  // Cycle to the previous weapon
 		}
 		if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-			cycleWeapon(1);  // Cycle to the next weapon
+			cycle_weapon(1);  // Cycle to the next weapon
 		}
 
 		// MOVEMENT CONTROLS
@@ -501,7 +511,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 }
 
 // Function to cycle player weapons (-1 for previous, 1 for next)
-void WorldSystem::cycleWeapon(int direction) {
+void WorldSystem::cycle_weapon(int direction) {
 	// Get the current player's weapon type
 	Player::WeaponType currentWeapon = registry.players.get(player).weapon_type;
 
@@ -525,22 +535,23 @@ void WorldSystem::cycleWeapon(int direction) {
 	std::string weaponString;
 	switch (newWeapon) {
 	case Player::WeaponType::MACHINE_GUN:
-		weaponString = "Machine Gun";
+		weaponString = "Weapon: Machine Gun";
 		break;
 	case Player::WeaponType::SNIPER:
-		weaponString = "Sniper";
+		weaponString = "Weapon: Sniper";
 		break;
 	case Player::WeaponType::SHOTGUN:
-		weaponString = "Shotgun";
+		weaponString = "Weapon: Shotgun";
 		break;
 	default:
 		weaponString = "Unknown Weapon";
 		break;
 	}
 
-	// TODO: Update the HUD with the current weapon (maybe just text for A2, we can add icons later)
 	// Print the current weapon
 	std::cout << "Current Weapon: " << weaponString << std::endl;
+	registry.texts.get(weapon_text).content = weaponString;
+	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(registry.players.get(player).ammo_count) + " / " + std::to_string(registry.players.get(player).magazine_sizes[registry.players.get(player).weapon_type]);
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {

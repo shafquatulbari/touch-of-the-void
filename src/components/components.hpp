@@ -22,17 +22,18 @@ struct Player
 
 	// Magazine sizes for each weapon
 	std::unordered_map<WeaponType, int> magazine_sizes = {
-		{WeaponType::MACHINE_GUN, 100},
-		{WeaponType::SNIPER, 5},
-		{WeaponType::SHOTGUN, 20},
+		{WeaponType::MACHINE_GUN, 50},
+		{WeaponType::SNIPER, 1},
+		{WeaponType::SHOTGUN, 2},
 		// Add more weapon types and their magazine sizes here
 	};
 
 	WeaponType weapon_type = WeaponType::MACHINE_GUN;
-	int current_magazine_size;
+	int max_ammo_count;
+	int ammo_count;
 
 	// Constructor to set the initial magazine size
-	Player() : current_magazine_size(magazine_sizes[weapon_type]) {}
+	Player() : max_ammo_count(magazine_sizes[weapon_type]) {}
 };
 
 // Obstacle component
