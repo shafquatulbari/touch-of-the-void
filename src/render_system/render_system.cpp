@@ -73,8 +73,10 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 			// Get the current frame
 			int current_frame = animation.current_frame;
 			// Get the texture id of the current frame
+			SPRITE_SHEET_ID sheet_id = animation.sheet_id;
 			std::pair<int, int> spriteLocation = animation.sprites[current_frame];
-			Sprite& sprite = m_ftSprites[spriteLocation];
+			std::map<std::pair<int, int>, Sprite>& spriteSheet = m_ftSpriteSheets[(int)sheet_id];
+			Sprite& sprite = spriteSheet[spriteLocation];
 
 			glBindTexture(GL_TEXTURE_2D, sprite.TextureID);
 
@@ -140,9 +142,10 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		Animation& animation = registry.animations.get(entity);
 		int current_frame = animation.current_frame;
 
-		// Get the texture id of the current frame
+		SPRITE_SHEET_ID sheet_id = animation.sheet_id;
 		std::pair<int, int> spriteLocation = animation.sprites[current_frame];
-		Sprite& sprite = m_ftSprites[spriteLocation];
+		std::map<std::pair<int, int>, Sprite>& spriteSheet = m_ftSpriteSheets[(int)sheet_id];
+		Sprite& sprite = spriteSheet[spriteLocation];
 
 		GLuint x_min_loc = glGetUniformLocation(currProgram, "minTexcoord");
 		GLuint x_max_loc = glGetUniformLocation(currProgram, "maxTexcoord");

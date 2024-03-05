@@ -22,8 +22,8 @@ class RenderSystem {
 	std::array<ivec2, texture_count> texture_dimensions;
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
-		//ivec2(6,1)
-		ivec2(12,1)
+		ivec2(12,1),
+		ivec2(6,1)
 	};
 	std::array<ivec2, sheet_count> sheet_dimensions;
 
@@ -73,8 +73,8 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
 		//sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
-		//sheets_path("exploding_skull_32x32.png"),
 		sheets_path("explosion_96x96.png"),
+		sheets_path("exploding_skull_32x32.png")
 		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
@@ -153,6 +153,6 @@ private:
 	GLuint m_font_VBO;
 
 	// Sprite Sheets
-	// links a sprite struct to its row and column in the sprite sheet
-	std::map<std::pair<int, int>, Sprite> m_ftSprites;
+
+	std::array<std::map<std::pair<int, int>, Sprite>, sheet_count> m_ftSpriteSheets;
 };

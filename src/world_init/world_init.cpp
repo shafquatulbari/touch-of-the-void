@@ -57,7 +57,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
@@ -326,6 +326,7 @@ Entity createExplosion(RenderSystem* render, vec2 pos, bool repeat)
 
 	assert(!registry.animations.has(entity));
 	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::EXPLOSION;
 	animation.total_frames = 12;
 	animation.current_frame = 0;
 	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };

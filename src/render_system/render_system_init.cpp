@@ -155,7 +155,8 @@ void RenderSystem::initializeGlSheets()
 				vec2 texcoord_max = { (x_offset + sprite_width) / dimensions.x, (y_offset + sprite_height) / dimensions.y };
 
 				Sprite sprite = { texture, texcoord_min, texcoord_max };
-				m_ftSprites.insert(std::pair<std::pair<int, int>, Sprite>(std::pair<int, int>(x, y), sprite)); // TODO: change this data type as it can't handle multiple sheets
+
+				m_ftSpriteSheets[i].insert(std::pair<std::pair<int, int>, Sprite>({ x, y }, sprite));
 			}
 		}
 		stbi_image_free(data);
