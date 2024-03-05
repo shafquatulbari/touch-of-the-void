@@ -55,6 +55,7 @@ public:
 		registry_list.push_back(&texts);
 		registry_list.push_back(&ais);
 		registry_list.push_back(&animations);
+		registry_list.push_back(&animationTimers);
 	}
 
 	void clear_all_components() {

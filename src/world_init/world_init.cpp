@@ -57,7 +57,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	registry.obstacles.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE });
 
