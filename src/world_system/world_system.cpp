@@ -240,6 +240,41 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// reduce window brightness if any of the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
+	for (Entity entity : registry.animationTimers.entities) {
+				// progress timer
+		AnimationTimer& counter = registry.animationTimers.get(entity);
+		if (!registry.animations.has(entity)) {
+			registry.animationTimers.remove(entity);
+			continue;
+		}
+		Animation& animation = registry.animations.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+
+		if (counter.counter_ms < 0) {
+			registry.animationTimers.remove(entity);
+			// check if finished
+			if (animation.current_frame == animation.total_frames - 1) {
+				if (animation.loop) {
+					// restart animation
+					animation.current_frame = 0;
+					AnimationTimer& timer = registry.animationTimers.emplace(entity);
+					timer.counter_ms = animation.frame_durations_ms[0];
+				}
+				else {
+					// done animating
+					registry.remove_all_components_of(entity);
+				}
+			}
+			else {
+				// progress to next frame
+				animation.current_frame++;
+				registry.animationTimers.remove(entity);
+				AnimationTimer& timer = registry.animationTimers.emplace(entity);
+				timer.counter_ms = animation.frame_durations_ms[animation.current_frame];
+			}
+		}
+	}
+
 	// heal obstacles over time
 	for (auto& obstacle : registry.obstacles.entities) {
         if (registry.healths.has(obstacle)) {
@@ -370,6 +405,11 @@ void WorldSystem::handle_collisions() {
 					Health& enemyHealth = registry.healths.get(entity_other);
 					enemyHealth.current_health -= deadly.damage;
 					if (enemyHealth.current_health <= 0) {
+						// enemy is dead, trigger an explosion animation
+						if (registry.motions.has(entity_other)) {
+							Motion& motion = registry.motions.get(entity_other);
+							createExplosion(renderer, motion.position, false); // Create explosion
+						}
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
 						score++;
 						registry.texts.get(score_text).content = "Score: " + std::to_string(score);

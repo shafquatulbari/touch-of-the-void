@@ -37,8 +37,6 @@ int main()
 
 	renderer.initializeFonts();
 
-	printf("Initialization successful\n");
-
 	// variable timestep loop
 	auto t = Clock::now();
 	while (!world.is_over()) {
@@ -55,7 +53,6 @@ int main()
 		ai.step(elapsed_ms);
 		physics.step(elapsed_ms);
 		world.handle_collisions();
-
 
 		renderer.draw();
 

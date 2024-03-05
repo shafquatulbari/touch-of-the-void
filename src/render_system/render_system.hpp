@@ -19,7 +19,13 @@ class RenderSystem {
 	 * it is easier to debug and faster to execute for the computer.
 	 */
 	std::array<GLuint, texture_count> texture_gl_handles;
-	std::array<ivec2, texture_count> texture_dimensions; 
+	std::array<ivec2, texture_count> texture_dimensions;
+	// number of sprites per row and column in the sprite sheet
+	std::array<ivec2, sheet_count> sheet_sprite_count = {
+		ivec2(12,1),
+		ivec2(6,1)
+	};
+	std::array<ivec2, sheet_count> sheet_dimensions;
 
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	// Associated id with .obj path
@@ -63,6 +69,18 @@ class RenderSystem {
 		fonts_path("Vermin_Vibes_1989.ttf")
 	};
 
+	std::array<GLuint, sheet_count> sheets;
+	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
+	const std::array<std::string, sheet_count> sheet_paths = {
+		//sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("explosion_96x96.png"),
+		sheets_path("exploding_skull_32x32.png")
+		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
+		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
+		//sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
+		//sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")
+	};
+
 	std::array<GLuint, geometry_count> vertex_buffers;
 	std::array<GLuint, geometry_count> index_buffers;
 	std::array<Mesh, geometry_count> meshes;
@@ -75,6 +93,8 @@ public:
 	void bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices);
 
 	void initializeGlTextures();
+
+	void initializeGlSheets();
 
 	void initializeGlEffects();
 
@@ -131,4 +151,8 @@ private:
 	GLuint m_font_shaderProgram;
 	GLuint m_font_VAO;
 	GLuint m_font_VBO;
+
+	// Sprite Sheets
+
+	std::array<std::map<std::pair<int, int>, Sprite>, sheet_count> m_ftSpriteSheets;
 };
