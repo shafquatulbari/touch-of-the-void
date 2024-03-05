@@ -73,6 +73,8 @@ private:
 	Entity player_hp_text;
 	Entity weapon_text;
 	Entity ammo_text;
+	Entity score_text;
+	int score;
 
 	// FPS 
 	Entity fps_text;

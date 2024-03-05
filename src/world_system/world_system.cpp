@@ -140,8 +140,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	auto& motions_registry = registry.motions;
 
+	// WEAPON SYSTEM
 	Player& p = registry.players.get(player);
-	// Handle player firing
+	Motion& p_m = registry.motions.get(player);
+	// Handle reloading
 	if (p.is_reloading) {
 		registry.texts.get(ammo_text).content = "Ammo: Reloading...";
 		p.reload_timer_ms -= elapsed_ms_since_last_update;
@@ -154,6 +156,42 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 		}
 	}
+	// Handle firing
+	if (p.is_firing && !p.is_reloading) {
+		p.fire_length_ms += elapsed_ms_since_last_update;
+		if (p.fire_rate_timer_ms <= 0) {
+			p.fire_rate_timer_ms = p.fire_rates[p.weapon_type];
+			switch (registry.players.get(player).weapon_type)
+			{
+			case Player::WeaponType::MACHINE_GUN:
+				createProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				break;
+
+			case Player::WeaponType::SNIPER:
+				createSniperProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				break;
+
+			case Player::WeaponType::SHOTGUN:
+				for (int i = 0; i < 10; i++) {
+					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
+				}
+				break;
+
+			default:
+				// Handle an unknown weapon type (should never reach here, hopefully...)
+				break;
+			}
+			registry.players.get(player).ammo_count -= 1;
+			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+
+			if (p.ammo_count <= 0) {
+				p.is_reloading = true;
+			}
+		}
+		else {
+			p.fire_rate_timer_ms -= elapsed_ms_since_last_update;
+		}
+	}
 
 	// Removing out of screen entities
 	// Remove entities that leave the screen on the left side
@@ -161,12 +199,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	// (the containers exchange the last element with the current)
 	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
 		Motion& motion = motions_registry.components[i];
+		Entity& entity = motions_registry.entities[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-			if (!registry.players.has(motions_registry.entities[i])) // don't remove the player
-				registry.remove_all_components_of(motions_registry.entities[i]);
+			if (!registry.players.has(entity)) // don't remove the player
+				registry.remove_all_components_of(entity);
 		}
 
-		if (registry.projectiles.has(motions_registry.entities[i])) {
+		if (registry.projectiles.has(entity)) {
 			// max_position from physics_system.cpp and replaced game_window_block_size 
 			// with the entity's width and height
 			float max_position_x = (game_window_size_px / 2) - (motion.scale.x / 2);
@@ -175,7 +214,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 				abs(motion.position.x - (window_width_px / 2)) >= max_position_x ||
 				abs(motion.position.y - (window_height_px / 2)) >= max_position_y
 			)
-					registry.remove_all_components_of(motions_registry.entities[i]);
+					registry.remove_all_components_of(entity);
 		}
 	}
 
@@ -289,17 +328,19 @@ void WorldSystem::restart_game() {
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 	registry.players.get(player).current_room = starting_room;
 	// Tutorial Text
-	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, COLOR_WHITE);
+	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, COLOR_WHITE);
 
 	// Create HUD
-	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, { 1.0f, 0.15f, 0.15f });
-	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, { 0.26f, 0.97f, 0.19f });
-	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
+	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, COLOR_RED);
+	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, COLOR_GREEN);
+	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
+	score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
+	score = 0;
 
 	// FPS
 	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
@@ -451,7 +492,8 @@ void WorldSystem::handle_collisions() {
 						current_room.enemy_count--;
 						// remove the first element in enemy set 
 						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
-						
+						score++;
+						registry.texts.get(score_text).content = "Score: " + std::to_string(score);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -680,61 +722,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 
 	if (button == left_click) {
 		if (action == press) {
-			if (!registry.players.get(player).is_reloading) {
-				switch (registry.players.get(player).weapon_type) {
-				case Player::WeaponType::MACHINE_GUN:
-					// TODO: Logic for firing machine gun
-					createProjectile(
-						renderer,
-						registry.motions.get(player).position,
-						registry.motions.get(player).look_angle - M_PI / 2,
-						uniform_dist(rng),
-						registry.players.get(player).fire_length_ms,
-						player);
-					break;
-
-				case Player::WeaponType::SNIPER:
-					// TODO: Logic for firing sniper
-					createProjectile(
-						renderer,
-						registry.motions.get(player).position,
-						registry.motions.get(player).look_angle - M_PI / 2,
-						uniform_dist(rng),
-						registry.players.get(player).fire_length_ms,
-						player);
-					break;
-
-				case Player::WeaponType::SHOTGUN:
-					// TODO: Logic for firing shotgun
-					createProjectile(
-						renderer,
-						registry.motions.get(player).position,
-						registry.motions.get(player).look_angle - M_PI / 2,
-						uniform_dist(rng),
-						registry.players.get(player).fire_length_ms,
-						player);
-					break;
-
-				default:
-					// Handle an unknown weapon type (should never reach here, hopefully...)
-					break;
-				}
-				std::cout << registry.players.get(player).ammo_count << std::endl;
-				registry.players.get(player).ammo_count -= 1;
-
-				registry.texts.get(ammo_text).content =
-					"Ammo: " +
-					std::to_string(registry.players.get(player).ammo_count) +
-					" / " +
-					std::to_string(registry.players.get(player).magazine_sizes[registry.players.get(player).weapon_type]);
-
-				if (registry.players.get(player).ammo_count <= 0) {
-					registry.players.get(player).is_reloading = true;
-				}
-
-				// player is firing 
-				//registry.players.get(player).is_firing = true;
-			}
+			registry.players.get(player).is_firing = true;
 		}
 		else if (action == release) {
 			registry.players.get(player).is_firing = false;

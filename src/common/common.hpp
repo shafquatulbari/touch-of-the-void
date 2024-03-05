@@ -39,6 +39,11 @@ const int game_window_size_px = 480;
 // game window block size, width and height
 const int game_window_block_size = 32;
 
+// Colors
+const vec3 COLOR_WHITE = vec3(1.0f, 1.0f, 1.0f);
+const vec3 COLOR_RED = vec3(1.0f, 0.15f, 0.15f);
+const vec3 COLOR_GREEN = vec3(0.26f, 0.97f, 0.19f);
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif

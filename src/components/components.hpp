@@ -52,9 +52,6 @@ struct Room {
 // Player component
 struct Player
 {
-	bool is_firing = false; // player is currently firing projectiles
-	float fire_length_ms = 0.0f; // time the player has been firing
-
 	enum class WeaponType {
 		MACHINE_GUN,
 		SNIPER,
@@ -66,20 +63,31 @@ struct Player
 
 	// Magazine sizes for each weapon
 	std::unordered_map<WeaponType, int> magazine_sizes = {
-		{WeaponType::MACHINE_GUN, 50},
+		{WeaponType::MACHINE_GUN, 100},
 		{WeaponType::SNIPER, 1},
-		{WeaponType::SHOTGUN, 2},
+		{WeaponType::SHOTGUN, 6},
 		// Add more weapon types and their magazine sizes here
 	};
 
 	// Reload times for each weapon
 	std::unordered_map<WeaponType, float> reload_times = {
-		{WeaponType::MACHINE_GUN, 4000.0f},
+		{WeaponType::MACHINE_GUN, 3000.0f},
 		{WeaponType::SNIPER, 1000.0f},
-		{WeaponType::SHOTGUN, 1000.0f},
+		{WeaponType::SHOTGUN, 2000.0f},
 		// Add more weapon types and their reload times here
 	};
 
+	// Time between each bullet
+	std::unordered_map<WeaponType, float> fire_rates = {
+		{WeaponType::MACHINE_GUN, 40.0f},
+		{WeaponType::SNIPER, 0.0f},
+		{WeaponType::SHOTGUN, 200.0f},
+		// Add more weapon types and their fire rates here
+	};
+
+	bool is_firing = false; // player is currently firing projectiles
+	float fire_length_ms = 0.0f; // time the player has been firing
+	float fire_rate_timer_ms = 0.0f; // timer for fully-automatic weapons
 	WeaponType weapon_type = WeaponType::MACHINE_GUN;
 	int max_ammo_count;
 	int ammo_count;
