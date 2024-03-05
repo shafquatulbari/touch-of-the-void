@@ -212,8 +212,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			screen.darken_screen_factor = 0;
 			p.is_moving_rooms = false;
 			// player enters new room
-			enter_room(registry.rooms.get(p.current_room)
-				, { window_width_px / 2, window_height_px / 2});
+		/*	enter_room(registry.rooms.get(p.current_room)
+				, { window_width_px / 2, window_height_px / 2});*/
 			return true;
 		}
 	}
@@ -373,26 +373,41 @@ void WorldSystem::handle_collisions() {
 				if (!player.is_moving_rooms)
 				{
 					player.is_moving_rooms = true;
+					vec2 next_pos;
+					float x_mid = window_width_px / 2;
+					float y_mid = window_height_px / 2;
+					float x_delta = game_window_size_px / 2 - 16;
+					float y_delta = game_window_size_px / 2 - 16;
+					float x_max = x_mid + x_delta;
+					float x_min = x_mid - x_delta;
+					float y_max = y_mid + y_delta;
+					float y_min = y_mid - y_delta;
 					// change to the room that they entered
 					if (obstacle.is_bottom_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).bottom_room;
+						next_pos = { x_mid, y_min + 32 };
 					}
 					else if (obstacle.is_top_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).top_room;
+						next_pos = { x_mid, y_max - 32 };
 					}
 					else if (obstacle.is_left_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).left_room;
+						next_pos = { x_max - 32, y_mid };
 					}
 					else if (obstacle.is_right_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).right_room;
+						next_pos = { x_min + 32, y_mid };
 					}
 				
 					// darken effect
 					registry.roomTransitionTimers.emplace(entity);
+					enter_room(registry.rooms.get(player.current_room)
+						, next_pos);
 				}
 				
 			}
