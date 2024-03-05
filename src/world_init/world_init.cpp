@@ -393,6 +393,18 @@ void render_room(RenderSystem* render, Room& room)
 	}
 
 	createWalls(render, room);
+
+	// Setting initial motion values
+	auto entity = Entity();
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT });
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE });
 }
 
 Entity createRoom(RenderSystem* render)
