@@ -445,6 +445,13 @@ void WorldSystem::handle_collisions() {
 					enemyHealth.current_health -= deadly.damage;
 					if (enemyHealth.current_health <= 0) {
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
+						Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
+
+						// Arbitrarily remove one enemy from the internal room state when an enemy dies.
+						current_room.enemy_count--;
+						// remove the first element in enemy set 
+						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+						
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision

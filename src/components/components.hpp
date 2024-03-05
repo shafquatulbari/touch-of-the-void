@@ -212,7 +212,7 @@ struct DeathTimer
 // A timer that will be associated to player moving rooms
 struct RoomTransitionTimer
 {
-	float counter_ms = 500;
+	float counter_ms = 0;
 };
 
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & chicken.vs.glsl)

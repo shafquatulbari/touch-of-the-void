@@ -11,22 +11,23 @@ Room& WorldGenerator::generateRoom(Room& room)
 {
 	// space is effectively 15x15 since 480/32 = 15 
 	room.is_cleared = true;
-	room.obstacle_count = 8;
-	room.enemy_count = 3;
-	//room.obstacle_positions = {};
-	//room.all_positions = {};
+	
 	std::default_random_engine rng = std::default_random_engine(std::random_device()());
 
-	// number between 1..12 (don't spawn obstacles too close to where we start)
-	std::uniform_real_distribution<float> obstacle_uniform_dist(2,12); 
+	// number between 2..12 (don't spawn obstacles too close to where we start)
+	std::uniform_real_distribution<float> position_uniform_dist(2,12);
 
+	// randomize number of enemies/obstacles per room
+	std::uniform_real_distribution<float> num_positions_uniform_dist(3, 6);
+	room.obstacle_count = num_positions_uniform_dist(rng);
+	room.enemy_count = num_positions_uniform_dist(rng);
 	
 
 	int cur_obstacles_count = 0;
 
 	while (room.obstacle_positions.size() < room.obstacle_count) {
-		int rand_x = std::rint(obstacle_uniform_dist(rng));
-		int rand_y = std::rint(obstacle_uniform_dist(rng));
+		int rand_x = std::rint(position_uniform_dist(rng));
+		int rand_y = std::rint(position_uniform_dist(rng));
 		vec2 position = vec2(rand_x, rand_y);
 		if (!shouldAvoidPosition(position)) {
 			room.obstacle_positions.insert(vec2(rand_x, rand_y));
@@ -35,8 +36,8 @@ Room& WorldGenerator::generateRoom(Room& room)
 	}
 
 	while (room.enemy_positions.size() < room.enemy_count) {
-		int rand_x = std::rint(obstacle_uniform_dist(rng));
-		int rand_y = std::rint(obstacle_uniform_dist(rng));
+		int rand_x = std::rint(position_uniform_dist(rng));
+		int rand_y = std::rint(position_uniform_dist(rng));
 		vec2 position = vec2(rand_x, rand_y);
 		// if something is not already in this position and it's not too close to the middle, add it
 		if (!room.all_positions.count(position) == 1 && !shouldAvoidPosition(position)) {
