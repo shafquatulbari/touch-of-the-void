@@ -37,6 +37,8 @@ public:
 	// Check for collisions
 	void handle_collisions();
 
+	void cycle_weapon(int direction);
+
 	void bounce_back(Entity player, Entity obstacle);
 
 	// Should the game be over ?
@@ -63,8 +65,16 @@ private:
 	// TODO: Global game state goes here
 	float current_speed;
 	Entity player;
+	
+	// HUD
+	Entity player_hp_text;
+	Entity weapon_text;
+	Entity ammo_text;
+	Entity score_text;
+	int score;
 
-	//FPS 
+	// FPS 
+	Entity fps_text;
 	float fps;
 	float maxFps;
 	float frameTime;

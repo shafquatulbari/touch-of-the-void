@@ -133,25 +133,79 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
-	// Removing out of screen entities
+	// Update HUD
+	int roundedHealth = static_cast<int>(registry.healths.get(player).current_health); // round to nearest int so the HUD doesn't get cluttered
+	std::string healthText = "HP: " + std::to_string(roundedHealth) + " / 100";
+	registry.texts.get(player_hp_text).content = healthText;
+
 	auto& motions_registry = registry.motions;
 
-	if (registry.players.get(player).is_firing) {
-		// increase the counter of fire length
-		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
-		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms, player);
+	// WEAPON SYSTEM
+	Player& p = registry.players.get(player);
+	Motion& p_m = registry.motions.get(player);
+	// Handle reloading
+	if (p.is_reloading) {
+		registry.texts.get(ammo_text).content = "Ammo: Reloading...";
+		p.reload_timer_ms -= elapsed_ms_since_last_update;
+
+		if (p.reload_timer_ms < 0) {
+			// Reload complete, refill ammo
+			p.is_reloading = false;
+			p.reload_timer_ms = p.reload_times[p.weapon_type];
+			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
+			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+		}
 	}
+	// Handle firing
+	if (p.is_firing && !p.is_reloading) {
+		p.fire_length_ms += elapsed_ms_since_last_update;
+		if (p.fire_rate_timer_ms <= 0) {
+			p.fire_rate_timer_ms = p.fire_rates[p.weapon_type];
+			switch (registry.players.get(player).weapon_type)
+			{
+			case Player::WeaponType::MACHINE_GUN:
+				createProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				break;
+
+			case Player::WeaponType::SNIPER:
+				createSniperProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				break;
+
+			case Player::WeaponType::SHOTGUN:
+				for (int i = 0; i < 10; i++) {
+					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
+				}
+				break;
+
+			default:
+				// Handle an unknown weapon type (should never reach here, hopefully...)
+				break;
+			}
+			registry.players.get(player).ammo_count -= 1;
+			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+
+			if (p.ammo_count <= 0) {
+				p.is_reloading = true;
+			}
+		}
+		else {
+			p.fire_rate_timer_ms -= elapsed_ms_since_last_update;
+		}
+	}
+
+	// Removing out of screen entities
 	// Remove entities that leave the screen on the left side
 	// Iterate backwards to be able to remove without unterfering with the next object to visit
 	// (the containers exchange the last element with the current)
 	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
 		Motion& motion = motions_registry.components[i];
+		Entity& entity = motions_registry.entities[i];
 		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-			if (!registry.players.has(motions_registry.entities[i])) // don't remove the player
-				registry.remove_all_components_of(motions_registry.entities[i]);
+			if (!registry.players.has(entity)) // don't remove the player
+				registry.remove_all_components_of(entity);
 		}
 
-		if (registry.projectiles.has(motions_registry.entities[i])) {
+		if (registry.projectiles.has(entity)) {
 			// max_position from physics_system.cpp and replaced game_window_block_size 
 			// with the entity's width and height
 			float max_position_x = (game_window_size_px / 2) - (motion.scale.x / 2);
@@ -160,7 +214,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 				abs(motion.position.x - (window_width_px / 2)) >= max_position_x ||
 				abs(motion.position.y - (window_height_px / 2)) >= max_position_y
 			)
-					registry.remove_all_components_of(motions_registry.entities[i]);
+					registry.remove_all_components_of(entity);
 		}
 	}
 
@@ -231,41 +285,33 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			}
         }
     }
-	// measure the current frame time
-	float startTicks = SDL_GetTicks();
 
-	fpsCalculate();
-
-	static int frameCounter = 0;
-	frameCounter++;
-	//update fps every 50 frames 
-	if (frameCounter == 25) {
-		//std::cout << "FPS: "<<  fps << std::endl;
-
-		std::stringstream ss;
-		ss << "Touch of the Void" << " [FPS: " << std::floor(fps) << "]";
-		glfwSetWindowTitle(window, ss.str().c_str());
-
-		frameCounter = 0;
-	}
-
-	float frameTicks = SDL_GetTicks() - startTicks;
-
-
-	//fps limiter. 
-	/*if ((1000.0f / maxFps) > frameTicks) {
-		SDL_Delay((1000.0f / maxFps) - frameTicks);
-	}*/
-
-
-	//heal player over timne
+	// heal player over timne
 	if (registry.healths.has(player)) {
 		Health& playerHealth = registry.healths.get(player);
 		if (playerHealth.current_health < playerHealth.max_health) {
 			playerHealth.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5; // Adjust speed here
 			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
 		}
+
 	}
+
+	// FPS
+	float startTicks = SDL_GetTicks();
+	fpsCalculate();
+	static int frameCounter = 0;
+	frameCounter++;
+	// update fps every 50 frames 
+	if (frameCounter == 25) {
+		registry.texts.get(fps_text).content = "FPS: " + std::to_string(static_cast<int>(fps));
+		frameCounter = 0;
+	}
+	float frameTicks = SDL_GetTicks() - startTicks;
+
+	//fps limiter. 
+	/*if ((1000.0f / maxFps) > frameTicks) {
+		SDL_Delay((1000.0f / maxFps) - frameTicks);
+	}*/
 
 	return true;
 }
@@ -294,10 +340,26 @@ void WorldSystem::restart_game() {
 	// Create a level
 	createBackground(renderer);
 
-	//createText(renderer, "hello world", { window_width_px / 2, 0 }, 2.f, {1, 0, 0});
-
-	//// Create a new player
+	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
+
+	// Tutorial Text
+	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, COLOR_WHITE);
+	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, COLOR_WHITE);
+
+	// Create HUD
+	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, COLOR_RED);
+	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, COLOR_GREEN);
+	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
+	score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
+	score = 0;
+
+	// FPS
+	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
 }
 
 // Compute collisions between entities
@@ -349,6 +411,8 @@ void WorldSystem::handle_collisions() {
 							createExplosion(renderer, motion.position, false); // Create explosion
 						}
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
+						score++;
+						registry.texts.get(score_text).content = "Score: " + std::to_string(score);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -416,7 +480,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_R) {
+	if (action == GLFW_RELEASE && key == GLFW_KEY_G) {
 		int w, h;
 		glfwGetWindowSize(window, &w, &h);
 
@@ -454,15 +518,14 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		// WEAPON CONTROLS
 		if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-			// TODO: initiate reload
+			registry.players.get(player).is_reloading = true;
 		}
 		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-			// TODO: Change weapon (scroll up)
+			cycle_weapon(-1);  // Cycle to the previous weapon
 		}
 		if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-			// TODO: Change weapon (scroll down)
+			cycle_weapon(1);  // Cycle to the next weapon
 		}
-
 
 		// MOVEMENT CONTROLS
 		if (key == GLFW_KEY_W) {
@@ -501,6 +564,54 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 }
 
+// Function to cycle player weapons (-1 for previous, 1 for next)
+void WorldSystem::cycle_weapon(int direction) {
+	Player& p = registry.players.get(player);
+
+	// Get the current player's weapon type
+	Player::WeaponType currentWeapon = registry.players.get(player).weapon_type;
+
+	// Get the total number of weapon types
+	int numWeapons = static_cast<int>(Player::WeaponType::TOTAL_WEAPON_TYPES);
+
+	// Calculate the new weapon index
+	int newWeaponIndex = static_cast<int>(currentWeapon) + direction;
+	if (newWeaponIndex < 0) {
+		newWeaponIndex = numWeapons - 1;  // Wrap around to the last weapon
+	}
+	else if (newWeaponIndex >= numWeapons) {
+		newWeaponIndex = 0;  // Wrap around to the first weapon
+	}
+
+	// Set the new weapon type
+	Player::WeaponType newWeapon = static_cast<Player::WeaponType>(newWeaponIndex);
+	registry.players.get(player).weapon_type = newWeapon;
+	
+	// Convert the enum value to a string for printing
+	std::string weaponString;
+	switch (newWeapon) {
+	case Player::WeaponType::MACHINE_GUN:
+		weaponString = "Weapon: Machine Gun";
+		break;
+	case Player::WeaponType::SNIPER:
+		weaponString = "Weapon: Sniper";
+		break;
+	case Player::WeaponType::SHOTGUN:
+		weaponString = "Weapon: Shotgun";
+		break;
+	default:
+		weaponString = "Unknown Weapon";
+		break;
+	}
+
+	// Update ammo counters and reload timers
+	p.is_reloading = true;
+	p.reload_timer_ms = p.reload_times[p.weapon_type];
+	p.ammo_count = p.magazine_sizes[p.weapon_type];
+	registry.texts.get(weapon_text).content = weaponString;
+	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+}
+
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	// Bounce back functionality by moving back by a bit
 	Motion& playerMotion = registry.motions.get(player);
@@ -528,10 +639,8 @@ void WorldSystem::on_mouse_click(int button, int action, int mods) {
 	int press = 1;
 	int release = 0;
 
-	// TODO: Change to fire until clip is empty then auto reload
 	if (button == left_click) {
 		if (action == press) {
-			// player is firing 
 			registry.players.get(player).is_firing = true;
 		}
 		else if (action == release) {
