@@ -362,8 +362,8 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	for(Entity e: registry.motions.entities)
 	{
-		// clear motion registry except for player.
-		if (!registry.players.has(e))
+		// clear motion registry except for player and texts.
+		if (!(registry.players.has(e) || registry.texts.has(e)))
 		{
 			registry.remove_all_components_of(e);
 		}
@@ -377,23 +377,6 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
-
-
-	// Tutorial Text
-	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-
-	// Create HUD
-	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, { 1.0f, 0.15f, 0.15f });
-	weapon_text = createText(renderer, "Weapon: Machine Gun", { 780.0f, 360.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
-	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
-
-	// FPS
-	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
 }
 
 // Compute collisions between entities
