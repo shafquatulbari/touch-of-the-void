@@ -26,7 +26,23 @@ WorldSystem::WorldSystem()
 // Destroy the world
 WorldSystem::~WorldSystem()
 {
-	// TODO: destroy any music components
+	// Destroy sound components
+	if (machine_gun_sound != nullptr)
+		Mix_FreeChunk(machine_gun_sound);
+	if (sniper_sound != nullptr)
+		Mix_FreeChunk(sniper_sound);
+	if (shotgun_sound != nullptr)
+		Mix_FreeChunk(shotgun_sound);
+	if (reload_sound != nullptr)
+		Mix_FreeChunk(reload_sound);
+	if (explosion_sound != nullptr)
+		Mix_FreeChunk(explosion_sound);
+	if (cycle_weapon_sound != nullptr)
+		Mix_FreeChunk(cycle_weapon_sound);
+	if (player_hit_sound != nullptr)
+		Mix_FreeChunk(player_hit_sound);
+	if (enemy_hit_sound != nullptr)
+		Mix_FreeChunk(enemy_hit_sound);
 
 	// Destroy all created components
 	registry.clear_all_components();
@@ -61,9 +77,9 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-#if __APPLE__
+	#if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+	#endif
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
@@ -83,6 +99,7 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_button_redirect);
+	
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -95,18 +112,26 @@ GLFWwindow* WorldSystem::create_window() {
 	}
 
 	// Load music and sounds
-	// TODO: Load our music and sounds as so.
-	
-	// background_music = Mix_LoadMUS(audio_path("music.wav").c_str());
-	// chicken_dead_sound = Mix_LoadWAV(audio_path("chicken_dead.wav").c_str());
+	machine_gun_sound = Mix_LoadWAV(audio_path("machine_gun.wav").c_str());
+	sniper_sound = Mix_LoadWAV(audio_path("sniper.wav").c_str());
+	shotgun_sound = Mix_LoadWAV(audio_path("shotgun.wav").c_str());
+	reload_sound = Mix_LoadWAV(audio_path("reload.wav").c_str());
+	explosion_sound = Mix_LoadWAV(audio_path("explosion.wav").c_str());
+	cycle_weapon_sound = Mix_LoadWAV(audio_path("cycle_weapon_sound.wav").c_str());
+	player_hit_sound = Mix_LoadWAV(audio_path("player_hit_sound.wav").c_str());
+	enemy_hit_sound = Mix_LoadWAV(audio_path("enemy_hit_sound.wav").c_str());
 
-	//if (background_music == nullptr || chicken_dead_sound == nullptr) {
-	//	fprintf(stderr, "Failed to load sounds\n %s\n %s\n make sure the data directory is present",
-	//		audio_path("music.wav").c_str(),
-	//		audio_path("chicken_dead.wav").c_str());
-	//	return nullptr;
-	//}
-
+	if (machine_gun_sound == nullptr || 
+		sniper_sound == nullptr ||
+		shotgun_sound == nullptr ||
+		reload_sound == nullptr ||
+		explosion_sound == nullptr ||
+		cycle_weapon_sound == nullptr ||
+		player_hit_sound == nullptr ||
+		enemy_hit_sound == nullptr) {
+		fprintf(stderr, "Failed to load sounds make sure the data directory is present");
+		return nullptr;
+	}
 
 	return window;
 }
@@ -154,6 +179,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			p.reload_timer_ms = p.reload_times[p.weapon_type];
 			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
 			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+			Mix_PlayChannel(-1, reload_sound, 0);
 		}
 	}
 	// Handle firing
@@ -165,15 +191,18 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			{
 			case Player::WeaponType::MACHINE_GUN:
 				createProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				Mix_PlayChannel(-1, machine_gun_sound, 0);
 				break;
 
 			case Player::WeaponType::SNIPER:
 				createSniperProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				Mix_PlayChannel(-1, sniper_sound, 0);
 				break;
 
 			case Player::WeaponType::SHOTGUN:
 				for (int i = 0; i < 10; i++) {
 					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
+					Mix_PlayChannel(-1, shotgun_sound, 0);
 				}
 				break;
 
@@ -404,6 +433,7 @@ void WorldSystem::handle_collisions() {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& enemyHealth = registry.healths.get(entity_other);
 					enemyHealth.current_health -= deadly.damage;
+					Mix_PlayChannel(-1, enemy_hit_sound, 0);
 					if (enemyHealth.current_health <= 0) {
 						// enemy is dead, trigger an explosion animation
 						if (registry.motions.has(entity_other)) {
@@ -413,6 +443,7 @@ void WorldSystem::handle_collisions() {
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
 						score++;
 						registry.texts.get(score_text).content = "Score: " + std::to_string(score);
+						Mix_PlayChannel(-1, explosion_sound, 0);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -425,6 +456,7 @@ void WorldSystem::handle_collisions() {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& playerHealth = registry.healths.get(entity_other);
 					playerHealth.current_health -= 1; //hardcoded damage
+					Mix_PlayChannel(-1, player_hit_sound, 0);
 					if (playerHealth.current_health <= 0) {
 						// Trigger darkening immediately, but actual effect is controlled in step
 						if (!registry.deathTimers.has(player)) {
@@ -610,6 +642,7 @@ void WorldSystem::cycle_weapon(int direction) {
 	p.ammo_count = p.magazine_sizes[p.weapon_type];
 	registry.texts.get(weapon_text).content = weaponString;
 	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+	Mix_PlayChannel(-1, cycle_weapon_sound, 0);
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {

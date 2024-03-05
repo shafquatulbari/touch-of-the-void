@@ -126,7 +126,7 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 
 	// TODO: change the damage value and lifetime into constant variables
 	Deadly &deadly = registry.deadlies.emplace(entity);
-	deadly.damage = 15.0f;
+	deadly.damage = 20.0f;
 	projectile.lifetime = 1000.0f;
 
 	registry.renderRequests.insert(
