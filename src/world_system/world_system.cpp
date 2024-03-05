@@ -309,17 +309,19 @@ void WorldSystem::restart_game() {
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
 	// Tutorial Text
-	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
-	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, COLOR_WHITE);
+	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, COLOR_WHITE);
+	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, COLOR_WHITE);
 
 	// Create HUD
-	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, { 1.0f, 0.15f, 0.15f });
-	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, { 0.26f, 0.97f, 0.19f });
-	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
+	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, COLOR_RED);
+	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, COLOR_GREEN);
+	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
+	score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
+	score = 0;
 
 	// FPS
 	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
@@ -369,6 +371,8 @@ void WorldSystem::handle_collisions() {
 					enemyHealth.current_health -= deadly.damage;
 					if (enemyHealth.current_health <= 0) {
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
+						score++;
+						registry.texts.get(score_text).content = "Score: " + std::to_string(score);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
