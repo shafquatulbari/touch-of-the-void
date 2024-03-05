@@ -198,6 +198,25 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			return true;
 		}
 	}
+	for (Entity entity : registry.roomTransitionTimers.entities) {
+		// progress timer
+		RoomTransitionTimer& counter = registry.roomTransitionTimers.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+		if (counter.counter_ms < min_counter_ms) {
+			min_counter_ms = counter.counter_ms;
+		}
+
+		// remove the darken effect once the timer expired
+		if (counter.counter_ms < 0) {
+			registry.roomTransitionTimers.remove(entity);
+			screen.darken_screen_factor = 0;
+			p.is_moving_rooms = false;
+			// player enters new room
+			enter_room(registry.rooms.get(p.current_room)
+				, { window_width_px / 2, window_height_px / 2});
+			return true;
+		}
+	}
 	// reduce window brightness if any of the player is dying
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
@@ -264,11 +283,11 @@ void WorldSystem::restart_game() {
 	registry.list_all_components();
 
 	// Create a level
-	createBackground(renderer);
+	Entity starting_room = createBackground(renderer);
 
 	// Create a new player
 	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
-
+	registry.players.get(player).current_room = starting_room;
 	// Tutorial Text
 	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, { 1.0f, 1.0f, 1.0f });
 	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
@@ -286,6 +305,56 @@ void WorldSystem::restart_game() {
 	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
 }
 
+
+// Reset the world state to its initial state
+void WorldSystem::enter_room(Room& room, vec2 player_pos) {
+	// Debugging for memory/component leaks
+	registry.list_all_components();
+	printf("Entering Room\n");
+
+	// Reset the game speed
+	current_speed = 1.f;
+
+	// Reset darken_screen_factor on room enter
+	ScreenState& screen = registry.screenStates.components[0];
+	screen.darken_screen_factor = 0.0f;
+
+	for(Entity e: registry.motions.entities)
+	{
+		// clear motion registry except for player.
+		if (!registry.players.has(e))
+		{
+			registry.remove_all_components_of(e);
+		}
+	}
+
+	// Debugging for memory/component leaks
+	registry.list_all_components();
+
+	// Render the room
+	render_room(renderer, room);
+
+	// Move the player to position
+	registry.motions.get(player).position = player_pos;
+
+
+	// Tutorial Text
+	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, { 1.0f, 1.0f, 1.0f });
+
+	// Create HUD
+	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, { 1.0f, 0.15f, 0.15f });
+	weapon_text = createText(renderer, "Weapon: Machine Gun", { 780.0f, 360.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
+	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, { 0.26f, 0.97f, 0.19f });
+
+	// FPS
+	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
+}
+
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
@@ -295,10 +364,37 @@ void WorldSystem::handle_collisions() {
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 
+		
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
-			if (registry.obstacles.get(entity_other).is_passable)
+			Obstacle& obstacle = registry.obstacles.get(entity_other);
+			if (obstacle.is_passable)
 			{
-				registry.players.get(entity).is_moving_rooms = true;
+				Player& player = registry.players.get(entity);
+				if (!player.is_moving_rooms)
+				{
+					player.is_moving_rooms = true;
+					// change to the room that they entered
+					if (obstacle.is_bottom_door)
+					{
+						player.current_room = registry.rooms.get(player.current_room).bottom_room;
+					}
+					else if (obstacle.is_top_door)
+					{
+						player.current_room = registry.rooms.get(player.current_room).top_room;
+					}
+					else if (obstacle.is_left_door)
+					{
+						player.current_room = registry.rooms.get(player.current_room).left_room;
+					}
+					else if (obstacle.is_right_door)
+					{
+						player.current_room = registry.rooms.get(player.current_room).right_room;
+					}
+				
+					// darken effect
+					registry.roomTransitionTimers.emplace(entity);
+				}
+				
 			}
 			// Apply damage to the player
 			Health& playerHealth = registry.healths.get(player);

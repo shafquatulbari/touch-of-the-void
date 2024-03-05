@@ -101,9 +101,10 @@ Entity createBackground(RenderSystem *renderer)
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE});
 
-	createRoom(renderer);
+	// return the starting room entity
+	return createRoom(renderer);
 
-	return Entity();
+	//return Entity();
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -161,6 +162,7 @@ void createWalls(RenderSystem* render, Room& room)
 	top_motion.scale = vec2({ game_window_size_px - 64, 32 });
 
 	registry.obstacles.emplace(topWall);
+	registry.obstacles.get(topWall).is_passable = false;
 	registry.renderRequests.insert(
 		topWall,
 		{ room.has_top_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
@@ -172,15 +174,10 @@ void createWalls(RenderSystem* render, Room& room)
 		auto top_door = Entity();
 		Motion& top_door_motion = registry.motions.emplace(top_door);
 		top_door_motion.position = { x_mid, y_min };
-		// fix this scale
 		top_door_motion.scale = { 32,32 };
 		Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
 		top_door_obstacle.is_passable = true;
-		registry.renderRequests.insert(
-			top_door,
-			{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
-				EFFECT_ASSET_ID::TEXTURED,
-				GEOMETRY_BUFFER_ID::SPRITE });
+		top_door_obstacle.is_top_door = true;
 	}
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
@@ -194,8 +191,16 @@ void createWalls(RenderSystem* render, Room& room)
 			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
+	if (room.has_bottom_door) {
+		auto bottom_door = Entity();
+		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
+		bottom_door_motion.position = { x_mid, y_max };
+		bottom_door_motion.scale = { 32,32 };
+		Obstacle& bottom_door_obstacle = registry.obstacles.emplace(bottom_door);
+		bottom_door_obstacle.is_passable = true;
+		bottom_door_obstacle.is_bottom_door = true;
+	}
 	// player can pass through the door if it exists
-	if (room.has_bottom_door) registry.obstacles.get(topWall).is_passable = true;
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
 	left_motion.position = vec2({ x_min, y_mid });
@@ -209,6 +214,15 @@ void createWalls(RenderSystem* render, Room& room)
 			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR ,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
+	if (room.has_left_door) {
+		auto left_door = Entity();
+		Motion& left_door_motion = registry.motions.emplace(left_door);
+		left_door_motion.position = { x_min, y_mid };
+		left_door_motion.scale = { 32,32 };
+		Obstacle& left_door_obstacle = registry.obstacles.emplace(left_door);
+		left_door_obstacle.is_passable = true;
+		left_door_obstacle.is_left_door = true;
+	}
 
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
@@ -224,6 +238,15 @@ void createWalls(RenderSystem* render, Room& room)
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
+	if (room.has_right_door) {
+		auto right_door = Entity();
+		Motion& right_door_motion = registry.motions.emplace(right_door);
+		right_door_motion.position = { x_max, y_mid };
+		right_door_motion.scale = { 32,32 };
+		Obstacle& right_door_obstacle = registry.obstacles.emplace(right_door);
+		right_door_obstacle.is_passable = true;
+		right_door_obstacle.is_right_door = true;
+	}
 	// corners
 	auto topLeftWall = Entity();
 	auto topRightWall = Entity();
@@ -279,6 +302,31 @@ void createWalls(RenderSystem* render, Room& room)
 									GEOMETRY_BUFFER_ID::SPRITE });
 
 }
+void render_room(RenderSystem* render, Room& room)
+{
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+
+	for (auto& pos : room.obstacle_positions)
+	{
+		float x = x_origin + pos.x * game_window_block_size;
+		float y = y_origin + pos.y * game_window_block_size;
+		createObstacle(render, vec2(x, y));
+	}
+
+	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
+
+	// Create each enemy with their specified type
+	for (auto& pos : room.enemy_positions) {
+		//enemy positions is a set of vec2
+		float x = x_origin + pos.x * game_window_block_size;
+		float y = y_origin + pos.y * game_window_block_size;
+		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+	}
+
+	createWalls(render, room);
+}
 
 Entity createRoom(RenderSystem* render)
 {
@@ -319,44 +367,21 @@ Entity createRoom(RenderSystem* render)
 
 	Room& left_room = registry.rooms.emplace(left_room_entity);
 	world_generator.generateRoom(left_room);
-	top_room.has_right_door = true;
-	top_room.right_room = starting_room_entity;
+	left_room.has_right_door = true;
+	left_room.right_room = starting_room_entity;
 
 	Room& right_room = registry.rooms.emplace(right_room_entity);
 	world_generator.generateRoom(right_room);
-	top_room.has_left_door = true;
-	top_room.left_room = starting_room_entity;
+	right_room.has_left_door = true;
+	right_room.left_room = starting_room_entity;
 
-	printf("rooms3 size: %llu", registry.rooms.size());
 
 	Room& room1 = registry.rooms.get(starting_room_entity);
-	Room& leftroom = registry.rooms.get(room1.left_room);
-
-	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
-	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
-
-	for (auto& pos : room1.obstacle_positions)
-	{
-		float x = x_origin + pos.x * game_window_block_size;
-		float y = y_origin + pos.y * game_window_block_size;
-		createObstacle(render, vec2(x, y));
-	}
-
-	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
-
-	// Create each enemy with their specified type
-	for (auto& pos : room1.enemy_positions) {
-		//enemy positions is a set of vec2
-		float x = x_origin + pos.x * game_window_block_size;
-		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
-	}
-
-	createWalls(render, room1);
+	render_room(render, room1);
 
 	return starting_room_entity;
 }
+
 
 Entity createText(RenderSystem* render, std::string content, vec2 pos, float scale, vec3 color)
 {
