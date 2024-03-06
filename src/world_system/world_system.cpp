@@ -494,11 +494,11 @@ void WorldSystem::handle_collisions() {
 					enter_room(registry.rooms.get(player.current_room)
 						, next_pos);
 				}
-				
 			}
+
 			// Apply damage to the player
-			Health& playerHealth = registry.healths.get(player);
-			if (registry.deadlies.has(entity_other)) {
+			else if (registry.deadlies.has(entity_other)) {
+				Health& playerHealth = registry.healths.get(player);
 				Deadly& deadly = registry.deadlies.get(entity_other);
 				playerHealth.current_health -= deadly.damage;
 				if (playerHealth.current_health <= 0) {
@@ -515,7 +515,9 @@ void WorldSystem::handle_collisions() {
 					}
 				}
 			}
-			bounce_back(player, entity_other);
+			else {
+				bounce_back(player, entity_other);
+			}
 		}
 		if (registry.projectiles.has(entity)) {
 			Projectile& projectile = registry.projectiles.get(entity);

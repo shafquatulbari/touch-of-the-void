@@ -53,8 +53,12 @@ class RenderSystem {
 		textures_path("bottom_lvl1_full_wall_closed_door_416x32.png"),
 		textures_path("left_lvl1_full_wall_closed_door_416x32.png"),
 		
-		textures_path("lvl1_full_wall_no_door_416x32.png"),
 		textures_path("lvl1_full_wall_open_door_416x32.png"),
+		textures_path("right_lvl1_full_wall_open_door_416x32.png"),
+		textures_path("bottom_lvl1_full_wall_open_door_416x32.png"),
+		textures_path("left_lvl1_full_wall_open_door_416x32.png"),
+		
+		textures_path("lvl1_full_wall_no_door_416x32.png"),
 		textures_path("lvl1_obstacle_32x32.png"),
 		textures_path("lvl1_wall_bottom_corner_32x32.png"),
 		textures_path("lvl1_wall_end_32x32.png"),
