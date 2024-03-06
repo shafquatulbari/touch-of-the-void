@@ -193,7 +193,7 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	registry.projectiles.get(entity).source = source;
 
 	Deadly& deadly = registry.deadlies.emplace(entity);
-	deadly.damage = 200.0f;
+	deadly.damage = 300.0f;
 	projectile.lifetime = 1000.0f;
 
 	registry.renderRequests.insert(

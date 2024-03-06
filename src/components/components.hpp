@@ -72,7 +72,7 @@ struct Player
 	// Reload times for each weapon
 	std::unordered_map<WeaponType, float> reload_times = {
 		{WeaponType::MACHINE_GUN, 2000.0f},
-		{WeaponType::SNIPER, 1000.0f},
+		{WeaponType::SNIPER, 1500.0f},
 		{WeaponType::SHOTGUN, 1500.0f},
 		// Add more weapon types and their reload times here
 	};
