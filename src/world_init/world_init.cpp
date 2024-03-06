@@ -114,7 +114,7 @@ Entity createBackground(RenderSystem *renderer)
 
 	createRoom(renderer);
 
-	return Entity();
+	return entity;
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -140,7 +140,7 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 
 	// TODO: change the damage value and lifetime into constant variables
 	Deadly &deadly = registry.deadlies.emplace(entity);
-	deadly.damage = 10.0f;
+	deadly.damage = 20.0f;
 	projectile.lifetime = 1000.0f;
 
 	registry.renderRequests.insert(
@@ -148,6 +148,73 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 			{TEXTURE_ASSET_ID::BULLET,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE});
+
+	return entity;
+}
+
+Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
+{
+	auto entity = Entity();
+
+	// actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	angle += (rng - 0.5f) * accuracy;
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle + M_PI / 4;
+	motion.scale = vec2({ BULLET_BB_WIDTH * 3, BULLET_BB_HEIGHT * 3 });
+	motion.velocity = vec2({ 1000.0f * cos(angle), 1000.0f * sin(angle) });
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 200.0f;
+	projectile.lifetime = 1000.0f;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE });
+
+	return entity;
+}
+
+Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
+{
+	auto entity = Entity();
+
+	// Actual firing angle is randomly perturbed based on accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	float perturbedAngle = angle + (rng - 0.5f) * accuracy;
+
+	float coneWidth = 0.5f;
+
+	// Calculate the angle for each shotgun projectile in a cone
+	float coneAngle = perturbedAngle - coneWidth / 2 + i * coneWidth / 10;
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = coneAngle;
+	motion.scale = vec2({ BULLET_BB_WIDTH * 0.8, BULLET_BB_HEIGHT * 0.8 });
+	motion.velocity = vec2({ 500.0f * cos(coneAngle), 500.0f * sin(coneAngle) });
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 20.0f;
+	projectile.lifetime = 1000.0f;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE });
 
 	return entity;
 }
@@ -308,6 +375,51 @@ Entity createRoom(RenderSystem* render)
 	}
 
 	createWalls(render);
+
+	return entity;
+}
+
+Entity createText(RenderSystem* render, std::string content, vec2 pos, float scale, vec3 color)
+{
+	auto entity = Entity();
+
+	Text& text = registry.texts.emplace(entity);
+	text.content = content;
+	text.color = color;
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { pos.x, pos.y };
+	motion.scale = vec2({ scale, scale });
+
+	return entity;
+}
+
+Entity createExplosion(RenderSystem* render, vec2 pos, bool repeat)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ EXPLOSION_BB_WIDTH, EXPLOSION_BB_HEIGHT });
+
+	assert(!registry.animations.has(entity));
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::EXPLOSION;
+	animation.total_frames = 12;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.loop = repeat;
+
+	assert(!registry.animationTimers.has(entity));
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(entity, {
+		TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		EFFECT_ASSET_ID::TEXTURED,
+		GEOMETRY_BUFFER_ID::SPRITE});
 
 	return entity;
 }

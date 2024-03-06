@@ -1,6 +1,5 @@
 // internal
 #include "render_system/render_system.hpp"
-
 #include <array>
 #include <fstream>
 
@@ -12,6 +11,16 @@
 // stlib
 #include <iostream>
 #include <sstream>
+
+// fonts
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <map>
+
+// matrices
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // World initialization
 bool RenderSystem::init(GLFWwindow* window_arg)
@@ -50,13 +59,13 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 
 	// We are not really using VAO's but without at least one bound we will crash in
 	// some systems.
-	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 	gl_has_errors();
 
 	initScreenTexture();
 	initializeGlTextures();
+	initializeGlSheets();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
 
@@ -90,6 +99,70 @@ void RenderSystem::initializeGlTextures()
 	}
 	gl_has_errors();
 }
+
+void RenderSystem::initializeGlSheets()
+{
+	for (uint i = 0; i < sheet_paths.size(); i++)
+	{
+		const std::string& path = sheet_paths[i];
+		ivec2& dimensions = sheet_dimensions[i]; // width, height of one sprite
+		ivec2& count = sheet_sprite_count[i]; // (rows, columns) of the sheet
+
+		stbi_uc* data;
+		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, NULL, 4);
+
+		if (data == NULL)
+		{
+			const std::string message = "Could not load the file " + path + ".";
+			fprintf(stderr, "%s", message.c_str());
+			assert(false);
+		}
+
+		int sprite_width = dimensions.x / count.x;
+		int sprite_height = dimensions.y / count.y;
+
+		// create a new texture for the sprite
+		GLuint texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		//// generate texture
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			dimensions.x,
+			dimensions.y,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			data
+		);
+
+		// set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+		for (int y = 0; y < count.y; y++)
+		{
+			for (int x = 0; x < count.x; x++)
+			{
+				// calculate the position of the sprite in the sheet
+				float x_offset = (float)x * sprite_width;
+				float y_offset = (float)y * sprite_height;
+
+				vec2 texcoord_min = { x_offset / dimensions.x, y_offset / dimensions.y };
+				vec2 texcoord_max = { (x_offset + sprite_width) / dimensions.x, (y_offset + sprite_height) / dimensions.y };
+
+				Sprite sprite = { texture, texcoord_min, texcoord_max };
+
+				m_ftSpriteSheets[i].insert(std::pair<std::pair<int, int>, Sprite>({ x, y }, sprite));
+			}
+		}
+		stbi_image_free(data);
+	}
+	gl_has_errors();
+}	
 
 void RenderSystem::initializeGlEffects()
 {
@@ -178,6 +251,11 @@ void RenderSystem::initializeGlGeometryBuffers()
 
 RenderSystem::~RenderSystem()
 {
+	// font cleanup
+	glDeleteProgram(m_font_shaderProgram);
+	glDeleteVertexArrays(1, &m_font_VAO);
+	glDeleteBuffers(1, &m_font_VBO);
+
 	// Don't need to free gl resources since they last for as long as the program,
 	// but it's polite to clean after yourself.
 	glDeleteBuffers((GLsizei)vertex_buffers.size(), vertex_buffers.data());
@@ -226,6 +304,168 @@ bool RenderSystem::initScreenTexture()
 	return true;
 }
 
+// TODO: remove these and use the file versions.
+const char* fontVertexShaderSource =
+"#version 330 core\n"
+"layout(location = 0) in vec4 vertex; // <vec2 pos, vec2 tex>\n"
+"out vec2 TexCoords; \n"
+"\n"
+"uniform mat4 projection; \n"
+"uniform mat4 transform;\n"
+"\n"
+"void main()\n"
+"{\n"
+"    gl_Position = projection * transform * vec4(vertex.xy, 0.0, 1.0); \n"
+"    TexCoords = vertex.zw; \n"
+"}\0";
+
+const char* fontFragmentShaderSource =
+"#version 330 core\n"
+"in vec2 TexCoords; \n"
+"out vec4 color; \n"
+"\n"
+"uniform sampler2D text; \n"
+"uniform vec3 textColor; \n"
+"\n"
+"void main()\n"
+"{\n"
+"    vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);\n"
+"    color = vec4(textColor, 1.0) * sampled;\n"
+"}\0";
+
+bool RenderSystem::initializeFonts() {
+	// font buffer setup
+	glGenVertexArrays(1, &m_font_VAO);
+	glGenBuffers(1, &m_font_VBO);
+
+	// font vertex shader
+	unsigned int font_vertexShader;
+	font_vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(font_vertexShader, 1, &fontVertexShaderSource, NULL);
+	glCompileShader(font_vertexShader);
+
+	// font fragement shader
+	unsigned int font_fragmentShader;
+	font_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(font_fragmentShader, 1, &fontFragmentShaderSource, NULL);
+	glCompileShader(font_fragmentShader);
+
+	// font shader program
+	m_font_shaderProgram = glCreateProgram();
+	glAttachShader(m_font_shaderProgram, font_vertexShader);
+	glAttachShader(m_font_shaderProgram, font_fragmentShader);
+	glLinkProgram(m_font_shaderProgram);
+
+	// clean up shaders
+	glDeleteShader(font_vertexShader);
+	glDeleteShader(font_fragmentShader);
+
+	// use our new shader
+	glUseProgram(m_font_shaderProgram);
+
+	// apply projection matrix for font
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
+	GLint project_location = glGetUniformLocation(m_font_shaderProgram, "projection");
+	assert(project_location > -1);
+	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
+
+	// init FreeType fonts
+	for (uint i = 0; i < font_paths.size(); i++)
+	{
+		// Initialize each font
+		FONT_ASSET_ID font_index = (FONT_ASSET_ID)i;
+		const std::string& name = font_paths[i];
+		bool is_valid = loadFontFromFile(name, 48);
+		assert(is_valid);
+		fprintf(stderr, "Loaded font %s\n", name.c_str());
+	}
+
+	// bind buffers
+	glBindVertexArray(m_font_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_font_VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+	// release buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return true;
+}
+
+bool RenderSystem::loadFontFromFile(const std::string& font_filename, unsigned int font_default_size) {
+	// Load font
+	FT_Library ft;
+	if (FT_Init_FreeType(&ft))
+	{
+		fprintf(stderr, "ERROR::FREETYPE: Could not init FreeType Library\n");
+		return false;
+	}
+
+	FT_Face face;
+	if (FT_New_Face(ft, font_filename.c_str(), 0, &face))
+	{
+		fprintf(stderr, "ERROR::FREETYPE: Failed to load font\n");
+		return false;
+	}
+
+	FT_Set_Pixel_Sizes(face, 0, font_default_size);
+
+	// disable byte-alignment restriction in OpenGL
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+	for (unsigned char c = 0; c < 128; c++)
+	{
+		// Load character glyph 
+		if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+		{
+			fprintf(stderr, "ERROR::FREETYTPE: Failed to load Glyph\n");
+			continue;
+		}
+
+		// generate texture
+		unsigned int texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RED,
+			face->glyph->bitmap.width,
+			face->glyph->bitmap.rows,
+			0,
+			GL_RED,
+			GL_UNSIGNED_BYTE,
+			face->glyph->bitmap.buffer
+		);
+
+		// Set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		// Now store character for later use
+		Character character = {
+			texture,
+			{face->glyph->bitmap.width, face->glyph->bitmap.rows},
+			{face->glyph->bitmap_left, face->glyph->bitmap_top},
+			face->glyph->advance.x
+		};
+
+		m_ftCharacters.insert(std::pair<char, Character>(c, character));
+	}
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// clean up
+	FT_Done_Face(face);
+	FT_Done_FreeType(ft);
+
+	return true;
+}
+
 bool gl_compile_shader(GLuint shader)
 {
 	glCompileShader(shader);
@@ -249,7 +489,7 @@ bool gl_compile_shader(GLuint shader)
 	return true;
 }
 
-bool loadEffectFromFile(
+bool RenderSystem::loadEffectFromFile(
 	const std::string& vs_path, const std::string& fs_path, GLuint& out_program)
 {
 	// Opening files
@@ -327,4 +567,3 @@ bool loadEffectFromFile(
 
 	return true;
 }
-

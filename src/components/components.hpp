@@ -7,8 +7,50 @@
 // Player component
 struct Player
 {
+	enum class WeaponType {
+		MACHINE_GUN,
+		SNIPER,
+		SHOTGUN,
+		// Add more weapon types here
+		// Example: ROCKET_LAUNCHER, FLAMETHROWER, etc.
+		TOTAL_WEAPON_TYPES // Keep this as the last element
+	};
+
+	// Magazine sizes for each weapon
+	std::unordered_map<WeaponType, int> magazine_sizes = {
+		{WeaponType::MACHINE_GUN, 100},
+		{WeaponType::SNIPER, 1},
+		{WeaponType::SHOTGUN, 6},
+		// Add more weapon types and their magazine sizes here
+	};
+
+	// Reload times for each weapon
+	std::unordered_map<WeaponType, float> reload_times = {
+		{WeaponType::MACHINE_GUN, 2000.0f},
+		{WeaponType::SNIPER, 1000.0f},
+		{WeaponType::SHOTGUN, 1500.0f},
+		// Add more weapon types and their reload times here
+	};
+
+	// Time between each bullet
+	std::unordered_map<WeaponType, float> fire_rates = {
+		{WeaponType::MACHINE_GUN, 40.0f},
+		{WeaponType::SNIPER, 0.0f},
+		{WeaponType::SHOTGUN, 300.0f},
+		// Add more weapon types and their fire rates here
+	};
+
 	bool is_firing = false; // player is currently firing projectiles
 	float fire_length_ms = 0.0f; // time the player has been firing
+	float fire_rate_timer_ms = 0.0f; // timer for fully-automatic weapons
+	WeaponType weapon_type = WeaponType::MACHINE_GUN;
+	int max_ammo_count;
+	int ammo_count;
+	bool is_reloading = false; // player is currently reloading and cannot fire
+	float reload_timer_ms = 0.0f;
+
+	// Constructor to set the initial magazine size
+	Player() : max_ammo_count(magazine_sizes[weapon_type]), ammo_count(max_ammo_count), reload_timer_ms(reload_times[weapon_type]) {}
 };
 
 // Obstacle component
@@ -129,10 +171,10 @@ struct Room
 	struct Room* bottom_room;
 };
 
-
+// A time to track reload times
 struct ReloadTimer
 {
-	float counter_ms = 0.0f;
+	float counter_ms = 2000.0f;
 };
 
 // Stucture to store collision information
@@ -192,6 +234,28 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+struct Text
+{
+	std::string content;
+	vec3 color;
+};
+
+// A structure to store the font data of a single character
+struct Character {
+	unsigned int TextureID;  // ID handle of the glyph texture
+	glm::ivec2   Size;       // Size of glyph
+	glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
+	unsigned int Advance;    // Offset to advance to next glyph
+	char character;
+};
+
+// A structure to store the data concerning a single sprite sheet texture
+struct Sprite {
+	unsigned int TextureID;
+	vec2 minTexCoords;
+	vec2 maxTexCoords;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -240,6 +304,12 @@ enum class TEXTURE_ASSET_ID {
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
+enum class FONT_ASSET_ID {
+	VERMIN_VIBES_1989 = 0,
+	FONT_COUNT = VERMIN_VIBES_1989 + 1
+};
+const int font_count = (int)FONT_ASSET_ID::FONT_COUNT;
+
 enum class EFFECT_ASSET_ID {
 	COLOURED = 0,
 	TEXTURED = COLOURED + 1,
@@ -258,9 +328,36 @@ enum class GEOMETRY_BUFFER_ID {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
+enum class SPRITE_SHEET_ID {
+	//BLUE_EFFECT = 0,
+	EXPLOSION = 0,
+	ENEMY_EXPLODER = EXPLOSION + 1,
+	//GREEN_EFFECT = EXPLOSION + 1,
+	//PURPLE_EFFECT = GREEN_EFFECT + 1,
+	//RED_EFFECT = PURPLE_EFFECT + 1,
+	//YELLOW_EFFECT = RED_EFFECT + 1,
+	SPRITE_SHEET_COUNT = ENEMY_EXPLODER + 1
+};
+const int sheet_count = (int)SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
+
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 };
 
+
+// A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
+struct Animation {
+	std::vector<std::pair<int, int>> sprites;
+	std::vector<float> frame_durations_ms;
+	SPRITE_SHEET_ID sheet_id;
+	float total_frames;
+	float current_frame;
+	bool loop;
+};
+
+struct AnimationTimer
+{
+	float counter_ms = 0.0f;
+};

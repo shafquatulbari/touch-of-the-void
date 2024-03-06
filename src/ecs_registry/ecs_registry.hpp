@@ -26,8 +26,12 @@ public:
 	ComponentContainer<Health> healths;
 	ComponentContainer<Shield> shields;
 	ComponentContainer<Room> rooms;
+	ComponentContainer<Text> texts;
 	ComponentContainer<AI> ais;
 	ComponentContainer<NoCollisionCheck> noCollisionChecks;
+	ComponentContainer<Animation> animations;
+	ComponentContainer<AnimationTimer> animationTimers;
+
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -48,8 +52,11 @@ public:
 		registry_list.push_back(&healths);
 		registry_list.push_back(&shields);
 		registry_list.push_back(&rooms);
+		registry_list.push_back(&texts);
 		registry_list.push_back(&ais);
 		registry_list.push_back(&noCollisionChecks);
+		registry_list.push_back(&animations);
+		registry_list.push_back(&animationTimers);
 	}
 
 	void clear_all_components() {

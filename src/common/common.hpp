@@ -27,8 +27,10 @@ using namespace glm;
 inline std::string data_path() { return std::string(PROJECT_SOURCE_DIR) + "data"; };
 inline std::string shader_path(const std::string &name) { return std::string(PROJECT_SOURCE_DIR) + "/shaders/" + name; };
 inline std::string textures_path(const std::string &name) { return data_path() + "/textures/" + std::string(name); };
+inline std::string fonts_path(const std::string& name) { return data_path() + "/fonts/" + std::string(name); };
 inline std::string audio_path(const std::string &name) { return data_path() + "/audio/" + std::string(name); };
 inline std::string mesh_path(const std::string &name) { return data_path() + "/meshes/" + std::string(name); };
+inline std::string sheets_path(const std::string &name) { return data_path() + "/sheets/" + std::string(name); };
 
 // game artstyle was generated for 1024x512 window
 const int window_width_px = 1024;
@@ -37,6 +39,11 @@ const int window_height_px = 512;
 const int game_window_size_px = 480;
 // game window block size, width and height
 const int game_window_block_size = 32;
+
+// Colors
+const vec3 COLOR_WHITE = vec3(1.0f, 1.0f, 1.0f);
+const vec3 COLOR_RED = vec3(1.0f, 0.15f, 0.15f);
+const vec3 COLOR_GREEN = vec3(0.26f, 0.97f, 0.19f);
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
