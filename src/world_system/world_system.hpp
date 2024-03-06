@@ -52,6 +52,9 @@ private:
 	// restart level
 	void restart_game();
 
+	// enter room
+	void enter_room(Room& room, vec2 player_pos);
+
 	//fps
 	void fpsCalculate();
 	// OpenGL window handle

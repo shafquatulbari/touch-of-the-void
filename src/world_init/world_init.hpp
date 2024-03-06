@@ -42,5 +42,7 @@ Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angl
 Entity createRoom(RenderSystem* renderer);
 // a text object
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color);
+// render the room
+void render_room(RenderSystem* renderer, Room& room);
 // an explosion animation
 Entity createExplosion(RenderSystem* renderer, vec2 position, bool repeat);

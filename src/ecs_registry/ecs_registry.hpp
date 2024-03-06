@@ -28,11 +28,10 @@ public:
 	ComponentContainer<Room> rooms;
 	ComponentContainer<Text> texts;
 	ComponentContainer<AI> ais;
-	ComponentContainer<NoCollisionCheck> noCollisionChecks;
+	ComponentContainer<RoomTransitionTimer> roomTransitionTimers;
 	ComponentContainer<Animation> animations;
 	ComponentContainer<AnimationTimer> animationTimers;
-
-
+	ComponentContainer<NoCollisionCheck> noCollisionChecks;
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
 	ECSRegistry()
@@ -54,6 +53,7 @@ public:
 		registry_list.push_back(&rooms);
 		registry_list.push_back(&texts);
 		registry_list.push_back(&ais);
+		registry_list.push_back(&roomTransitionTimers);
 		registry_list.push_back(&noCollisionChecks);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&animationTimers);

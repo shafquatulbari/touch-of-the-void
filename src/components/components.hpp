@@ -3,6 +3,51 @@
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
+struct vec2comp {
+	bool operator() (vec2 lhs, vec2 rhs) const
+	{
+		if (lhs.x < rhs.x) return true;
+		if (lhs.x == rhs.x && lhs.y < rhs.y) return true;
+		return false;
+	}
+};
+
+
+// All data relevant to the contents of a game room
+struct Room {
+	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
+
+	// The number of enemies in the room
+	int enemy_count = 0;
+
+	// the positions of all entities in the room
+	std::set<vec2, vec2comp> all_positions;
+
+	// the positions of the enemies in the room
+	std::set<vec2, vec2comp> enemy_positions;
+
+	// The number of obstacles in the room
+	int obstacle_count = 0;
+	// the positions of the obstacles in the room
+	std::set<vec2, vec2comp> obstacle_positions;
+
+	// The number of powerups in the room
+	int powerup_count = 0;
+	// the positions of the powerups in the room
+	std::set<vec2, vec2comp> powerup_positions;
+
+	// fields concerning the doors of the room
+	bool has_left_door = false;
+	bool has_right_door = false;
+	bool has_top_door = false;
+	bool has_bottom_door = false;
+
+	// neighbouring rooms
+	Entity left_room;
+	Entity right_room;
+	Entity top_room;
+	Entity bottom_room;
+};
 
 // Player component
 struct Player
@@ -49,6 +94,10 @@ struct Player
 	bool is_reloading = false; // player is currently reloading and cannot fire
 	float reload_timer_ms = 0.0f;
 
+	// if the player is moving between rooms
+	bool is_moving_rooms = false;
+	// the room that the player is moving to if it is moving rooms
+	Entity current_room;
 	// Constructor to set the initial magazine size
 	Player() : max_ammo_count(magazine_sizes[weapon_type]), ammo_count(max_ammo_count), reload_timer_ms(reload_times[weapon_type]) {}
 };
@@ -56,6 +105,14 @@ struct Player
 // Obstacle component
 struct Obstacle
 {
+	// player can pass through this obstacle (i,e. a door)
+	bool is_passable = false;
+
+	// if this is a door, which one
+	bool is_top_door = false;
+	bool is_bottom_door = false;
+	bool is_left_door = false;
+	bool is_right_door = false;
 };
 
 // No collision check indicator component (for background)
@@ -122,54 +179,10 @@ struct Motion {
 	float deceleration_rate = 0.0f; // amount to be shaved off velocity if moving in direction
 	float max_velocity = 0.0f; 	// maximum velocity in any direction
 	float turn_rate = 0.0f;		// how fast the entity can turn
+
+	bool is_passable = false; // if the entity is passable (cannot be collided with)
 };
 
-struct vec2comp 
-{
-	bool operator() (vec2 lhs, vec2 rhs) const
-	{
-		if (lhs.x < rhs.x) return true;
-		if (lhs.x == rhs.x && lhs.y < rhs.y) return true;
-		return false;
-	}
-};
-
-// All data relevant to the contents of a game room
-struct Room 
-{
-	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
-
-	// The number of enemies in the room
-	int enemy_count = 0;
-
-	// the positions of all entities in the room
-	std::set<vec2, vec2comp> all_positions;
-
-	// the positions of the enemies in the room
-	std::set<vec2, vec2comp> enemy_positions;
-
-	// The number of obstacles in the room
-	int obstacle_count = 0;
-	// the positions of the obstacles in the room
-	std::set<vec2, vec2comp> obstacle_positions;
-
-	// The number of powerups in the room
-	int powerup_count = 0;
-	// the positions of the powerups in the room
-	std::set<vec2, vec2comp> powerup_positions;
-
-	// fields concerning the doors of the room
-	bool has_left_door = false;
-	bool has_right_door = false;
-	bool has_top_door = false;
-	bool has_bottom_door = false;
-
-	// neighbouring rooms
-	struct Room* left_room;
-	struct Room* right_room;
-	struct Room* top_room;
-	struct Room* bottom_room;
-};
 
 // A time to track reload times
 struct ReloadTimer
@@ -209,6 +222,12 @@ struct DebugComponent
 struct DeathTimer
 {
 	float counter_ms = 3000;
+};
+
+// A timer that will be associated to player moving rooms
+struct RoomTransitionTimer
+{
+	float counter_ms = 0;
 };
 
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & chicken.vs.glsl)
@@ -291,10 +310,15 @@ enum class TEXTURE_ASSET_ID {
 	RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR = TOP_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR = RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR = BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+
+	// Full wall open door textures
+	TOP_LEVEL1_FULL_WALL_OPEN_DOOR = LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+	RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR = TOP_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
+	BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR = RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
+	LEFT_LEVEL1_FULL_WALL_OPEN_DOOR = BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	
-	LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
-	LEVEL1_FULL_WALL_OPEN_DOOR = LEVEL1_FULL_WALL_NO_DOOR + 1,
-	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_OPEN_DOOR + 1,
+	LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
+	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_NO_DOOR + 1,
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
