@@ -29,7 +29,8 @@ public:
 	ComponentContainer<Text> texts;
 	ComponentContainer<AI> ais;
 	ComponentContainer<RoomTransitionTimer> roomTransitionTimers;
-
+	ComponentContainer<Animation> animations;
+	ComponentContainer<AnimationTimer> animationTimers;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -53,6 +54,8 @@ public:
 		registry_list.push_back(&texts);
 		registry_list.push_back(&ais);
 		registry_list.push_back(&roomTransitionTimers);
+		registry_list.push_back(&animations);
+		registry_list.push_back(&animationTimers);
 	}
 
 	void clear_all_components() {

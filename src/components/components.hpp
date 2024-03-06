@@ -71,9 +71,9 @@ struct Player
 
 	// Reload times for each weapon
 	std::unordered_map<WeaponType, float> reload_times = {
-		{WeaponType::MACHINE_GUN, 3000.0f},
+		{WeaponType::MACHINE_GUN, 2000.0f},
 		{WeaponType::SNIPER, 1000.0f},
-		{WeaponType::SHOTGUN, 2000.0f},
+		{WeaponType::SHOTGUN, 1500.0f},
 		// Add more weapon types and their reload times here
 	};
 
@@ -81,7 +81,7 @@ struct Player
 	std::unordered_map<WeaponType, float> fire_rates = {
 		{WeaponType::MACHINE_GUN, 40.0f},
 		{WeaponType::SNIPER, 0.0f},
-		{WeaponType::SHOTGUN, 200.0f},
+		{WeaponType::SHOTGUN, 300.0f},
 		// Add more weapon types and their fire rates here
 	};
 
@@ -261,6 +261,13 @@ struct Character {
 	char character;
 };
 
+// A structure to store the data concerning a single sprite sheet texture
+struct Sprite {
+	unsigned int TextureID;
+	vec2 minTexCoords;
+	vec2 maxTexCoords;
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -324,9 +331,36 @@ enum class GEOMETRY_BUFFER_ID {
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
+enum class SPRITE_SHEET_ID {
+	//BLUE_EFFECT = 0,
+	EXPLOSION = 0,
+	ENEMY_EXPLODER = EXPLOSION + 1,
+	//GREEN_EFFECT = EXPLOSION + 1,
+	//PURPLE_EFFECT = GREEN_EFFECT + 1,
+	//RED_EFFECT = PURPLE_EFFECT + 1,
+	//YELLOW_EFFECT = RED_EFFECT + 1,
+	SPRITE_SHEET_COUNT = ENEMY_EXPLODER + 1
+};
+const int sheet_count = (int)SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
+
 struct RenderRequest {
 	TEXTURE_ASSET_ID used_texture = TEXTURE_ASSET_ID::TEXTURE_COUNT;
 	EFFECT_ASSET_ID used_effect = EFFECT_ASSET_ID::EFFECT_COUNT;
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 };
 
+
+// A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
+struct Animation {
+	std::vector<std::pair<int, int>> sprites;
+	std::vector<float> frame_durations_ms;
+	SPRITE_SHEET_ID sheet_id;
+	float total_frames;
+	float current_frame;
+	bool loop;
+};
+
+struct AnimationTimer
+{
+	float counter_ms = 0.0f;
+};

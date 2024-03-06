@@ -82,9 +82,15 @@ private:
 	float maxFps;
 	float frameTime;
 
-	// music references
-	// TODO: ADD OUR SOUND REFERENCES AS Mix_Music* or Mix_Chunk* 
-
+	// Sound references
+	Mix_Chunk* machine_gun_sound;
+	Mix_Chunk* sniper_sound;
+	Mix_Chunk* shotgun_sound;
+	Mix_Chunk* reload_sound;
+	Mix_Chunk* explosion_sound;
+	Mix_Chunk* cycle_weapon_sound;
+	Mix_Chunk* player_hit_sound;
+	Mix_Chunk* enemy_hit_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;

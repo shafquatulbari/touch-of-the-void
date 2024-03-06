@@ -65,6 +65,7 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 
 	initScreenTexture();
 	initializeGlTextures();
+	initializeGlSheets();
 	initializeGlEffects();
 	initializeGlGeometryBuffers();
 
@@ -98,6 +99,70 @@ void RenderSystem::initializeGlTextures()
 	}
 	gl_has_errors();
 }
+
+void RenderSystem::initializeGlSheets()
+{
+	for (uint i = 0; i < sheet_paths.size(); i++)
+	{
+		const std::string& path = sheet_paths[i];
+		ivec2& dimensions = sheet_dimensions[i]; // width, height of one sprite
+		ivec2& count = sheet_sprite_count[i]; // (rows, columns) of the sheet
+
+		stbi_uc* data;
+		data = stbi_load(path.c_str(), &dimensions.x, &dimensions.y, NULL, 4);
+
+		if (data == NULL)
+		{
+			const std::string message = "Could not load the file " + path + ".";
+			fprintf(stderr, "%s", message.c_str());
+			assert(false);
+		}
+
+		int sprite_width = dimensions.x / count.x;
+		int sprite_height = dimensions.y / count.y;
+
+		// create a new texture for the sprite
+		GLuint texture;
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		//// generate texture
+		glTexImage2D(
+			GL_TEXTURE_2D,
+			0,
+			GL_RGBA,
+			dimensions.x,
+			dimensions.y,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			data
+		);
+
+		// set texture options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+		for (int y = 0; y < count.y; y++)
+		{
+			for (int x = 0; x < count.x; x++)
+			{
+				// calculate the position of the sprite in the sheet
+				float x_offset = (float)x * sprite_width;
+				float y_offset = (float)y * sprite_height;
+
+				vec2 texcoord_min = { x_offset / dimensions.x, y_offset / dimensions.y };
+				vec2 texcoord_max = { (x_offset + sprite_width) / dimensions.x, (y_offset + sprite_height) / dimensions.y };
+
+				Sprite sprite = { texture, texcoord_min, texcoord_max };
+
+				m_ftSpriteSheets[i].insert(std::pair<std::pair<int, int>, Sprite>({ x, y }, sprite));
+			}
+		}
+		stbi_image_free(data);
+	}
+	gl_has_errors();
+}	
 
 void RenderSystem::initializeGlEffects()
 {

@@ -103,8 +103,8 @@ Entity createBackground(RenderSystem *renderer)
 
 	// return the starting room entity
 	return createRoom(renderer);
-
 	//return Entity();
+	//return entity;
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -127,7 +127,7 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 
 	// TODO: change the damage value and lifetime into constant variables
 	Deadly &deadly = registry.deadlies.emplace(entity);
-	deadly.damage = 15.0f;
+	deadly.damage = 20.0f;
 	projectile.lifetime = 1000.0f;
 
 	registry.renderRequests.insert(
@@ -473,6 +473,36 @@ Entity createText(RenderSystem* render, std::string content, vec2 pos, float sca
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = { pos.x, pos.y };
 	motion.scale = vec2({ scale, scale });
+
+	return entity;
+}
+
+Entity createExplosion(RenderSystem* render, vec2 pos, bool repeat)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ EXPLOSION_BB_WIDTH, EXPLOSION_BB_HEIGHT });
+
+	assert(!registry.animations.has(entity));
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::EXPLOSION;
+	animation.total_frames = 12;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.loop = repeat;
+
+	assert(!registry.animationTimers.has(entity));
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(entity, {
+		TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		EFFECT_ASSET_ID::TEXTURED,
+		GEOMETRY_BUFFER_ID::SPRITE});
 
 	return entity;
 }
