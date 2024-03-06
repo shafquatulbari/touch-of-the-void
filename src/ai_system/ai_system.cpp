@@ -192,7 +192,7 @@ void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity sourc
     // Adjust angle, position, and possibly texture for the enemy's projectiles
     float rng = 0.0f; // Assuming no randomness for enemy shots, adjust as needed
     float fire_length = 0.0f; // Not used for enemies in this context
-    createProjectile(nullptr, position, angle, rng, fire_length, source);
+    createProjectile(renderer, position, angle, rng, fire_length, source);
 }
 
 vec2 AISystem::worldToGrid(const vec2& pos) {

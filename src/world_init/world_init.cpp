@@ -7,6 +7,10 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
 	auto entity = Entity();
 
+	Mesh& p_mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::PLAYER_CH);
+	registry.meshPtrs.emplace(entity, &p_mesh);
+	
+
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
@@ -15,6 +19,8 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	motion.deceleration_rate = 10.0f;
 	motion.max_velocity = 200.0f;
 	motion.scale = vec2({PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT});
+
+	
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
@@ -54,12 +60,36 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	deadly.damage = 10.0f;
 
+	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
 	registry.obstacles.emplace(entity);
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
-		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE });
+	if (aiType == AI::AIType::MELEE) {
+
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.total_frames = 6;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE });
+	}
+	else if (aiType == AI::AIType::RANGED) {
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE });
+	}
 
 
 	return entity;
@@ -95,6 +125,8 @@ Entity createBackground(RenderSystem *renderer)
 	motion.position = { window_width_px / 2, window_height_px / 2 };
 	motion.scale = vec2({BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT});
 
+	registry.noCollisionChecks.emplace(entity);
+
 	registry.renderRequests.insert(
 			entity,
 			{TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
@@ -114,6 +146,9 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	// actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
 	angle += (rng - 0.5f) * accuracy;
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -249,7 +284,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
 	bottom_motion.position = vec2({ x_mid, y_max });
-	bottom_motion.scale = vec2({ game_window_size_px - 64, -32 });
+	bottom_motion.scale = vec2({ game_window_size_px - 64, 32 });
 
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
@@ -271,8 +306,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
 	left_motion.position = vec2({ x_min, y_mid });
-	left_motion.look_angle = M_PI / 2;
-	left_motion.scale = vec2({ game_window_size_px - 64, -32 });
+	left_motion.scale = vec2({ 32 , game_window_size_px - 64 });
 
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
@@ -294,8 +328,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
 	right_motion.position = vec2({ x_max, y_mid });
-	right_motion.look_angle = M_PI / 2;
-	right_motion.scale = vec2({ game_window_size_px - 64, 32 });
+	right_motion.scale = vec2({ 32, game_window_size_px - 64 });
 
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
