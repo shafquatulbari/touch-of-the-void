@@ -217,10 +217,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 				p.is_reloading = true;
 			}
 		}
-		else {
-			p.fire_rate_timer_ms -= elapsed_ms_since_last_update;
-		}
 	}
+	p.fire_rate_timer_ms -= elapsed_ms_since_last_update;
 
 	// Removing out of screen entities
 	// Remove entities that leave the screen on the left side
