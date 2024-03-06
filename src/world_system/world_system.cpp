@@ -165,14 +165,6 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	registry.texts.get(player_hp_text).content = healthText;
 
 	auto& motions_registry = registry.motions;
-
-
-	if (registry.players.get(player).is_firing) {
-		// increase the counter of fire length
-
-		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
-		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms, player);
-    }
     
 	// WEAPON SYSTEM
 	Player& p = registry.players.get(player);
