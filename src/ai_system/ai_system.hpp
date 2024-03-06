@@ -2,12 +2,18 @@
 
 #include <vector>
 
+#include "render_system/render_system.hpp"
 #include "ecs_registry/ecs_registry.hpp"
 #include "common/common.hpp"
 
 class AISystem
 {
+private:
+	RenderSystem* renderer;
 public:
+	AISystem() {};
+	AISystem(RenderSystem* _renderer): renderer(_renderer) {}
+
 	void step(float elapsed_ms);
 	void idleState(Entity entity, Motion& motion);
 	void activeState(Entity entity, Motion& motion, float elapsed_ms);

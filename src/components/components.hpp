@@ -58,6 +58,12 @@ struct Obstacle
 {
 };
 
+// No collision check indicator component (for background)
+struct NoCollisionCheck 
+{
+
+};
+
 // Projectile component
 struct Projectile 
 {
@@ -118,7 +124,8 @@ struct Motion {
 	float turn_rate = 0.0f;		// how fast the entity can turn
 };
 
-struct vec2comp {
+struct vec2comp 
+{
 	bool operator() (vec2 lhs, vec2 rhs) const
 	{
 		if (lhs.x < rhs.x) return true;
@@ -126,8 +133,10 @@ struct vec2comp {
 		return false;
 	}
 };
+
 // All data relevant to the contents of a game room
-struct Room {
+struct Room 
+{
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
 	// The number of enemies in the room
@@ -177,7 +186,8 @@ struct Collision
 };
 
 // Data structure for toggling debug mode
-struct Debug {
+struct Debug 
+{
 	bool in_debug_mode = 0;
 	bool in_freeze_mode = 0;
 };
@@ -275,8 +285,14 @@ enum class TEXTURE_ASSET_ID {
 	ENEMY_SPITTER = BULLET + 1,
 	LEVEL1_BACKGROUND = ENEMY_SPITTER + 1,
 	LEVEL1_DOORS = LEVEL1_BACKGROUND + 1,
-	LEVEL1_FULL_WALL_CLOSED_DOOR = LEVEL1_DOORS + 1,
-	LEVEL1_FULL_WALL_NO_DOOR = LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+
+	// Full wall closed door textures
+	TOP_LEVEL1_FULL_WALL_CLOSED_DOOR = LEVEL1_DOORS + 1,
+	RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR = TOP_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+	BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR = RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+	LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR = BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
+	
+	LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	LEVEL1_FULL_WALL_OPEN_DOOR = LEVEL1_FULL_WALL_NO_DOOR + 1,
 	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
@@ -305,7 +321,10 @@ const int effect_count = (int)EFFECT_ASSET_ID::EFFECT_COUNT;
 enum class GEOMETRY_BUFFER_ID {
 	SPRITE = 0,
 	SCREEN_TRIANGLE = SPRITE + 1,
-	GEOMETRY_COUNT = SCREEN_TRIANGLE + 1
+	PLAYER_CH = SCREEN_TRIANGLE + 1,
+	BULLET_CH = PLAYER_CH + 1,
+	ENEMY_SPITTER_CH = BULLET_CH + 1,
+	GEOMETRY_COUNT = ENEMY_SPITTER_CH + 1
 };
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
