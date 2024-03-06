@@ -1,13 +1,14 @@
 // Header
 #include "world_system/world_system.hpp"
 #include "world_init/world_init.hpp"
+#include "physics_system/physics_system.hpp"
 
 // stlib
 #include <cassert>
 #include <sstream>
 #include <iostream>
+#include <glm/trigonometric.hpp>
 
-#include "physics_system/physics_system.hpp"
 
 // Game configuration
 // TODO: set hard coded game configuration values here
@@ -138,6 +139,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 
 	if (registry.players.get(player).is_firing) {
 		// increase the counter of fire length
+
 		registry.players.get(player).fire_length_ms += elapsed_ms_since_last_update;
 		createProjectile(renderer, motions_registry.get(player).position, motions_registry.get(player).look_angle - M_PI / 2, uniform_dist(rng), registry.players.get(player).fire_length_ms, player);
 	}
@@ -307,6 +309,7 @@ void WorldSystem::handle_collisions() {
 					enemyHealth.current_health -= deadly.damage;
 					if (enemyHealth.current_health <= 0) {
 						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
+						int x = 1;
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -461,9 +464,55 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	// Bounce back functionality by moving back by a bit
-	Motion& playerMotion = registry.motions.get(player);
-	playerMotion.velocity *= -1;
-	playerMotion.position += playerMotion.velocity * 0.01f;
+	//Motion& playerMotion = registry.motions.get(player);
+	//playerMotion.velocity *= -1;
+	//playerMotion.position += playerMotion.velocity * 0.01f;
+
+	Motion& p_motion = registry.motions.get(player);
+	Motion& obs_motion = registry.motions.get(obstacle);
+
+	vec2& p_pos = p_motion.position;
+	vec2& p_size = p_motion.scale;
+	vec2& obs_pos = obs_motion.position;
+	vec2& obs_size = obs_motion.scale;
+
+	float p_minx = p_pos.x - p_size.x / 2;
+	float p_maxx = p_pos.x + p_size.x / 2;
+	float p_miny = p_pos.y + p_size.y / 2;
+	float p_maxy = p_pos.y - p_size.y / 2;
+
+	float obs_left = obs_pos.x - obs_size.x / 2;
+	float obs_right = obs_pos.x + obs_size.x / 2;
+	float obs_bottom = obs_pos.y + obs_size.y / 2;
+	float obs_top = obs_pos.y - obs_size.y / 2;
+ 
+	float angle = atan2(obs_pos.y - p_pos.y, obs_pos.x - p_pos.x);
+	
+	float obs_topleft_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_left);
+	float obs_topright_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_right);
+	float obs_bottomleft_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_left);
+	float obs_bottomright_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_right);
+
+	// Check if player travels upwards
+	if (angle > obs_bottomright_angle && angle <= obs_bottomleft_angle) {
+		p_pos.y = obs_bottom + p_size.y / 2;
+		p_motion.velocity.y = 0;
+	}
+	// Check if player travels downwards
+	else if (angle > obs_topleft_angle && angle <= obs_topright_angle) {
+		p_pos.y = obs_top - p_size.y / 2;
+		p_motion.velocity.y = 0;
+	}
+	// Check if player travels rightwards
+	else if (angle > obs_bottomleft_angle && angle <= obs_topleft_angle) {	
+		p_pos.x = obs_left - p_size.x / 2;
+		p_motion.velocity.x = 0;
+	}
+	// Check if player travels leftwards
+	else if (angle >= obs_topright_angle || angle <= obs_bottomright_angle) {
+		p_pos.x = obs_right + p_size.x / 2;
+		p_motion.velocity.x = 0;
+	}
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) {

@@ -26,6 +26,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 	std::vector<vec2> e1_pts;
 	std::vector<vec2> e2_pts;
 
+	// Get all vertices of the convex hull for entity1
 	if (registry.meshPtrs.has(e1)) {
 		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e1)->vertices;
 		Transform t;
@@ -45,6 +46,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 		e1_pts.push_back(vec2({ m1.position.x - m1.scale.x / 2, m1.position.y + m1.scale.y / 2 })); // bottom-left
 	}
 
+	// Get vertices of the convex hull for entity2
 	if (registry.meshPtrs.has(e2)) {
 		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e2)->vertices;
 		Transform t;
@@ -67,6 +69,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 	std::vector<vec2> e1_normals;
 	std::vector<vec2> e2_normals;
 
+	// Get the left-normals of each face of the convex hull (since the vertices are in clockwise order)
 	for (int i = e1_pts.size() - 1; i >= 0; i--) {
 		vec2& p1 = e1_pts[i];
 		vec2& p2 = e1_pts[(i + 1) % e1_pts.size()];
@@ -86,6 +89,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 	float min_e2;
 	float max_e2;
 
+	// Check for SAT collision with normals of entity1
 	for (vec2& n : e1_normals) {
 		min_e1 = glm::dot(e1_pts[0], n);
 		max_e1 = min_e1;
@@ -110,12 +114,13 @@ bool sat_collision_check(Entity e1, Entity e2) {
 			}
 		}
 
+		// We can draw a line between the two entities, return no collision
 		if (min_e1 > max_e2 || min_e2 > max_e1) {
 			return false;
 		}
 	}
 
-	
+	// Check for SAT collision with normals from entity2
 	for (vec2& n : e2_normals) {
 		min_e1 = glm::dot(e1_pts[0], n);
 		max_e1 = min_e1;
@@ -140,6 +145,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 			}
 		}
 
+		// We can draw a line between the two entities, return no collision
 		if (min_e1 > max_e2 || min_e2 > max_e1) {
 			return false;
 		}
@@ -152,13 +158,14 @@ bool sat_collision_check(Entity e1, Entity e2) {
  bool aabb_collision_check(const Motion& motion1, const Motion& motion2) {
 	 const float& x1 = motion1.position.x;
 	 const float& y1 = motion1.position.y;
-	 const float& w1 = abs(abs(motion1.scale.x) * cos(motion1.look_angle) + abs(motion1.scale.y) * sin(motion1.look_angle));
-	 const float& h1 = abs(abs(motion1.scale.x) * sin(motion1.look_angle) + abs(motion1.scale.y) * cos(motion1.look_angle));
+	 const float& w1 = abs(motion1.scale.x);
+	 const float& h1 = abs(motion1.scale.y);
 
 	 const float& x2 = motion2.position.x;
 	 const float& y2 = motion2.position.y;
-	 const float& w2 = abs(abs(motion2.scale.x) * cos(motion2.look_angle) + abs(motion2.scale.y) * sin(motion2.look_angle));
-	 const float& h2 = abs(abs(motion2.scale.x) * sin(motion2.look_angle) + abs(motion2.scale.y) * cos(motion2.look_angle));
+	 const float& w2 = abs(motion2.scale.x);
+	 const float& h2 = abs(motion2.scale.y);
+	 
 
 	 return
 		 (x1 - 0.5f * w1 < x2 + 0.5f * w2 && y1 - 0.5f * h1 < y2 + 0.5 * h2) &&

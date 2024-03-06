@@ -40,7 +40,12 @@ class RenderSystem {
 		textures_path("enemy_spitter_32x32.png"),
 		textures_path("lvl1_background_480x480.png"),
 		textures_path("lvl1_doors_96x28.png"),
+
 		textures_path("lvl1_full_wall_closed_door_416x32.png"),
+		textures_path("right_lvl1_full_wall_closed_door_416x32.png"),
+		textures_path("bottom_lvl1_full_wall_closed_door_416x32.png"),
+		textures_path("left_lvl1_full_wall_closed_door_416x32.png"),
+		
 		textures_path("lvl1_full_wall_no_door_416x32.png"),
 		textures_path("lvl1_full_wall_open_door_416x32.png"),
 		textures_path("lvl1_obstacle_32x32.png"),
@@ -48,8 +53,7 @@ class RenderSystem {
 		textures_path("lvl1_wall_end_32x32.png"),
 		textures_path("lvl1_wall_top_corner_32x32.png"),
 		textures_path("lvl1_wall_64x32.png"),
-		textures_path("player_32x32.png"),
-		
+		textures_path("player_32x32.png")
 	};
 
 	std::array<GLuint, effect_count> effects;

@@ -9,6 +9,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 
 	Mesh& p_mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::PLAYER_CH);
 	registry.meshPtrs.emplace(entity, &p_mesh);
+	
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -176,45 +177,43 @@ void createWalls(RenderSystem* render)
 	registry.obstacles.emplace(topWall);
 	registry.renderRequests.insert(
 		topWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
 	bottom_motion.position = vec2({ x_mid, y_max });
-	bottom_motion.scale = vec2({ game_window_size_px - 64, -32 });
+	bottom_motion.scale = vec2({ game_window_size_px - 64, 32 });
 
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
 		bottomWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
 
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
 	left_motion.position = vec2({ x_min, y_mid });
-	left_motion.look_angle = M_PI / 2;
-	left_motion.scale = vec2({ game_window_size_px - 64, -32 });
+	left_motion.scale = vec2({ 32 , game_window_size_px - 64 });
 
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
 		leftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
 
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
 	right_motion.position = vec2({ x_max, y_mid });
-	right_motion.look_angle = M_PI / 2;
-	right_motion.scale = vec2({ game_window_size_px - 64, 32 });
+	right_motion.scale = vec2({ 32, game_window_size_px - 64 });
 
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
 		rightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 
