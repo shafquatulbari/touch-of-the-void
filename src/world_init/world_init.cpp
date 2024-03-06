@@ -268,7 +268,7 @@ void createWalls(RenderSystem* render, Room& room)
 	registry.renderRequests.insert(
 		topWall,
 		{ room.has_top_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+			: TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 	// create the door if room should have one
@@ -290,7 +290,7 @@ void createWalls(RenderSystem* render, Room& room)
 	registry.renderRequests.insert(
 		bottomWall,
 		{ room.has_bottom_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR,
+			: TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE });
 	if (room.has_bottom_door) {
@@ -312,7 +312,7 @@ void createWalls(RenderSystem* render, Room& room)
 	registry.renderRequests.insert(
 		leftWall,
 		{ room.has_left_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR ,
+			: TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE });
 	if (room.has_left_door) {
@@ -334,7 +334,7 @@ void createWalls(RenderSystem* render, Room& room)
 	registry.renderRequests.insert(
 		rightWall,
 		{ room.has_right_door ? TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_CLOSED_DOOR ,
+			: TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE });
 

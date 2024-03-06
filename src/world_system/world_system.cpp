@@ -279,8 +279,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			screen.darken_screen_factor = 0;
 			p.is_moving_rooms = false;
 			// player enters new room
-		/*	enter_room(registry.rooms.get(p.current_room)
-				, { window_width_px / 2, window_height_px / 2});*/
+		   enter_room(registry.rooms.get(p.current_room)
+				, { window_width_px / 2, window_height_px / 2});
 			return true;
 		}
 	}

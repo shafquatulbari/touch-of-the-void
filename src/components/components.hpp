@@ -182,20 +182,6 @@ struct Motion {
 
 	bool is_passable = false; // if the entity is passable (cannot be collided with)
 };
-struct vec2comp 
-{
-	bool operator() (vec2 lhs, vec2 rhs) const
-	{
-		if (lhs.x < rhs.x) return true;
-		if (lhs.x == rhs.x && lhs.y < rhs.y) return true;
-		return false;
-	}
-};
-
-// All data relevant to the contents of a game room
-struct Room 
-{
-	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
 
 // A time to track reload times
