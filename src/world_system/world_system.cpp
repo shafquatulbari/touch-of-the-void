@@ -81,7 +81,7 @@ GLFWwindow* WorldSystem::create_window() {
 	#if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	#endif
-	glfwWindowHint(GLFW_RESIZABLE, 0);
+	glfwWindowHint(GLFW_RESIZABLE, 1);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
 	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
@@ -805,8 +805,13 @@ void WorldSystem::on_mouse_move(vec2 mouse_position) {
 	if (registry.deathTimers.has(player)) {
 		return;
 	}
+	int w, h;
+	glfwGetWindowSize(window, &w, &h);
+	// Convert from window coordinates to world coordinates
+	float x_scale = (float)w / (float)window_width_px;
+	float y_scale = (float)h / (float)window_height_px;
 	vec2 player_position = registry.motions.get(player).position;
-	vec2 direction = mouse_position - player_position;
+	vec2 direction = vec2({ mouse_position.x, h - mouse_position.y }) - vec2({ player_position.x * x_scale, player_position.y * y_scale });
 	registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 }
 

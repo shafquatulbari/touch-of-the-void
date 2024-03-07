@@ -494,6 +494,28 @@ Entity createRoom(RenderSystem* render)
 	return starting_room_entity;
 }
 
+Entity createLine(vec2 position, vec2 scale)
+{
+	Entity entity = Entity();
+
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::LINE,
+		 GEOMETRY_BUFFER_ID::DEBUG_LINE });
+
+	// Create motion
+	Motion& motion = registry.motions.emplace(entity);
+	motion.look_angle = 0.f;
+	motion.velocity = { 0, 0 };
+	motion.position = position;
+	motion.scale = scale;
+
+	registry.debugComponents.emplace(entity);
+	return entity;
+}
+
 
 Entity createText(RenderSystem* render, std::string content, vec2 pos, float scale, vec3 color)
 {

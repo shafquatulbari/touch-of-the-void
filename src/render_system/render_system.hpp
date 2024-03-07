@@ -74,6 +74,7 @@ class RenderSystem {
 		shader_path("coloured"),
 		shader_path("textured"),
 		shader_path("post_process"),
+		shader_path("line")
 	};
 
 	std::array<GLuint, font_count> fonts;
@@ -131,9 +132,9 @@ public:
 	void draw();
 
 	// Draw all text entities
-	void drawText(const mat3& projection);
+	void drawText(const mat3& projection, int* w, int* h);
 
-	mat3 createProjectionMatrix();
+	mat3 createProjectionMatrix(int* w, int* h);
 
 	bool loadEffectFromFile(
 		const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
@@ -141,13 +142,13 @@ public:
 	bool loadFontFromFile(
 		const std::string& font_path, unsigned int font_default_size);
 
+	GLFWwindow* window;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen(const mat3& projection);
 
 	// Window handle
-	GLFWwindow* window;
 
 	// Screen texture handles
 	GLuint frame_buffer;
