@@ -329,9 +329,6 @@ void framebuffer_size_callback(GLFWwindow* window, int* width, int* height) {
 
 	// Only resize the window if the aspect ratio is within the current ratio
 	if (fabs(new_aspect_ratio - aspect_ratio) < 0.01) {
-		// Update the aspect ratio
-		aspectRatio = newAspectRatio;
-
 		// Update viewport size
 		glViewport(0, 0, *width, *height);
 	}
