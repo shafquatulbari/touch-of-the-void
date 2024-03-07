@@ -861,13 +861,11 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 			return;
 		}
 		int w, h;
-    glfwGetWindowSize(window, &w, &h);
-    // Convert from window coordinates to world coordinates
-    float x_scale = (float)w / (float)window_width_px;
-    float y_scale = (float)h / (float)window_height_px;
-    vec2 player_position = registry.motions.get(player).position;
-    vec2 direction = vec2({ mouse_position.x, h - mouse_position.y }) - vec2({ player_position.x * x_scale, player_position.y * y_scale });
-    registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
+		glfwGetWindowSize(window, &w, &h);
+		// Convert from window coordinates to world coordinates
+		vec2 player_position = registry.motions.get(player).position;
+		vec2 direction = vec2({ mouse_position.x, h - mouse_position.y }) - vec2({ player_position.x * (float)w / (float)window_width_px, player_position.y * (float)h / (float)window_height_px });
+		registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 		break;
 	
 	case GAME_STATE::GAME_OVER:
