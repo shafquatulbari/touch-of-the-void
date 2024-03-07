@@ -86,7 +86,9 @@ private:
 	Mix_Chunk* machine_gun_sound;
 	Mix_Chunk* sniper_sound;
 	Mix_Chunk* shotgun_sound;
-	Mix_Chunk* reload_sound;
+	Mix_Chunk* reload_start_sound;
+	Mix_Chunk* reload_end_sound;
+	bool init_reload = false;
 	Mix_Chunk* explosion_sound;
 	Mix_Chunk* cycle_weapon_sound;
 	Mix_Chunk* player_hit_sound;

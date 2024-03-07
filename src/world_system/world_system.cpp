@@ -34,8 +34,10 @@ WorldSystem::~WorldSystem()
 		Mix_FreeChunk(sniper_sound);
 	if (shotgun_sound != nullptr)
 		Mix_FreeChunk(shotgun_sound);
-	if (reload_sound != nullptr)
-		Mix_FreeChunk(reload_sound);
+	if (reload_start_sound != nullptr)
+		Mix_FreeChunk(reload_start_sound);
+	if (reload_end_sound != nullptr)
+		Mix_FreeChunk(reload_end_sound);
 	if (explosion_sound != nullptr)
 		Mix_FreeChunk(explosion_sound);
 	if (cycle_weapon_sound != nullptr)
@@ -116,7 +118,8 @@ GLFWwindow* WorldSystem::create_window() {
 	machine_gun_sound = Mix_LoadWAV(audio_path("machine_gun.wav").c_str());
 	sniper_sound = Mix_LoadWAV(audio_path("sniper.wav").c_str());
 	shotgun_sound = Mix_LoadWAV(audio_path("shotgun.wav").c_str());
-	reload_sound = Mix_LoadWAV(audio_path("reload.wav").c_str());
+	reload_start_sound = Mix_LoadWAV(audio_path("reload_start_sound.wav").c_str());
+	reload_end_sound = Mix_LoadWAV(audio_path("reload_end_sound.wav").c_str());
 	explosion_sound = Mix_LoadWAV(audio_path("explosion.wav").c_str());
 	cycle_weapon_sound = Mix_LoadWAV(audio_path("cycle_weapon_sound.wav").c_str());
 	player_hit_sound = Mix_LoadWAV(audio_path("player_hit_sound.wav").c_str());
@@ -125,7 +128,8 @@ GLFWwindow* WorldSystem::create_window() {
 	if (machine_gun_sound == nullptr || 
 		sniper_sound == nullptr ||
 		shotgun_sound == nullptr ||
-		reload_sound == nullptr ||
+		reload_start_sound == nullptr ||
+		reload_end_sound == nullptr ||
 		explosion_sound == nullptr ||
 		cycle_weapon_sound == nullptr ||
 		player_hit_sound == nullptr ||
@@ -170,8 +174,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
 	// Handle reloading
-	if (p.is_reloading) {
+	if (init_reload) {
+		init_reload = false;
 		registry.texts.get(ammo_text).content = "Ammo: Reloading...";
+		Mix_PlayChannel(-1, reload_start_sound, 0);
+		p.is_reloading = true;
+	}
+	if (p.is_reloading) {
 		p.reload_timer_ms -= elapsed_ms_since_last_update;
 
 		if (p.reload_timer_ms < 0) {
@@ -180,11 +189,11 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			p.reload_timer_ms = p.reload_times[p.weapon_type];
 			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
 			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
-			Mix_PlayChannel(-1, reload_sound, 0);
+			Mix_PlayChannel(-1, reload_end_sound, 0);
 		}
 	}
 	// Handle firing
-	if (p.is_firing && !p.is_reloading) {
+	if (p.is_firing && !p.is_reloading && p.ammo_count > 0) {
 		p.fire_length_ms += elapsed_ms_since_last_update;
 		if (p.fire_rate_timer_ms <= 0) {
 			p.fire_rate_timer_ms = p.fire_rates[p.weapon_type];
@@ -215,7 +224,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 
 			if (p.ammo_count <= 0) {
-				p.is_reloading = true;
+				init_reload = true;
 			}
 		}
 	}
@@ -653,7 +662,7 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 
 		// WEAPON CONTROLS
 		if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-			registry.players.get(player).is_reloading = true;
+			init_reload = true;
 		}
 		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
 			cycle_weapon(-1);  // Cycle to the previous weapon
@@ -706,6 +715,9 @@ void WorldSystem::cycle_weapon(int direction) {
 	// Get the current player's weapon type
 	Player::WeaponType currentWeapon = registry.players.get(player).weapon_type;
 
+	// Store the current ammo count
+	p.magazine_ammo_count[p.weapon_type] = p.ammo_count;
+
 	// Get the total number of weapon types
 	int numWeapons = static_cast<int>(Player::WeaponType::TOTAL_WEAPON_TYPES);
 
@@ -740,9 +752,7 @@ void WorldSystem::cycle_weapon(int direction) {
 	}
 
 	// Update ammo counters and reload timers
-	p.is_reloading = true;
-	p.reload_timer_ms = p.reload_times[p.weapon_type];
-	p.ammo_count = p.magazine_sizes[p.weapon_type];
+	p.ammo_count = p.magazine_ammo_count[p.weapon_type];
 	registry.texts.get(weapon_text).content = weaponString;
 	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 	Mix_PlayChannel(-1, cycle_weapon_sound, 0);
