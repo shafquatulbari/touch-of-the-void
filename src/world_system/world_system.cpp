@@ -357,7 +357,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	frameCounter++;
 	// update fps every 50 frames 
 	if (frameCounter == 25) {
-		registry.texts.get(fps_text).content = "FPS: " + std::to_string(static_cast<int>(fps));
+		if (debugging.show_fps)
+			registry.texts.get(fps_text).content = "FPS: " + std::to_string(static_cast<int>(fps));
 		frameCounter = 0;
 	}
 	float frameTicks = SDL_GetTicks() - startTicks;
@@ -411,9 +412,6 @@ void WorldSystem::restart_game() {
 	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
 	score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
 	score = 0;
-
-	// FPS
-	fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
 }
 
 
@@ -627,12 +625,15 @@ void WorldSystem::on_key(int key, int, int action, int mod) {
 		restart_game();
 	}
 
-	// Debugging
-	if (key == GLFW_KEY_D) {
-		if (action == GLFW_RELEASE)
-			debugging.in_debug_mode = false;
-		else
-			debugging.in_debug_mode = true;
+	// FPS
+	if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
+		debugging.show_fps = !debugging.show_fps;
+		if (debugging.show_fps) {
+			fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
+		}
+		else {
+			registry.remove_all_components_of(fps_text);
+		}
 	}
 
 	// Control the current speed with `<` `>`

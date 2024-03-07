@@ -211,6 +211,7 @@ struct Debug
 {
 	bool in_debug_mode = 0;
 	bool in_freeze_mode = 0;
+	bool show_fps = 0;
 };
 extern Debug debugging;
 
