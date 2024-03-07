@@ -69,6 +69,14 @@ struct Player
 		// Add more weapon types and their magazine sizes here
 	};
 
+	// Store the current ammo count for each weapon
+	std::unordered_map<WeaponType, int> magazine_ammo_count = {
+		{WeaponType::MACHINE_GUN, 100},
+		{WeaponType::SNIPER, 1},
+		{WeaponType::SHOTGUN, 6},
+		// Add more weapon types and their magazine sizes here
+	};
+
 	// Reload times for each weapon
 	std::unordered_map<WeaponType, float> reload_times = {
 		{WeaponType::MACHINE_GUN, 2000.0f},
@@ -203,6 +211,7 @@ struct Debug
 {
 	bool in_debug_mode = 0;
 	bool in_freeze_mode = 0;
+	bool show_fps = 0;
 };
 extern Debug debugging;
 

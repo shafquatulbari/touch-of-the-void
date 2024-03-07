@@ -390,9 +390,9 @@ void RenderSystem::draw()
 	}
 
 	drawText(projection_2D, &w, &h);
+
 	// Truely render to the screen
 	drawToScreen(projection_2D);
-
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
