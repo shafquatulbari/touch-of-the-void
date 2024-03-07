@@ -10,11 +10,8 @@
 #include <map>
 #include <world_init/world_init.hpp>
 
-const int WIDTH = 32;
-const int HEIGHT = 32;
-
-const int GRID_SIZE_X = 32; // according to your game's layout
-const int GRID_SIZE_Y = 32; // according to your game's layout
+const int GRID_SIZE_X = 15; // according to your game's layout 480/32 = 15
+const int GRID_SIZE_Y = 15; // according to your game's layout 480/32 = 15
 std::vector<std::vector<bool>> grid(GRID_SIZE_X, std::vector<bool>(GRID_SIZE_Y, true)); // true for walkable, false for blocked
 
 struct Vec2Hash {

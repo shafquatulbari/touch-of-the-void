@@ -585,24 +585,20 @@ void WorldSystem::handle_collisions() {
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
-
-			// Additional collision handling logic can be added here
 		}
-		/*
+		
 		// Handle collisions projectiles and obstacles
 		if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
-				Projectile& projectile = registry.projectiles.get(entity);
-				if (registry.healths.has(entity_other)) {
-					Deadly& deadly = registry.deadlies.get(entity);
-					Health& obstacle_health = registry.healths.get(entity_other);
-					obstacle_health.current_health -= deadly.damage;
-					if (obstacle_health.current_health <= 0) {
-						registry.remove_all_components_of(entity_other);
-					}
-				}
-				registry.remove_all_components_of(entity);
-		}
-		*/
+            Projectile& projectile = registry.projectiles.get(entity);
+            Entity projectileSource = projectile.source;
+
+            // Check if the projectile comes from the player
+            if (registry.players.has(projectileSource)) {
+                // Remove the projectile, it hit an obstacle
+                registry.remove_all_components_of(entity);
+                continue; // Skip further processing for this collision
+            }
+        }
 	}
 
 	// Remove all collisions from this simulation step
