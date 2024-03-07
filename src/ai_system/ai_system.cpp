@@ -91,7 +91,7 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
 
                 direction = normalize(nextStep - motion.position);
                 float angle = atan2(direction.y, direction.x);
-                motion.look_angle = angle; // Rotate towards player
+                motion.look_angle = angle - M_PI / 2; // Rotate towards player
                 float speed = 10.0f; // a suitable speed value for the game
                 
                 if (grid[static_cast<int>(worldToGrid(nextStep).x)][static_cast<int>(worldToGrid(nextStep).y)]) {
@@ -121,7 +121,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         // Rotate towards the player
         vec2 direction = normalize(playerPosition - motion.position);
         float angle = atan2(direction.y, direction.x);
-        motion.look_angle = angle;
+        motion.look_angle = angle - M_PI / 2;
         float speed = 10.0f; // a suitable speed value for the game
 
         // Movement logic for ranged AI, moving closer until within a safe distance

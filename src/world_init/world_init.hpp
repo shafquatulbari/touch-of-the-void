@@ -38,6 +38,8 @@ Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, floa
 Entity createSniperProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // a single shotgun projectile
 Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
+// debug line
+Entity createLine(vec2 position, vec2 scale);
 // a hard coded room
 Entity createRoom(RenderSystem* renderer);
 // a text object

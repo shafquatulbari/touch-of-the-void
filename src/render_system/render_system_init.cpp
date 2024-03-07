@@ -236,6 +236,30 @@ void RenderSystem::initializeGlGeometryBuffers()
 	const std::vector<uint16_t> textured_indices = { 0, 3, 1, 1, 3, 2 };
 	bindVBOandIBO(GEOMETRY_BUFFER_ID::SPRITE, textured_vertices, textured_indices);
 
+	//////////////////////////////////
+	// Initialize debug line
+	std::vector<ColoredVertex> line_vertices;
+	std::vector<uint16_t> line_indices;
+
+	constexpr float depth = 0.5f;
+	constexpr vec3 red = { 0.8,0.1,0.1 };
+
+	// Corner points
+	line_vertices = {
+		{{-0.5,-0.5, depth}, red},
+		{{-0.5, 0.5, depth}, red},
+		{{ 0.5, 0.5, depth}, red},
+		{{ 0.5,-0.5, depth}, red},
+	};
+
+	// Two triangles
+	line_indices = { 0, 1, 3, 1, 2, 3 };
+
+	int geom_index = (int)GEOMETRY_BUFFER_ID::DEBUG_LINE;
+	meshes[geom_index].vertices = line_vertices;
+	meshes[geom_index].vertex_indices = line_indices;
+	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
+
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).
@@ -362,12 +386,6 @@ bool RenderSystem::initializeFonts() {
 
 	// use our new shader
 	glUseProgram(m_font_shaderProgram);
-
-	// apply projection matrix for font
-	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
-	GLint project_location = glGetUniformLocation(m_font_shaderProgram, "projection");
-	assert(project_location > -1);
-	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
 
 	// init FreeType fonts
 	for (uint i = 0; i < font_paths.size(); i++)

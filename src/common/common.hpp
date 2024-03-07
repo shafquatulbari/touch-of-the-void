@@ -39,6 +39,7 @@ const int window_height_px = 512;
 const int game_window_size_px = 480;
 // game window block size, width and height
 const int game_window_block_size = 32;
+const float aspect_ratio = (float)window_width_px / (float)window_height_px;
 
 // Colors
 const vec3 COLOR_WHITE = vec3(1.0f, 1.0f, 1.0f);
