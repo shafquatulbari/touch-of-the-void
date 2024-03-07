@@ -157,7 +157,24 @@ void WorldSystem::init(RenderSystem* renderer_arg) {
 }
 
 // Update our game world
-bool WorldSystem::step(float elapsed_ms_since_last_update) {
+bool WorldSystem::step(float elapsed_ms_since_last_update) 
+{
+	switch (game_state)
+	{
+	case GAME_STATE::START_MENU:
+		return true;
+		break;
+	case GAME_STATE::GAME:
+		break;
+
+	case GAME_STATE::GAME_OVER:
+		return true;
+		break;
+
+	default:
+		return true;
+		break;
+	}
 
 	// Remove debug info from the last step
 	while (registry.debugComponents.entities.size() > 0)
@@ -270,6 +287,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		if (counter.counter_ms < 0) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
+			game_state = GAME_STATE::GAME_OVER;
 			restart_game();
 			return true;
 		}
@@ -295,7 +313,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 	screen.darken_screen_factor = 1 - min_counter_ms / 3000;
 
 	for (Entity entity : registry.animationTimers.entities) {
-				// progress timer
+		// progress timer
 		AnimationTimer& counter = registry.animationTimers.get(entity);
 		if (!registry.animations.has(entity)) {
 			registry.animationTimers.remove(entity);
@@ -377,9 +395,6 @@ void WorldSystem::restart_game() {
 	registry.list_all_components();
 	printf("Restarting\n");
 
-	// Reset the game speed
-	current_speed = 1.f;
-
 	// Reset darken_screen_factor on game restart
     ScreenState& screen = registry.screenStates.components[0];
     screen.darken_screen_factor = 0.0f; 
@@ -392,26 +407,44 @@ void WorldSystem::restart_game() {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
-	// Create a level
-	Entity starting_room = createBackground(renderer);
+	switch (game_state) 
+	{
+	case GAME_STATE::START_MENU:
+		createText(renderer, "TOUCH OF THE VOID", { 220.0f, 350.0f }, 1.5f, COLOR_RED);
+		createText(renderer, "Press 'enter' to start", { 380.0f, 280.0f }, 0.5f, COLOR_WHITE);
+		break;
 
-	// Create a new player
-	player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
-	registry.players.get(player).current_room = starting_room;
-	// Tutorial Text
-	createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, COLOR_WHITE);
-	createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, COLOR_WHITE);
-	createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, COLOR_WHITE);
-	createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, COLOR_WHITE);
-	createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, COLOR_WHITE);
-	createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, COLOR_WHITE);
+	case GAME_STATE::GAME:
+		// Create a new player
+		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
-	// Create HUD
-	player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, COLOR_RED);
-	weapon_text = createText(renderer, "Weapon: Machine Gun", {780.0f, 360.0f}, 0.5f, COLOR_GREEN);
-	ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
-	score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
-	score = 0;
+		// Create a level
+		registry.players.get(player).current_room = createBackground(renderer);
+
+		// Tutorial Text
+		createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, COLOR_WHITE);
+		createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, COLOR_WHITE);
+		createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, COLOR_WHITE);
+		createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, COLOR_WHITE);
+		createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, COLOR_WHITE);
+		createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, COLOR_WHITE);
+
+		// Create HUD
+		player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, COLOR_RED);
+		weapon_text = createText(renderer, "Weapon: Machine Gun", { 780.0f, 360.0f }, 0.5f, COLOR_GREEN);
+		ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
+		score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
+		score = 0;
+		break;
+
+	case GAME_STATE::GAME_OVER:
+		createText(renderer, "GAME OVER", { 340.0f, 350.0f }, 1.5f, COLOR_RED);
+		createText(renderer, "Press 'enter' to play again", { 350.0f, 280.0f }, 0.5f, COLOR_WHITE);
+		break;
+
+	default:
+		break;
+	}
 }
 
 
@@ -420,9 +453,6 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Entering Room\n");
-
-	// Reset the game speed
-	current_speed = 1.f;
 
 	// Reset darken_screen_factor on room enter
 	ScreenState& screen = registry.screenStates.components[0];
@@ -610,99 +640,109 @@ bool WorldSystem::is_over() const {
 }
 
 // On key callback
-void WorldSystem::on_key(int key, int, int action, int mod) {
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// TODO: HANDLE PLAYER MOVEMENT HERE
+void WorldSystem::on_key(int key, int, int action, int mod) 
+{
 	// key is of 'type' GLFW_KEY_
 	// action can be GLFW_PRESS GLFW_RELEASE GLFW_REPEAT
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-	// Resetting game
-	if (action == GLFW_RELEASE && key == GLFW_KEY_G) {
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
+	switch (game_state)
+	{
 
-		restart_game();
+	case GAME_STATE::START_MENU:
+		// Enter key to start the game
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ENTER) {
+			game_state = GAME_STATE::GAME;
+			restart_game();
+		}
+		break;
+
+	case GAME_STATE::GAME:
+		// Exit the game on escape
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+			// TODO: Change to different screen or close depending on the game state
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+
+		// Resetting game
+		if (action == GLFW_RELEASE && key == GLFW_KEY_G) {
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+
+			restart_game();
+		}
+
+		// FPS
+		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
+			debugging.show_fps = !debugging.show_fps;
+			if (debugging.show_fps) {
+				fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
+			}
+			else {
+				registry.remove_all_components_of(fps_text);
+			}
+		}
+
+		// Player keyboard controls
+		if (!registry.deathTimers.has(player)) {
+			// WEAPON CONTROLS
+			if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+				init_reload = true;
+			}
+			if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+				cycle_weapon(-1);  // Cycle to the previous weapon
+			}
+			if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+				cycle_weapon(1);  // Cycle to the next weapon
+			}
+
+			// MOVEMENT CONTROLS
+			if (key == GLFW_KEY_W) {
+				if (action == GLFW_PRESS) {
+					registry.motions.get(player).is_moving_up = true;
+				}
+				else if (action == GLFW_RELEASE) {
+					registry.motions.get(player).is_moving_up = false;
+				}
+			}
+			if (key == GLFW_KEY_S) {
+				if (action == GLFW_PRESS) {
+					registry.motions.get(player).is_moving_down = true;
+				}
+				else if (action == GLFW_RELEASE) {
+					registry.motions.get(player).is_moving_down = false;
+				}
+			}
+			if (key == GLFW_KEY_A) {
+				if (action == GLFW_PRESS) {
+					registry.motions.get(player).is_moving_left = true;
+				}
+				else if (action == GLFW_RELEASE) {
+					registry.motions.get(player).is_moving_left = false;
+				}
+			}
+			if (key == GLFW_KEY_D) {
+				if (action == GLFW_PRESS) {
+					registry.motions.get(player).is_moving_right = true;
+				}
+				else if (action == GLFW_RELEASE) {
+					registry.motions.get(player).is_moving_right = false;
+				}
+			}
+		}
+		break;
+
+	case GAME_STATE::GAME_OVER:
+		// Enter key to start the game
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ENTER) {
+			game_state = GAME_STATE::GAME;
+			restart_game();
+		}
+		break;
+
+	default:
+		break;
+
 	}
-
-	// FPS
-	if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
-		debugging.show_fps = !debugging.show_fps;
-		if (debugging.show_fps) {
-			fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
-		}
-		else {
-			registry.remove_all_components_of(fps_text);
-		}
-	}
-
-	// Control the current speed with `<` `>`
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_COMMA) {
-		current_speed -= 0.1f;
-		printf("Current speed = %f\n", current_speed);
-	}
-	if (action == GLFW_RELEASE && (mod & GLFW_MOD_SHIFT) && key == GLFW_KEY_PERIOD) {
-		current_speed += 0.1f;
-		printf("Current speed = %f\n", current_speed);
-	}
-	current_speed = fmax(0.f, current_speed);
-
-	// exit the game on escape
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
-		// TODO: Change to different screen or close depending on the game state
-		glfwSetWindowShouldClose(window, GL_TRUE);
-	}
-
-
-	if (!registry.deathTimers.has(player)) {
-		// TODO: Handle player controls here
-
-		// WEAPON CONTROLS
-		if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-			init_reload = true;
-		}
-		if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-			cycle_weapon(-1);  // Cycle to the previous weapon
-		}
-		if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-			cycle_weapon(1);  // Cycle to the next weapon
-		}
-
-		// MOVEMENT CONTROLS
-		if (key == GLFW_KEY_W) {
-			if (action == GLFW_PRESS) {
-				registry.motions.get(player).is_moving_up = true;
-			}
-			else if (action == GLFW_RELEASE) {
-				registry.motions.get(player).is_moving_up = false;
-			}
-		}
-		if (key == GLFW_KEY_S) {
-			if (action == GLFW_PRESS) {
-				registry.motions.get(player).is_moving_down = true;
-			}
-			else if (action == GLFW_RELEASE) {
-				registry.motions.get(player).is_moving_down = false;
-			}
-		}
-		if (key == GLFW_KEY_A) {
-			if (action == GLFW_PRESS) {
-				registry.motions.get(player).is_moving_left = true;
-			}
-			else if (action == GLFW_RELEASE) {
-				registry.motions.get(player).is_moving_left = false;
-			}
-		}
-		if (key == GLFW_KEY_D) {
-			if (action == GLFW_PRESS) {
-				registry.motions.get(player).is_moving_right = true;
-			}
-			else if (action == GLFW_RELEASE) {
-				registry.motions.get(player).is_moving_right = false;
-			}
-		}
-	}
-
 }
 
 // Function to cycle player weapons (-1 for previous, 1 for next)
@@ -808,34 +848,68 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	}
 }
 
-void WorldSystem::on_mouse_move(vec2 mouse_position) {
-	if (registry.deathTimers.has(player)) {
-		return;
+void WorldSystem::on_mouse_move(vec2 mouse_position) 
+{
+	switch (game_state) 
+	{
+
+	case GAME_STATE::START_MENU:
+		break;
+	
+	case GAME_STATE::GAME:
+		if (registry.deathTimers.has(player)) {
+			return;
+		}
+		vec2 player_position = registry.motions.get(player).position;
+		vec2 direction = mouse_position - player_position;
+		registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI / 2;
+		break;
+	
+	case GAME_STATE::GAME_OVER:
+		break;
+	
+	default:
+		break;
+
 	}
-	vec2 player_position = registry.motions.get(player).position;
-	vec2 direction = mouse_position - player_position;
-	registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 }
 
-void WorldSystem::on_mouse_click(int button, int action, int mods) {
-	if (registry.deathTimers.has(player)) {
-		return;
-	}
-
+void WorldSystem::on_mouse_click(int button, int action, int mods) 
+{
 	// glfw mouse button codes
 	int left_click = 0;
 	int right_click = 1;
 	int press = 1;
 	int release = 0;
 
-	if (button == left_click) {
-		if (action == press) {
-			registry.players.get(player).is_firing = true;
+	switch (game_state)
+	{
+
+	case GAME_STATE::START_MENU:
+		break;
+
+	case GAME_STATE::GAME:
+		if (registry.deathTimers.has(player)) {
+			return;
 		}
-		else if (action == release) {
-			registry.players.get(player).is_firing = false;
-			registry.players.get(player).fire_length_ms = 0.0f;
+
+		if (button == left_click) {
+			if (action == press) {
+				registry.players.get(player).is_firing = true;
+			}
+			else if (action == release) {
+				registry.players.get(player).is_firing = false;
+				registry.players.get(player).fire_length_ms = 0.0f;
+			}
 		}
+		break;
+
+	case GAME_STATE::GAME_OVER:
+		break;
+
+	default:
+		break;
+
 	}
 }
 

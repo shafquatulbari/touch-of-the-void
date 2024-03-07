@@ -339,10 +339,11 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
+	// Draw text entities
 	drawText(projection_2D);
+
 	// Truely render to the screen
 	drawToScreen(projection_2D);
-
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);
