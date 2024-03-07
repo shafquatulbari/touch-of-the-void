@@ -55,19 +55,23 @@ private:
 	// enter room
 	void enter_room(Room& room, vec2 player_pos);
 
-	//fps
+	// fps
 	void fpsCalculate();
 	// OpenGL window handle
 	GLFWwindow* window;
 
-	// Number of bug eaten by the chicken, displayed in the window title
-	//unsigned int points;
-
 	// Game state
 	RenderSystem* renderer;
-	// TODO: Global game state goes here
-	float current_speed;
 	Entity player;
+
+	enum class GAME_STATE {
+		START_MENU,
+		GAME,
+		GAME_OVER,
+		TOTAL_GAME_STATES // Keep this as the last element
+	};
+
+	GAME_STATE game_state = GAME_STATE::START_MENU;
 	
 	// HUD
 	Entity player_hp_text;
@@ -86,7 +90,9 @@ private:
 	Mix_Chunk* machine_gun_sound;
 	Mix_Chunk* sniper_sound;
 	Mix_Chunk* shotgun_sound;
-	Mix_Chunk* reload_sound;
+	Mix_Chunk* reload_start_sound;
+	Mix_Chunk* reload_end_sound;
+	bool init_reload = false;
 	Mix_Chunk* explosion_sound;
 	Mix_Chunk* cycle_weapon_sound;
 	Mix_Chunk* player_hit_sound;
