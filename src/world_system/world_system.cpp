@@ -164,7 +164,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update) {
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
 	// Update HUD
-	int roundedHealth = static_cast<int>(registry.healths.get(player).current_health); // round to nearest int so the HUD doesn't get cluttered
+	int roundedHealth = std::max(0, static_cast<int>(registry.healths.get(player).current_health)); // round to nearest int so the HUD doesn't get cluttered
 	std::string healthText = "HP: " + std::to_string(roundedHealth) + " / 100";
 	registry.texts.get(player_hp_text).content = healthText;
 
