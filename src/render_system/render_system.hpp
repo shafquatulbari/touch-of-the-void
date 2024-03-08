@@ -90,8 +90,8 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
 		//sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
-		sheets_path("explosion_96x96.png"),
-		sheets_path("exploding_skull_32x32.png")
+		sheets_path("explosion_192x192.png"),
+		sheets_path("exploding_skull_64x64.png")
 		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("red_effect_bullet_impact_explosion_32x32.png"),

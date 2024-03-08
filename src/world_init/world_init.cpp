@@ -33,7 +33,8 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 			entity,
 			{TEXTURE_ASSET_ID::PLAYER,
 			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE});
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND});
 
 	
 	return entity;
@@ -81,14 +82,16 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			entity,
 			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE });
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
 	}
 	else if (aiType == AI::AIType::RANGED) {
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
 			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE });
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
 	}
 
 
@@ -111,7 +114,8 @@ Entity createObstacle(RenderSystem *renderer, vec2 position)
 		entity,
 		{ TEXTURE_ASSET_ID::LEVEL1_OBSTACLE,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE });
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	return entity;
 }
@@ -131,7 +135,8 @@ Entity createBackground(RenderSystem *renderer)
 			entity,
 			{TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
 			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE});
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::BACKGROUND});
 
 	// return the starting room entity
 	return createRoom(renderer);
@@ -169,7 +174,8 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 			entity,
 			{TEXTURE_ASSET_ID::BULLET,
 			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE});
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::MIDDLEGROUND});
 
 	return entity;
 }
@@ -200,7 +206,8 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 		entity,
 		{ TEXTURE_ASSET_ID::BULLET,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE });
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND});
 
 	return entity;
 }
@@ -236,7 +243,8 @@ Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle,
 		entity,
 		{ TEXTURE_ASSET_ID::BULLET,
 		  EFFECT_ASSET_ID::TEXTURED,
-		  GEOMETRY_BUFFER_ID::SPRITE });
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND});
 
 	return entity;
 }
@@ -270,7 +278,8 @@ void createWalls(RenderSystem* render, Room& room)
 		{ room.has_top_door ? TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR
 			: TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR,
 			EFFECT_ASSET_ID::TEXTURED,
-			GEOMETRY_BUFFER_ID::SPRITE });
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND});
 	// create the door if room should have one
 	if (room.has_top_door) {
 		auto top_door = Entity();
@@ -293,7 +302,8 @@ void createWalls(RenderSystem* render, Room& room)
 		{ room.has_bottom_door ? TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR
 			: TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR,
 					EFFECT_ASSET_ID::TEXTURED,
-					GEOMETRY_BUFFER_ID::SPRITE });
+					GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND});
 	if (room.has_bottom_door) {
 		auto bottom_door = Entity();
 		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
@@ -315,7 +325,8 @@ void createWalls(RenderSystem* render, Room& room)
 		{ room.has_left_door ? TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR
 			: TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
 							EFFECT_ASSET_ID::TEXTURED,
-							GEOMETRY_BUFFER_ID::SPRITE });
+							GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 	if (room.has_left_door) {
 		auto left_door = Entity();
 		Motion& left_door_motion = registry.motions.emplace(left_door);
@@ -337,7 +348,8 @@ void createWalls(RenderSystem* render, Room& room)
 		{ room.has_right_door ? TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR
 			: TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
 			EFFECT_ASSET_ID::TEXTURED,
-			GEOMETRY_BUFFER_ID::SPRITE });
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	if (room.has_right_door) {
 		auto right_door = Entity();
@@ -364,7 +376,8 @@ void createWalls(RenderSystem* render, Room& room)
 		topLeftWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
 					EFFECT_ASSET_ID::TEXTURED,
-					GEOMETRY_BUFFER_ID::SPRITE });
+					GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	// top right wall
 	Motion& topRight_motion = registry.motions.emplace(topRightWall);
@@ -376,7 +389,8 @@ void createWalls(RenderSystem* render, Room& room)
 		topRightWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
 							EFFECT_ASSET_ID::TEXTURED,
-							GEOMETRY_BUFFER_ID::SPRITE });
+							GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	// bottom left wall
 	Motion& bottomLeft_motion = registry.motions.emplace(bottomLeftWall);
@@ -388,7 +402,8 @@ void createWalls(RenderSystem* render, Room& room)
 		bottomLeftWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
 							EFFECT_ASSET_ID::TEXTURED,
-							GEOMETRY_BUFFER_ID::SPRITE });
+							GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	// bottom right wall
 	Motion& bottomRight_motion = registry.motions.emplace(bottomRightWall);
@@ -400,7 +415,8 @@ void createWalls(RenderSystem* render, Room& room)
 		bottomRightWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
 									EFFECT_ASSET_ID::TEXTURED,
-									GEOMETRY_BUFFER_ID::SPRITE });
+									GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 }
 void render_room(RenderSystem* render, Room& room)
@@ -438,7 +454,8 @@ void render_room(RenderSystem* render, Room& room)
 		entity,
 		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
 		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE });
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::BACKGROUND });
 }
 
 Entity createRoom(RenderSystem* render)
@@ -504,7 +521,8 @@ Entity createLine(vec2 position, vec2 scale)
 		entity,
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::LINE,
-		 GEOMETRY_BUFFER_ID::DEBUG_LINE });
+		 GEOMETRY_BUFFER_ID::DEBUG_LINE,
+		RENDER_LAYER::UI});
 
 	// Create motion
 	Motion& motion = registry.motions.emplace(entity);
@@ -558,7 +576,8 @@ Entity createExplosion(RenderSystem* render, vec2 pos, bool repeat)
 	registry.renderRequests.insert(entity, {
 		TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		EFFECT_ASSET_ID::TEXTURED,
-		GEOMETRY_BUFFER_ID::SPRITE});
+		GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::FOREGROUND});
 
 	return entity;
 }

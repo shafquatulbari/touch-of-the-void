@@ -345,7 +345,13 @@ void RenderSystem::draw()
 	gl_has_errors();
 	mat3 projection_2D = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.renderRequests.entities)
+	std::vector<Entity> sorted_entities;
+	sorted_entities = registry.renderRequests.entities;
+	std::sort(sorted_entities.begin(), sorted_entities.end(), [this](Entity a, Entity b) {
+		return registry.renderRequests.get(a).used_render_layer < registry.renderRequests.get(b).used_render_layer;
+		});
+
+	for (Entity entity : sorted_entities)
 	{
 		if (!registry.motions.has(entity) || registry.texts.has(entity))
 			continue;

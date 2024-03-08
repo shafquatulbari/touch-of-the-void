@@ -21,8 +21,8 @@ const float BACKGROUND_BB_HEIGHT = 960.f;
 const float BULLET_BB_WIDTH = 16.0f;
 const float BULLET_BB_HEIGHT = 16.0f;
 
-const float EXPLOSION_BB_WIDTH = 96.0f;
-const float EXPLOSION_BB_HEIGHT = 96.0f;
+const float EXPLOSION_BB_WIDTH = 192.0f;
+const float EXPLOSION_BB_HEIGHT = 192.0f;
 
 const float WALL_BB_WIDTH = 832.0f;
 const float WALL_BB_HEIGHT = 64.0F;
