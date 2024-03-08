@@ -33,12 +33,12 @@ inline std::string mesh_path(const std::string &name) { return data_path() + "/m
 inline std::string sheets_path(const std::string &name) { return data_path() + "/sheets/" + std::string(name); };
 
 // game artstyle was generated for 1024x512 window
-const int window_width_px = 1024;
-const int window_height_px = 512;
+const int window_width_px = 1920;
+const int window_height_px = 1024;
 // game window size both, width and height
-const int game_window_size_px = 480;
+const int game_window_size_px = 960;
 // game window block size, width and height
-const int game_window_block_size = 32;
+const int game_window_block_size = 64;
 const float aspect_ratio = (float)window_width_px / (float)window_height_px;
 
 // Colors

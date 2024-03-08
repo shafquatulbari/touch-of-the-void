@@ -15,9 +15,9 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	Motion &motion = registry.motions.emplace(entity);
 	motion.position = pos;
 	motion.complex = true;
-	motion.acceleration_rate = 25.0f;
-	motion.deceleration_rate = 10.0f;
-	motion.max_velocity = 200.0f;
+	motion.acceleration_rate = 50.f;
+	motion.deceleration_rate = 20.0f;
+	motion.max_velocity = 400.0f;
 	motion.scale = vec2({PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT});
 
 	
@@ -156,7 +156,7 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
 	motion.scale = vec2({BULLET_BB_WIDTH, BULLET_BB_HEIGHT});
-	motion.velocity = vec2({500.0f * cos(angle), 500.0f * sin(angle)});
+	motion.velocity = vec2({1000.0f * cos(angle), 1000.0f * sin(angle)});
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
 
@@ -188,7 +188,7 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
 	motion.scale = vec2({ BULLET_BB_WIDTH * 3, BULLET_BB_HEIGHT * 3 });
-	motion.velocity = vec2({ 1000.0f * cos(angle), 1000.0f * sin(angle) });
+	motion.velocity = vec2({ 2000.0f * cos(angle), 2000.0f * sin(angle) });
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
 
@@ -224,7 +224,7 @@ Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle,
 	motion.position = position;
 	motion.look_angle = coneAngle;
 	motion.scale = vec2({ BULLET_BB_WIDTH * 0.8, BULLET_BB_HEIGHT * 0.8 });
-	motion.velocity = vec2({ 500.0f * cos(coneAngle), 500.0f * sin(coneAngle) });
+	motion.velocity = vec2({ 1000.0f * cos(coneAngle), 1000.0f * sin(coneAngle) });
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
 
@@ -251,8 +251,8 @@ void createWalls(RenderSystem* render, Room& room)
 
 	float x_mid = window_width_px / 2;
 	float y_mid = window_height_px / 2;
-	float x_delta = game_window_size_px / 2 - 16;
-	float y_delta = game_window_size_px / 2 - 16;
+	float x_delta = game_window_size_px / 2 - 32;
+	float y_delta = game_window_size_px / 2 - 32;
 	float x_max = x_mid + x_delta;
 	float x_min = x_mid - x_delta;
 	float y_max = y_mid + y_delta;
@@ -261,7 +261,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// top wall
 	Motion& top_motion = registry.motions.emplace(topWall);
 	top_motion.position = vec2({ x_mid, y_min });
-	top_motion.scale = vec2({ game_window_size_px - 64, 32 });
+	top_motion.scale = vec2({ WALL_BB_WIDTH, WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(topWall);
 	registry.obstacles.get(topWall).is_passable = false;
@@ -276,15 +276,16 @@ void createWalls(RenderSystem* render, Room& room)
 		auto top_door = Entity();
 		Motion& top_door_motion = registry.motions.emplace(top_door);
 		top_door_motion.position = { x_mid, y_min };
-		top_door_motion.scale = { 32,32 };
+		top_door_motion.scale = { 64,64 };
 		Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
 		top_door_obstacle.is_passable = true;
 		top_door_obstacle.is_top_door = true;
 	}
+
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
 	bottom_motion.position = vec2({ x_mid, y_max });
-	bottom_motion.scale = vec2({ game_window_size_px - 64, 32 });
+	bottom_motion.scale = vec2({ WALL_BB_WIDTH, WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
@@ -297,7 +298,7 @@ void createWalls(RenderSystem* render, Room& room)
 		auto bottom_door = Entity();
 		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
 		bottom_door_motion.position = { x_mid, y_max };
-		bottom_door_motion.scale = { 32,32 };
+		bottom_door_motion.scale = { 64,64 };
 		Obstacle& bottom_door_obstacle = registry.obstacles.emplace(bottom_door);
 		bottom_door_obstacle.is_passable = true;
 		bottom_door_obstacle.is_bottom_door = true;
@@ -306,7 +307,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
 	left_motion.position = vec2({ x_min, y_mid });
-	left_motion.scale = vec2({ 32 , game_window_size_px - 64 });
+	left_motion.scale = vec2({ WALL_BB_HEIGHT , WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(leftWall);
 	registry.renderRequests.insert(
@@ -319,7 +320,7 @@ void createWalls(RenderSystem* render, Room& room)
 		auto left_door = Entity();
 		Motion& left_door_motion = registry.motions.emplace(left_door);
 		left_door_motion.position = { x_min, y_mid };
-		left_door_motion.scale = { 32,32 };
+		left_door_motion.scale = { 64,64 };
 		Obstacle& left_door_obstacle = registry.obstacles.emplace(left_door);
 		left_door_obstacle.is_passable = true;
 		left_door_obstacle.is_left_door = true;
@@ -328,7 +329,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
 	right_motion.position = vec2({ x_max, y_mid });
-	right_motion.scale = vec2({ 32, game_window_size_px - 64 });
+	right_motion.scale = vec2({ WALL_BB_HEIGHT, WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(rightWall);
 	registry.renderRequests.insert(
@@ -342,7 +343,7 @@ void createWalls(RenderSystem* render, Room& room)
 		auto right_door = Entity();
 		Motion& right_door_motion = registry.motions.emplace(right_door);
 		right_door_motion.position = { x_max, y_mid };
-		right_door_motion.scale = { 32,32 };
+		right_door_motion.scale = { 64,64 };
 		Obstacle& right_door_obstacle = registry.obstacles.emplace(right_door);
 		right_door_obstacle.is_passable = true;
 		right_door_obstacle.is_right_door = true;
@@ -356,7 +357,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// top left wall
 	Motion& topLeft_motion = registry.motions.emplace(topLeftWall);
 	topLeft_motion.position = vec2({ x_min, y_min });
-	topLeft_motion.scale = vec2({ -32, 32 });
+	topLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(topLeftWall);
 	registry.renderRequests.insert(
@@ -368,7 +369,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// top right wall
 	Motion& topRight_motion = registry.motions.emplace(topRightWall);
 	topRight_motion.position = vec2({ x_max, y_min });
-	topRight_motion.scale = vec2({ 32, 32 });
+	topRight_motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(topRightWall);
 	registry.renderRequests.insert(
@@ -380,7 +381,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// bottom left wall
 	Motion& bottomLeft_motion = registry.motions.emplace(bottomLeftWall);
 	bottomLeft_motion.position = vec2({ x_min, y_max });
-	bottomLeft_motion.scale = vec2({ -32, 32 });
+	bottomLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomLeftWall);
 	registry.renderRequests.insert(
@@ -392,7 +393,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// bottom right wall
 	Motion& bottomRight_motion = registry.motions.emplace(bottomRightWall);
 	bottomRight_motion.position = vec2({ x_max, y_max });
-	bottomRight_motion.scale = vec2({ 32, 32 });
+	bottomRight_motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomRightWall);
 	registry.renderRequests.insert(
@@ -404,8 +405,8 @@ void createWalls(RenderSystem* render, Room& room)
 }
 void render_room(RenderSystem* render, Room& room)
 {
-	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
-	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
 	for (auto& pos : room.obstacle_positions)
 	{
