@@ -245,7 +245,7 @@ void RenderSystem::drawToScreen(const mat3& projection)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void RenderSystem::drawText(const mat3& projection, int* w, int* h)
+void RenderSystem::drawText(const mat3& projection)
 {
 	// Setting shaders
 	glUseProgram(m_font_shaderProgram);
@@ -268,10 +268,6 @@ void RenderSystem::drawText(const mat3& projection, int* w, int* h)
 		GLint colorLocation = glGetUniformLocation(m_font_shaderProgram, "textColor");
 		assert(colorLocation >= 0);
 		glUniform3f(colorLocation, text_component.color.x, text_component.color.y, text_component.color.z);
-
-		GLuint projection_loc = glGetUniformLocation(m_font_shaderProgram, "projection");
-		glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(*w), 0.0f, static_cast<float>(*h));
-		glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		GLint transformLocation = glGetUniformLocation(m_font_shaderProgram, "transform");
 		assert(transformLocation >= 0);
@@ -323,35 +319,6 @@ void RenderSystem::drawText(const mat3& projection, int* w, int* h)
 	}
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int* width, int* height) {
-	// Calculate the new aspect ratio based on the current width and height
-	float new_aspect_ratio = (float)*width / (float)*height;
-
-	// Only resize the window if the aspect ratio is within the current ratio
-	if (fabs(new_aspect_ratio - aspect_ratio) < 0.01) {
-		// Update viewport size
-		glViewport(0, 0, *width, *height);
-	}
-	else {
-		// Calculate new width and height based on the current aspect ratio
-		int new_width, new_height;
-		if (new_aspect_ratio > aspect_ratio) {
-			new_width = (int)(*height * aspect_ratio);
-			new_height = *height;
-		}
-		else {
-			new_width = *width;
-			new_height = (int)(*width / aspect_ratio);
-		}
-
-		// Update the window width and height
-		*width = new_width;
-		*height = new_height;
-		// Update the framebuffer size without changing aspect ratio
-		glfwSetWindowSize(window, new_width, new_height);
-	}
-
-}
 
 // Render our game world
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-14-render-to-texture/
@@ -360,7 +327,6 @@ void RenderSystem::draw()
 	// Getting size of window
 	int w, h;
 	glfwGetFramebufferSize(window, &w, &h); // Note, this will be 2x the resolution given to glfwCreateWindow on retina displays
-	framebuffer_size_callback(window, &w, &h);
 
 	// First render to the custom framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
@@ -377,9 +343,15 @@ void RenderSystem::draw()
 	// and alpha blending, one would have to sort
 	// sprites back to front
 	gl_has_errors();
-	mat3 projection_2D = createProjectionMatrix(&w, &h);
+	mat3 projection_2D = createProjectionMatrix();
 	// Draw all textured meshes that have a position and size component
-	for (Entity entity : registry.renderRequests.entities)
+	std::vector<Entity> sorted_entities;
+	sorted_entities = registry.renderRequests.entities;
+	std::sort(sorted_entities.begin(), sorted_entities.end(), [this](Entity a, Entity b) {
+		return registry.renderRequests.get(a).used_render_layer < registry.renderRequests.get(b).used_render_layer;
+		});
+
+	for (Entity entity : sorted_entities)
 	{
 		if (!registry.motions.has(entity) || registry.texts.has(entity))
 			continue;
@@ -389,7 +361,7 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
-	drawText(projection_2D, &w, &h);
+	drawText(projection_2D);
 
 	// Truely render to the screen
 	drawToScreen(projection_2D);
@@ -399,20 +371,20 @@ void RenderSystem::draw()
 	gl_has_errors();
 }
 
-mat3 RenderSystem::createProjectionMatrix(int* w, int* h)
+mat3 RenderSystem::createProjectionMatrix()
 {
 	// Fake projection matrix, scales with respect to window coordinates
 	float left = 0.f;
 	float top = 0.f;
 	
 	gl_has_errors();
-	float right = (float)*w;
-	float bottom = (float)*h;
+	float right = (float)window_width_px;
+	float bottom = (float)window_height_px;
 
 	float sx = 2.f / (right - left);
-	float sy = 2.f / (bottom - top);
+	float sy = 2.f / (top - bottom);
 	float tx = -(right + left) / (right - left);
-	float ty = -(top + bottom) / (bottom - top);
+	float ty = -(top + bottom) / (top - bottom);
 	return { {sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f} };
 }
 

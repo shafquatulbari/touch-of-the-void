@@ -43,28 +43,31 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, texture_count> texture_paths = {
 		// TODO: specify textures of other assets here like so:
-		textures_path("bullet_8x8.png"),
-		textures_path("enemy_spitter_32x32.png"),
-		textures_path("lvl1_background_480x480.png"),
-		textures_path("lvl1_doors_96x28.png"),
+		textures_path("bullet_16x16.png"),
+		textures_path("enemy_spitter_64x64.png"),
+		textures_path("lvl1_background_960x960.png"),
+		textures_path("lvl1_doors_192x56.png"),
 
-		textures_path("lvl1_full_wall_closed_door_416x32.png"),
-		textures_path("right_lvl1_full_wall_closed_door_416x32.png"),
-		textures_path("bottom_lvl1_full_wall_closed_door_416x32.png"),
-		textures_path("left_lvl1_full_wall_closed_door_416x32.png"),
+		textures_path("lvl1_full_top_wall_closed_door_832x64.png"),
+		textures_path("lvl1_full_right_wall_closed_door_832x64.png"),
+		textures_path("lvl1_full_bottom_wall_closed_door_832x64.png"),
+		textures_path("lvl1_full_left_wall_closed_door_832x64.png"),
 		
-		textures_path("lvl1_full_wall_open_door_416x32.png"),
-		textures_path("right_lvl1_full_wall_open_door_416x32.png"),
-		textures_path("bottom_lvl1_full_wall_open_door_416x32.png"),
-		textures_path("left_lvl1_full_wall_open_door_416x32.png"),
+		textures_path("lvl1_full_top_wall_open_door_832x64.png"),
+		textures_path("lvl1_full_right_wall_open_door_832x64.png"),
+		textures_path("lvl1_full_bottom_wall_open_door_832x64.png"),
+		textures_path("lvl1_full_left_wall_open_door_832x64.png"),
 		
-		textures_path("lvl1_full_wall_no_door_416x32.png"),
-		textures_path("lvl1_obstacle_32x32.png"),
-		textures_path("lvl1_wall_bottom_corner_32x32.png"),
-		textures_path("lvl1_wall_end_32x32.png"),
-		textures_path("lvl1_wall_top_corner_32x32.png"),
-		textures_path("lvl1_wall_64x32.png"),
-		textures_path("player_32x32.png")
+		textures_path("lvl1_full_wall_no_door_832x64.png"),
+
+		textures_path("lvl1_obstacle_64x64.png"),
+
+		textures_path("lvl1_wall_bottom_corner_64x64.png"),
+		textures_path("lvl1_wall_end_64x64.png"),
+		textures_path("lvl1_wall_top_corner_64x64.png"),
+		textures_path("lvl1_wall_128x64.png"),
+
+		textures_path("player_64x64.png")
 	};
 
 	std::array<GLuint, effect_count> effects;
@@ -87,8 +90,8 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
 		//sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
-		sheets_path("explosion_96x96.png"),
-		sheets_path("exploding_skull_32x32.png")
+		sheets_path("explosion_192x192.png"),
+		sheets_path("exploding_skull_64x64.png")
 		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
@@ -132,9 +135,9 @@ public:
 	void draw();
 
 	// Draw all text entities
-	void drawText(const mat3& projection, int* w, int* h);
+	void drawText(const mat3& projection);
 
-	mat3 createProjectionMatrix(int* w, int* h);
+	mat3 createProjectionMatrix();
 
 	bool loadEffectFromFile(
 		const std::string& vs_path, const std::string& fs_path, GLuint& out_program);
@@ -142,13 +145,13 @@ public:
 	bool loadFontFromFile(
 		const std::string& font_path, unsigned int font_default_size);
 
-	GLFWwindow* window;
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen(const mat3& projection);
 
 	// Window handle
+	GLFWwindow* window;
 
 	// Screen texture handles
 	GLuint frame_buffer;

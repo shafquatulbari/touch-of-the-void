@@ -387,6 +387,11 @@ bool RenderSystem::initializeFonts() {
 	// use our new shader
 	glUseProgram(m_font_shaderProgram);
 
+	glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(window_width_px), 0.0f, static_cast<float>(window_height_px));
+	GLint project_location = glGetUniformLocation(m_font_shaderProgram, "projection");
+	assert(project_location > -1);
+	glUniformMatrix4fv(project_location, 1, GL_FALSE, glm::value_ptr(projection));
+
 	// init FreeType fonts
 	for (uint i = 0; i < font_paths.size(); i++)
 	{

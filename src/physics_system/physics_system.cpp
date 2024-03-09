@@ -206,11 +206,11 @@ void update_motion(Motion &motion, float step_seconds)
 	// UP - DOWN CASES (these cancel each other out)
 	if (motion.is_moving_up && !motion.is_moving_down)
 	{
-		potential_velocity_delta_y += motion.acceleration_rate;
+		potential_velocity_delta_y -= motion.acceleration_rate;
 	}
 	else if (motion.is_moving_down && !motion.is_moving_up)
 	{
-		potential_velocity_delta_y -= motion.acceleration_rate;
+		potential_velocity_delta_y += motion.acceleration_rate;
 	}
 	else
 	{

@@ -83,7 +83,7 @@ GLFWwindow* WorldSystem::create_window() {
 	#if __APPLE__
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	#endif
-	glfwWindowHint(GLFW_RESIZABLE, 1);
+	glfwWindowHint(GLFW_RESIZABLE, 0);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
 	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
@@ -410,8 +410,8 @@ void WorldSystem::restart_game() {
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
-		createText(renderer, "TOUCH OF THE VOID", { 220.0f, 350.0f }, 1.5f, COLOR_RED);
-		createText(renderer, "Press 'enter' to start", { 380.0f, 280.0f }, 0.5f, COLOR_WHITE);
+		createText(renderer, "TOUCH OF THE VOID", { 440.0f, 700.0f }, 1.5f, COLOR_RED);
+		createText(renderer, "Press 'enter' to start", { 760.0f, 560.0f }, 0.5f, COLOR_WHITE);
 		break;
 
 	case GAME_STATE::GAME:
@@ -422,24 +422,24 @@ void WorldSystem::restart_game() {
 		registry.players.get(player).current_room = createBackground(renderer);
 
 		// Tutorial Text
-		createText(renderer, "CONTROLS", { 20.0f, 440.0f }, 0.7f, COLOR_WHITE);
-		createText(renderer, "WASD to move", { 20.0f, 400.0f }, 0.4f, COLOR_WHITE);
-		createText(renderer, "Mouse to aim", { 20.0f, 370.0f }, 0.4f, COLOR_WHITE);
-		createText(renderer, "Right-Click to shoot", { 20.0f, 340.0f }, 0.4f, COLOR_WHITE);
-		createText(renderer, "R to reload", { 20.0f, 310.0f }, 0.4f, COLOR_WHITE);
-		createText(renderer, "Q/E to change weapons", { 20.0f, 280.0f }, 0.4f, COLOR_WHITE);
+		createText(renderer, "CONTROLS", { 40.0f, 880.0f }, 1.4f, COLOR_WHITE);
+		createText(renderer, "WASD to move", { 40.0f, 800.0f }, 0.8f, COLOR_WHITE);
+		createText(renderer, "Mouse to aim", { 40.0f, 740.0f }, 0.8f, COLOR_WHITE);
+		createText(renderer, "Right-Click to shoot", { 40.0f, 680.0f }, 0.8f, COLOR_WHITE);
+		createText(renderer, "R to reload", { 40.0f, 620.0f }, 0.8f, COLOR_WHITE);
+		createText(renderer, "Q/E to change weapons", { 40.0f, 460.0f }, 0.8f, COLOR_WHITE);
 
 		// Create HUD
-		player_hp_text = createText(renderer, "HP: 100 / 100", { 780.0f, 400.0f }, 0.5f, COLOR_RED);
-		weapon_text = createText(renderer, "Weapon: Machine Gun", { 780.0f, 360.0f }, 0.5f, COLOR_GREEN);
-		ammo_text = createText(renderer, "Ammo: 30 / 30", { 780.0f, 320.0f }, 0.5f, COLOR_GREEN);
-		score_text = createText(renderer, "Score: 0", { 780.0f, 120.0f }, 0.7f, COLOR_GREEN);
+		player_hp_text = createText(renderer, "HP: 100 / 100", { 1560.0f, 800.0f }, .5f, COLOR_RED);
+		weapon_text = createText(renderer, "Weapon: Machine Gun", { 1560.0f, 720.0f }, .5f, COLOR_GREEN);
+		ammo_text = createText(renderer, "Ammo: 30 / 30", { 1560.0f, 640.0f }, .5f, COLOR_GREEN);
+		score_text = createText(renderer, "Score: 0", { 1560.0f, 240.0f }, 1.4f, COLOR_GREEN);
 		score = 0;
 		break;
 
 	case GAME_STATE::GAME_OVER:
-		createText(renderer, "GAME OVER", { 340.0f, 350.0f }, 1.5f, COLOR_RED);
-		createText(renderer, "Press 'enter' to play again", { 350.0f, 280.0f }, 0.5f, COLOR_WHITE);
+		createText(renderer, "GAME OVER", { 680.0f, 700.0f }, 3.f, COLOR_RED);
+		createText(renderer, "Press 'enter' to play again", { 700.0f, 560.0f }, 1.f, COLOR_WHITE);
 		break;
 
 	default:
@@ -860,11 +860,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		if (registry.deathTimers.has(player)) {
 			return;
 		}
-		int w, h;
-		glfwGetWindowSize(window, &w, &h);
-		// Convert from window coordinates to world coordinates
 		vec2 player_position = registry.motions.get(player).position;
-		vec2 direction = vec2({ mouse_position.x, h - mouse_position.y }) - vec2({ player_position.x * (float)w / (float)window_width_px, player_position.y * (float)h / (float)window_height_px });
+		vec2 direction = mouse_position - player_position;
 		registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 		break;
 	
