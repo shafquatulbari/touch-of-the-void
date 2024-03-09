@@ -2,6 +2,7 @@
 #include "world_system/world_system.hpp"
 #include "world_init/world_init.hpp"
 #include "physics_system/physics_system.hpp"
+#include "ui_system/ui_system.hpp"
 
 // stlib
 #include <cassert>
@@ -141,8 +142,9 @@ GLFWwindow* WorldSystem::create_window() {
 	return window;
 }
 
-void WorldSystem::init(RenderSystem* renderer_arg) {
+void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg) {
 	this->renderer = renderer_arg;
+	this->ui = ui_arg;
 	//std::stringstream title_ss;
 	//title_ss << "Touch of the Void";
 	//glfwSetWindowTitle(window, title_ss.str().c_str());
@@ -180,16 +182,16 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
-	// Update HUD
-	int roundedHealth = std::max(0, static_cast<int>(registry.healths.get(player).current_health)); // round to nearest int so the HUD doesn't get cluttered
-	std::string healthText = "HP: " + std::to_string(roundedHealth) + " / 100";
-	registry.texts.get(player_hp_text).content = healthText;
 
 	auto& motions_registry = registry.motions;
     
-	// WEAPON SYSTEM
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
+
+	// Update HUD
+	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player));
+
+	// WEAPON SYSTEM
 	// Handle reloading
 	if (init_reload) {
 		init_reload = false;
@@ -421,19 +423,20 @@ void WorldSystem::restart_game() {
 		// Create a level
 		registry.players.get(player).current_room = createBackground(renderer);
 
-		// Tutorial Text
-		createText(renderer, "CONTROLS", { 40.0f, 880.0f }, 1.4f, COLOR_WHITE);
-		createText(renderer, "WASD to move", { 40.0f, 800.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "Mouse to aim", { 40.0f, 740.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "Right-Click to shoot", { 40.0f, 680.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "R to reload", { 40.0f, 620.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "Q/E to change weapons", { 40.0f, 460.0f }, 0.8f, COLOR_WHITE);
+		//// Tutorial Text
+		//createText(renderer, "CONTROLS", { 40.0f, 880.0f }, 1.4f, COLOR_WHITE);
+		//createText(renderer, "WASD to move", { 40.0f, 800.0f }, 0.8f, COLOR_WHITE);
+		//createText(renderer, "Mouse to aim", { 40.0f, 740.0f }, 0.8f, COLOR_WHITE);
+		//createText(renderer, "Right-Click to shoot", { 40.0f, 680.0f }, 0.8f, COLOR_WHITE);
+		//createText(renderer, "R to reload", { 40.0f, 620.0f }, 0.8f, COLOR_WHITE);
+		//createText(renderer, "Q/E to change weapons", { 40.0f, 460.0f }, 0.8f, COLOR_WHITE);
 
-		// Create HUD
-		player_hp_text = createText(renderer, "HP: 100 / 100", { 1560.0f, 800.0f }, .5f, COLOR_RED);
+		//// Create HUD
+		//player_hp_text = createText(renderer, "HP: 100 / 100", { 1560.0f, 800.0f }, .5f, COLOR_RED);
 		weapon_text = createText(renderer, "Weapon: Machine Gun", { 1560.0f, 720.0f }, .5f, COLOR_GREEN);
 		ammo_text = createText(renderer, "Ammo: 30 / 30", { 1560.0f, 640.0f }, .5f, COLOR_GREEN);
 		score_text = createText(renderer, "Score: 0", { 1560.0f, 240.0f }, 1.4f, COLOR_GREEN);
+		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player));
 		score = 0;
 		break;
 
@@ -472,6 +475,7 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	// Render the room
 	render_room(renderer, room);
+	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player));
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;

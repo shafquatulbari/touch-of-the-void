@@ -67,6 +67,7 @@ class RenderSystem {
 		textures_path("lvl1_wall_top_corner_64x64.png"),
 		textures_path("lvl1_wall_128x64.png"),
 
+		textures_path("player_status_hud_1920x1024.png"),
 		textures_path("player_64x64.png")
 	};
 

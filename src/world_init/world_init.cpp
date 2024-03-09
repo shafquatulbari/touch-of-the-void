@@ -20,12 +20,16 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	motion.max_velocity = 400.0f;
 	motion.scale = vec2({PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT});
 
-	
+	Shield& shield = registry.shields.emplace(entity);
+	shield.current_shield = 100.0f;
+	shield.max_shield = 100.0f;
+	shield.recharge_delay = 2000.0f;
+	shield.recharge_rate = 10.0f;
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
-	health.current_health = 100.0f;
-	health.max_health = 100.0f;
+	health.current_health = 32.0f;
+	health.max_health = 32.0f;
 
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
@@ -547,6 +551,25 @@ Entity createText(RenderSystem* render, std::string content, vec2 pos, float sca
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = { pos.x, pos.y };
 	motion.scale = vec2({ scale, scale });
+
+	return entity;
+}
+
+Entity createStatusHud(RenderSystem* render)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = vec2{ window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::PLAYER_STATUS_HUD,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::FOREGROUND });
 
 	return entity;
 }

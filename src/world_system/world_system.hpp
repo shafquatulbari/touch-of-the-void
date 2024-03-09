@@ -12,6 +12,7 @@
 #include <SDL_mixer.h>
 
 #include "render_system/render_system.hpp"
+#include "ui_system/ui_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -26,7 +27,7 @@ public:
 	GLFWwindow* create_window();
 
 	// starts the game
-	void init(RenderSystem* renderer);
+	void init(RenderSystem* renderer, UISystem* ui);
 
 	// Releases all associated resources
 	~WorldSystem();
@@ -62,6 +63,7 @@ private:
 
 	// Game state
 	RenderSystem* renderer;
+	UISystem* ui;
 	Entity player;
 
 	enum class GAME_STATE {
