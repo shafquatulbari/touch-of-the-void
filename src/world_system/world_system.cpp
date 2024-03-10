@@ -189,13 +189,13 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	Motion& p_m = registry.motions.get(player);
 
 	// Update HUD
-	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player));
+	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
 
 	// WEAPON SYSTEM
 	// Handle reloading
 	if (init_reload) {
 		init_reload = false;
-		registry.texts.get(ammo_text).content = "Ammo: Reloading...";
+		//registry.texts.get(ammo_text).content = "Ammo: Reloading...";
 		Mix_PlayChannel(-1, reload_start_sound, 0);
 		p.is_reloading = true;
 	}
@@ -207,7 +207,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			p.is_reloading = false;
 			p.reload_timer_ms = p.reload_times[p.weapon_type];
 			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
-			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+			//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 			Mix_PlayChannel(-1, reload_end_sound, 0);
 		}
 	}
@@ -240,7 +240,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				break;
 			}
 			registry.players.get(player).ammo_count -= 1;
-			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+			//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 
 			if (p.ammo_count <= 0) {
 				init_reload = true;
@@ -433,11 +433,12 @@ void WorldSystem::restart_game() {
 
 		//// Create HUD
 		//player_hp_text = createText(renderer, "HP: 100 / 100", { 1560.0f, 800.0f }, .5f, COLOR_RED);
-		weapon_text = createText(renderer, "Weapon: Machine Gun", { 1560.0f, 720.0f }, .5f, COLOR_GREEN);
-		ammo_text = createText(renderer, "Ammo: 30 / 30", { 1560.0f, 640.0f }, .5f, COLOR_GREEN);
-		score_text = createText(renderer, "Score: 0", { 1560.0f, 240.0f }, 1.4f, COLOR_GREEN);
-		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player));
+		//weapon_text = createText(renderer, "Weapon: Machine Gun", { 1560.0f, 720.0f }, .5f, COLOR_GREEN);
+		//ammo_text = createText(renderer, "Ammo: 30 / 30", { 1560.0f, 640.0f }, .5f, COLOR_GREEN);
+		//score_text = createText(renderer, "Score: 0", { 1560.0f, 240.0f }, 1.4f, COLOR_GREEN);
 		score = 0;
+		multiplier = 1.0;
+		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
 		break;
 
 	case GAME_STATE::GAME_OVER:
@@ -475,7 +476,7 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	// Render the room
 	render_room(renderer, room);
-	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player));
+	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
@@ -586,7 +587,7 @@ void WorldSystem::handle_collisions() {
 						// remove the first element in enemy set 
 						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 						score++;
-						registry.texts.get(score_text).content = "Score: " + std::to_string(score);
+						//registry.texts.get(score_text).content = "Score: " + std::to_string(score);
 						Mix_PlayChannel(-1, explosion_sound, 0);
 					}
 				}
@@ -794,8 +795,8 @@ void WorldSystem::cycle_weapon(int direction) {
 
 	// Update ammo counters and reload timers
 	p.ammo_count = p.magazine_ammo_count[p.weapon_type];
-	registry.texts.get(weapon_text).content = weaponString;
-	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+	//registry.texts.get(weapon_text).content = weaponString;
+	//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 	Mix_PlayChannel(-1, cycle_weapon_sound, 0);
 }
 

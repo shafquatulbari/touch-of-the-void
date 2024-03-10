@@ -604,3 +604,60 @@ Entity createExplosion(RenderSystem* render, vec2 pos, bool repeat)
 
 	return entity;
 }
+
+Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ WEAPON_EQUIPPED_ICON_BB_WIDTH, WEAPON_EQUIPPED_ICON_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GATLING_GUN_EQUIPPED,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
+Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ WEAPON_UNEQUIPPED_ICON_BB_WIDTH, WEAPON_UNEQUIPPED_ICON_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
+Entity createIconInfinity(RenderSystem* render, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ ICON_INFINITY_BB_WIDTH, ICON_INFINITY_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INFINITY_AMMO,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}

@@ -27,6 +27,15 @@ const float EXPLOSION_BB_HEIGHT = 192.0f;
 const float WALL_BB_WIDTH = 832.0f;
 const float WALL_BB_HEIGHT = 64.0F;
 
+const float WEAPON_EQUIPPED_ICON_BB_WIDTH = 192.0f;
+const float WEAPON_EQUIPPED_ICON_BB_HEIGHT = 192.0f;
+
+const float WEAPON_UNEQUIPPED_ICON_BB_WIDTH = 128.0f;
+const float WEAPON_UNEQUIPPED_ICON_BB_HEIGHT = 128.0f;
+
+const float ICON_INFINITY_BB_WIDTH = 122.0f;
+const float ICON_INFINITY_BB_HEIGHT = 54.0f;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
@@ -53,3 +62,9 @@ void render_room(RenderSystem* renderer, Room& room);
 Entity createExplosion(RenderSystem* renderer, vec2 position, bool repeat);
 // a player status HUD
 Entity createStatusHud(RenderSystem* render);
+// a weapon equipped icon
+Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos);
+// a weapon unequipped icon
+Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos);
+// an infinity icon
+Entity createIconInfinity(RenderSystem* render, vec2 pos);

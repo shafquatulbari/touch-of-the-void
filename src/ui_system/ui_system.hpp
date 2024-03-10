@@ -14,9 +14,10 @@ private:
 	Entity player_ammo_text;
 	//Entity weapon_text;
 	//Entity ammo_text;
-	//Entity score_text;
+	Entity score_text;
+	Entity multiplier_text;
 public:
-	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player);
-	void reinit(Health& player_health, Shield& player_shield, Player& player);
-	void update(Health& player_health, Shield& player_shield, Player& player);
+	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
+	void reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
+	void update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
 };

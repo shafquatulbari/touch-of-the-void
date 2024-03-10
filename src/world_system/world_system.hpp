@@ -76,11 +76,13 @@ private:
 	GAME_STATE game_state = GAME_STATE::START_MENU;
 	
 	// HUD
-	Entity player_hp_text;
-	Entity weapon_text;
-	Entity ammo_text;
+	// Entity player_hp_text;
+	// Entity weapon_text;
+	// Entity ammo_text;
 	Entity score_text;
 	int score;
+	float multiplier; // Min 0.0, Max 9.9
+	int delta_score; // Score gained in the current period TBD what a period is
 
 	// FPS 
 	Entity fps_text;

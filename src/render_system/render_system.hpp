@@ -43,32 +43,41 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, texture_count> texture_paths = {
 		// TODO: specify textures of other assets here like so:
+
+
 		textures_path("bullet_16x16.png"),
+
+		// ENEMIES TEXTURES
 		textures_path("enemy_spitter_64x64.png"),
+
+		// ICON TEXTURES
+		textures_path("icon_infinity_122x54.png"),
+
+		// LEVEL 1 TEXTURES
 		textures_path("lvl1_background_960x960.png"),
 		textures_path("lvl1_doors_192x56.png"),
-
 		textures_path("lvl1_full_top_wall_closed_door_832x64.png"),
 		textures_path("lvl1_full_right_wall_closed_door_832x64.png"),
 		textures_path("lvl1_full_bottom_wall_closed_door_832x64.png"),
 		textures_path("lvl1_full_left_wall_closed_door_832x64.png"),
-		
 		textures_path("lvl1_full_top_wall_open_door_832x64.png"),
 		textures_path("lvl1_full_right_wall_open_door_832x64.png"),
 		textures_path("lvl1_full_bottom_wall_open_door_832x64.png"),
 		textures_path("lvl1_full_left_wall_open_door_832x64.png"),
-		
 		textures_path("lvl1_full_wall_no_door_832x64.png"),
-
 		textures_path("lvl1_obstacle_64x64.png"),
-
 		textures_path("lvl1_wall_bottom_corner_64x64.png"),
 		textures_path("lvl1_wall_end_64x64.png"),
 		textures_path("lvl1_wall_top_corner_64x64.png"),
 		textures_path("lvl1_wall_128x64.png"),
 
+		// PLAYER TEXTURES
 		textures_path("player_status_hud_1920x1024.png"),
-		textures_path("player_64x64.png")
+		textures_path("player_64x64.png"),
+
+		// WEAPON TEXTURES
+		textures_path("weapon_icon_gatling_gun_equipped_192x192.png"),
+		textures_path("weapon_icon_gatling_gun_unequipped_128x128.png")
 	};
 
 	std::array<GLuint, effect_count> effects;
