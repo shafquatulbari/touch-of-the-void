@@ -11,6 +11,7 @@
 #include "world_system/world_system.hpp"
 #include "ai_system/ai_system.hpp"
 #include "ui_system/ui_system.hpp"
+#include "weapon_system/weapon_system.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -20,8 +21,9 @@ int main()
 	// Global systems
 	WorldSystem world;
 	RenderSystem renderer;
-	PhysicsSystem physics;
 	UISystem ui;
+	WeaponSystem weapons;
+	PhysicsSystem physics;
 	AISystem ai(&renderer);
 
 	// Initializing window
@@ -35,7 +37,7 @@ int main()
 
 	// initialize the main systems
 	renderer.init(window);
-	world.init(&renderer, &ui);
+	world.init(&renderer, &ui, &weapons);
 
 	renderer.initializeFonts();
 

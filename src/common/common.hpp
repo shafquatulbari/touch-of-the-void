@@ -10,6 +10,7 @@
 #define NOMINMAX
 #include <gl3w.h>
 #include <GLFW/glfw3.h>
+#include <SDL_mixer.h>
 
 // The glm library provides vector and matrix operations as in GLSL
 #include <glm/vec2.hpp>						 // vec2

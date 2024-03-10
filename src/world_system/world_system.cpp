@@ -3,13 +3,13 @@
 #include "world_init/world_init.hpp"
 #include "physics_system/physics_system.hpp"
 #include "ui_system/ui_system.hpp"
+#include <weapon_system/weapon_system.hpp>
 
 // stlib
 #include <cassert>
 #include <sstream>
 #include <iostream>
 #include <glm/trigonometric.hpp>
-
 
 // Game configuration
 // TODO: set hard coded game configuration values here
@@ -29,24 +29,7 @@ WorldSystem::WorldSystem()
 WorldSystem::~WorldSystem()
 {
 	// Destroy sound components
-	if (machine_gun_sound != nullptr)
-		Mix_FreeChunk(machine_gun_sound);
-	if (sniper_sound != nullptr)
-		Mix_FreeChunk(sniper_sound);
-	if (shotgun_sound != nullptr)
-		Mix_FreeChunk(shotgun_sound);
-	if (reload_start_sound != nullptr)
-		Mix_FreeChunk(reload_start_sound);
-	if (reload_end_sound != nullptr)
-		Mix_FreeChunk(reload_end_sound);
-	if (explosion_sound != nullptr)
-		Mix_FreeChunk(explosion_sound);
-	if (cycle_weapon_sound != nullptr)
-		Mix_FreeChunk(cycle_weapon_sound);
-	if (player_hit_sound != nullptr)
-		Mix_FreeChunk(player_hit_sound);
-	if (enemy_hit_sound != nullptr)
-		Mix_FreeChunk(enemy_hit_sound);
+	close_audio();
 
 	// Destroy all created components
 	registry.clear_all_components();
@@ -106,45 +89,19 @@ GLFWwindow* WorldSystem::create_window() {
 	
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
-	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		fprintf(stderr, "Failed to initialize SDL Audio");
-		return nullptr;
-	}
-	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1) {
-		fprintf(stderr, "Failed to open audio device");
-		return nullptr;
-	}
-
-	// Load music and sounds
-	machine_gun_sound = Mix_LoadWAV(audio_path("machine_gun.wav").c_str());
-	sniper_sound = Mix_LoadWAV(audio_path("sniper.wav").c_str());
-	shotgun_sound = Mix_LoadWAV(audio_path("shotgun.wav").c_str());
-	reload_start_sound = Mix_LoadWAV(audio_path("reload_start_sound.wav").c_str());
-	reload_end_sound = Mix_LoadWAV(audio_path("reload_end_sound.wav").c_str());
-	explosion_sound = Mix_LoadWAV(audio_path("explosion.wav").c_str());
-	cycle_weapon_sound = Mix_LoadWAV(audio_path("cycle_weapon_sound.wav").c_str());
-	player_hit_sound = Mix_LoadWAV(audio_path("player_hit_sound.wav").c_str());
-	enemy_hit_sound = Mix_LoadWAV(audio_path("enemy_hit_sound.wav").c_str());
-
-	if (machine_gun_sound == nullptr || 
-		sniper_sound == nullptr ||
-		shotgun_sound == nullptr ||
-		reload_start_sound == nullptr ||
-		reload_end_sound == nullptr ||
-		explosion_sound == nullptr ||
-		cycle_weapon_sound == nullptr ||
-		player_hit_sound == nullptr ||
-		enemy_hit_sound == nullptr) {
-		fprintf(stderr, "Failed to load sounds make sure the data directory is present");
+	if (!init_audio()) {
+		fprintf(stderr, "Failed to initialize audio");
 		return nullptr;
 	}
 
 	return window;
 }
 
-void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg) {
+void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg) {
 	this->renderer = renderer_arg;
 	this->ui = ui_arg;
+	this->weapons = weapon_arg;
+
 	//std::stringstream title_ss;
 	//title_ss << "Touch of the Void";
 	//glfwSetWindowTitle(window, title_ss.str().c_str());
@@ -191,63 +148,8 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	// Update HUD
 	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
 
-	// WEAPON SYSTEM
-	// Handle reloading
-	if (init_reload) {
-		init_reload = false;
-		//registry.texts.get(ammo_text).content = "Ammo: Reloading...";
-		Mix_PlayChannel(-1, reload_start_sound, 0);
-		p.is_reloading = true;
-	}
-	if (p.is_reloading) {
-		p.reload_timer_ms -= elapsed_ms_since_last_update;
-
-		if (p.reload_timer_ms < 0) {
-			// Reload complete, refill ammo
-			p.is_reloading = false;
-			p.reload_timer_ms = p.reload_times[p.weapon_type];
-			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
-			//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
-			Mix_PlayChannel(-1, reload_end_sound, 0);
-		}
-	}
-	// Handle firing
-	if (p.is_firing && !p.is_reloading && p.ammo_count > 0) {
-		p.fire_length_ms += elapsed_ms_since_last_update;
-		if (p.fire_rate_timer_ms <= 0) {
-			p.fire_rate_timer_ms = p.fire_rates[p.weapon_type];
-			switch (registry.players.get(player).weapon_type)
-			{
-			case Player::WeaponType::MACHINE_GUN:
-				createProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
-				Mix_PlayChannel(-1, machine_gun_sound, 0);
-				break;
-
-			case Player::WeaponType::SNIPER:
-				createSniperProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
-				Mix_PlayChannel(-1, sniper_sound, 0);
-				break;
-
-			case Player::WeaponType::SHOTGUN:
-				for (int i = 0; i < 10; i++) {
-					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
-					Mix_PlayChannel(-1, shotgun_sound, 0);
-				}
-				break;
-
-			default:
-				// Handle an unknown weapon type (should never reach here, hopefully...)
-				break;
-			}
-			registry.players.get(player).ammo_count -= 1;
-			//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
-
-			if (p.ammo_count <= 0) {
-				init_reload = true;
-			}
-		}
-	}
-	p.fire_rate_timer_ms -= elapsed_ms_since_last_update;
+	// Update Weapon System
+	weapons->step(elapsed_ms_since_last_update, renderer, player);
 
 	// Removing out of screen entities
 	// Remove entities that leave the screen on the left side
@@ -567,7 +469,7 @@ void WorldSystem::handle_collisions() {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& enemyHealth = registry.healths.get(entity_other);
 					enemyHealth.current_health -= deadly.damage;
-					Mix_PlayChannel(-1, enemy_hit_sound, 0);
+					play_sound(enemy_hit_sound);
 					if (enemyHealth.current_health <= 0) {
 						// enemy is dead, trigger an explosion animation
 						if (registry.motions.has(entity_other)) {
@@ -583,7 +485,7 @@ void WorldSystem::handle_collisions() {
 						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 						score++;
 						//registry.texts.get(score_text).content = "Score: " + std::to_string(score);
-						Mix_PlayChannel(-1, explosion_sound, 0);
+						play_sound(explosion_sound);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -596,7 +498,7 @@ void WorldSystem::handle_collisions() {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& playerHealth = registry.healths.get(entity_other);
 					playerHealth.current_health -= 1; //hardcoded damage
-					Mix_PlayChannel(-1, player_hit_sound, 0);
+					play_sound(player_hit_sound);
 					if (playerHealth.current_health <= 0) {
 						// Trigger darkening immediately, but actual effect is controlled in step
 						if (!registry.deathTimers.has(player)) {
@@ -686,13 +588,13 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (!registry.deathTimers.has(player)) {
 			// WEAPON CONTROLS
 			if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-				init_reload = true;
+				weapons->reload_weapon();
 			}
 			if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-				cycle_weapon(-1);  // Cycle to the previous weapon
+				weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
 			}
 			if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-				cycle_weapon(1);  // Cycle to the next weapon
+				weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
 			}
 
 			// MOVEMENT CONTROLS
@@ -743,56 +645,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		break;
 
 	}
-}
-
-// Function to cycle player weapons (-1 for previous, 1 for next)
-void WorldSystem::cycle_weapon(int direction) {
-	Player& p = registry.players.get(player);
-
-	// Get the current player's weapon type
-	Player::WeaponType currentWeapon = registry.players.get(player).weapon_type;
-
-	// Store the current ammo count
-	p.magazine_ammo_count[p.weapon_type] = p.ammo_count;
-
-	// Get the total number of weapon types
-	int numWeapons = static_cast<int>(Player::WeaponType::TOTAL_WEAPON_TYPES);
-
-	// Calculate the new weapon index
-	int newWeaponIndex = static_cast<int>(currentWeapon) + direction;
-	if (newWeaponIndex < 0) {
-		newWeaponIndex = numWeapons - 1;  // Wrap around to the last weapon
-	}
-	else if (newWeaponIndex >= numWeapons) {
-		newWeaponIndex = 0;  // Wrap around to the first weapon
-	}
-
-	// Set the new weapon type
-	Player::WeaponType newWeapon = static_cast<Player::WeaponType>(newWeaponIndex);
-	registry.players.get(player).weapon_type = newWeapon;
-	
-	// Convert the enum value to a string for printing
-	std::string weaponString;
-	switch (newWeapon) {
-	case Player::WeaponType::MACHINE_GUN:
-		weaponString = "Weapon: Machine Gun";
-		break;
-	case Player::WeaponType::SNIPER:
-		weaponString = "Weapon: Sniper";
-		break;
-	case Player::WeaponType::SHOTGUN:
-		weaponString = "Weapon: Shotgun";
-		break;
-	default:
-		weaponString = "Unknown Weapon";
-		break;
-	}
-
-	// Update ammo counters and reload timers
-	p.ammo_count = p.magazine_ammo_count[p.weapon_type];
-	//registry.texts.get(weapon_text).content = weaponString;
-	//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
-	Mix_PlayChannel(-1, cycle_weapon_sound, 0);
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {

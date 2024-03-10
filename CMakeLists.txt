@@ -53,6 +53,10 @@ src/world_generator/*.cpp
 src/world_generator/*.hpp 
 src/ui_system/*.cpp
 src/ui_system/*.hpp
+src/weapon_system/*.cpp
+src/weapon_system/*.hpp
+src/audio_manager/*.cpp
+src/audio_manager/*.hpp
 )
 
 # external libraries will be installed into /usr/local/include and /usr/local/lib but that folder is not automatically included in the search on MACs
