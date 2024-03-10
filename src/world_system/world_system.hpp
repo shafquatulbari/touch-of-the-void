@@ -1,18 +1,15 @@
 #pragma once
 
 // internal
+#include "audio_manager/audio_manager.hpp"
 #include "common/common.hpp"
+#include "render_system/render_system.hpp"
+#include "ui_system/ui_system.hpp"
+#include <weapon_system/weapon_system.hpp>
 
 // stlib
 #include <vector>
 #include <random>
-
-#define SDL_MAIN_HANDLED
-#include <SDL.h>
-#include <SDL_mixer.h>
-
-#include "render_system/render_system.hpp"
-#include "ui_system/ui_system.hpp"
 
 // Container for all our entities and game logic. Individual rendering / update is
 // deferred to the relative update() methods
@@ -27,7 +24,7 @@ public:
 	GLFWwindow* create_window();
 
 	// starts the game
-	void init(RenderSystem* renderer, UISystem* ui);
+	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
 
 	// Releases all associated resources
 	~WorldSystem();
@@ -37,8 +34,6 @@ public:
 
 	// Check for collisions
 	void handle_collisions();
-
-	void cycle_weapon(int direction);
 
 	void bounce_back(Entity player, Entity obstacle);
 
@@ -58,12 +53,14 @@ private:
 
 	// fps
 	void fpsCalculate();
+
 	// OpenGL window handle
 	GLFWwindow* window;
 
 	// Game state
 	RenderSystem* renderer;
 	UISystem* ui;
+	WeaponSystem* weapons;
 	Entity player;
 
 	enum class GAME_STATE {
@@ -89,18 +86,6 @@ private:
 	float fps;
 	float maxFps;
 	float frameTime;
-
-	// Sound references
-	Mix_Chunk* machine_gun_sound;
-	Mix_Chunk* sniper_sound;
-	Mix_Chunk* shotgun_sound;
-	Mix_Chunk* reload_start_sound;
-	Mix_Chunk* reload_end_sound;
-	bool init_reload = false;
-	Mix_Chunk* explosion_sound;
-	Mix_Chunk* cycle_weapon_sound;
-	Mix_Chunk* player_hit_sound;
-	Mix_Chunk* enemy_hit_sound;
 
 	// C++ random number generator
 	std::default_random_engine rng;
