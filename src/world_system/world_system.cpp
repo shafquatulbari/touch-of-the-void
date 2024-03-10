@@ -408,12 +408,11 @@ void WorldSystem::restart_game() {
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
-
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
-		createText(renderer, "TOUCH OF THE VOID", { 440.0f, 700.0f }, 1.5f, COLOR_RED);
-		createText(renderer, "Press 'enter' to start", { 760.0f, 560.0f }, 0.5f, COLOR_WHITE);
+		createText(renderer, "TOUCH OF THE VOID", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		break;
 
 	case GAME_STATE::GAME:
@@ -424,26 +423,22 @@ void WorldSystem::restart_game() {
 		registry.players.get(player).current_room = createBackground(renderer);
 
 		//// Tutorial Text
-		//createText(renderer, "CONTROLS", { 40.0f, 880.0f }, 1.4f, COLOR_WHITE);
-		//createText(renderer, "WASD to move", { 40.0f, 800.0f }, 0.8f, COLOR_WHITE);
-		//createText(renderer, "Mouse to aim", { 40.0f, 740.0f }, 0.8f, COLOR_WHITE);
-		//createText(renderer, "Right-Click to shoot", { 40.0f, 680.0f }, 0.8f, COLOR_WHITE);
-		//createText(renderer, "R to reload", { 40.0f, 620.0f }, 0.8f, COLOR_WHITE);
-		//createText(renderer, "Q/E to change weapons", { 40.0f, 460.0f }, 0.8f, COLOR_WHITE);
+		createText(renderer, "CONTROLS", { 38.0f, 144.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "WASD to move", { 30.0f, 224.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Mouse to aim", { 30.0f, 264.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Right-Click to shoot", { 30.0f, 304.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "R to reload", { 30.0f, 344.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Q/E to change weapons", { 30.0f, 384.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
 		//// Create HUD
-		//player_hp_text = createText(renderer, "HP: 100 / 100", { 1560.0f, 800.0f }, .5f, COLOR_RED);
-		//weapon_text = createText(renderer, "Weapon: Machine Gun", { 1560.0f, 720.0f }, .5f, COLOR_GREEN);
-		//ammo_text = createText(renderer, "Ammo: 30 / 30", { 1560.0f, 640.0f }, .5f, COLOR_GREEN);
-		//score_text = createText(renderer, "Score: 0", { 1560.0f, 240.0f }, 1.4f, COLOR_GREEN);
-		score = 0;
+		score = 100;
 		multiplier = 1.0;
 		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
 		break;
 
 	case GAME_STATE::GAME_OVER:
-		createText(renderer, "GAME OVER", { 680.0f, 700.0f }, 3.f, COLOR_RED);
-		createText(renderer, "Press 'enter' to play again", { 700.0f, 560.0f }, 1.f, COLOR_WHITE);
+		createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		break;
 
 	default:
@@ -476,7 +471,7 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	// Render the room
 	render_room(renderer, room);
-	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
+	ui->reinit();
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
@@ -680,7 +675,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
 			debugging.show_fps = !debugging.show_fps;
 			if (debugging.show_fps) {
-				fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
+				fps_text = createText(renderer, "FPS:", { 1760.0f, 30.0f }, 0.8f, { 0.0f, 1.0f, 1.0f }, TextAlignment::LEFT);
 			}
 			else {
 				registry.remove_all_components_of(fps_text);

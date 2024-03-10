@@ -262,10 +262,13 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+enum class TextAlignment { LEFT, RIGHT, CENTER };
+
 struct Text
 {
 	std::string content;
 	vec3 color;
+	TextAlignment alignment = TextAlignment::LEFT;
 };
 
 // A structure to store the font data of a single character

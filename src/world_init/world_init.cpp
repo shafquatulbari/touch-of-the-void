@@ -540,16 +540,17 @@ Entity createLine(vec2 position, vec2 scale)
 }
 
 
-Entity createText(RenderSystem* render, std::string content, vec2 pos, float scale, vec3 color)
+Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)
 {
 	auto entity = Entity();
 
 	Text& text = registry.texts.emplace(entity);
 	text.content = content;
 	text.color = color;
+	text.alignment = alignment;
 
 	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { pos.x, pos.y };
+	motion.position = { pos.x, window_height_px - pos.y }; // flip y axis as text is rendered from top to bottom, but we use bottom to top everywhere else
 	motion.scale = vec2({ scale, scale });
 
 	return entity;

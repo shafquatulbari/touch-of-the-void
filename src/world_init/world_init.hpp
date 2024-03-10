@@ -55,7 +55,7 @@ Entity createLine(vec2 position, vec2 scale);
 // a hard coded room
 Entity createRoom(RenderSystem* renderer);
 // a text object
-Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color);
+Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment);
 // render the room
 void render_room(RenderSystem* renderer, Room& room);
 // an explosion animation

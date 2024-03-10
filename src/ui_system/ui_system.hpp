@@ -18,6 +18,6 @@ private:
 	Entity multiplier_text;
 public:
 	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
-	void reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
+	void reinit();
 	void update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
 };
