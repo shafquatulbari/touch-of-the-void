@@ -2,6 +2,7 @@
 #include "world_system/world_system.hpp"
 #include "world_init/world_init.hpp"
 #include "physics_system/physics_system.hpp"
+#include "ui_system/ui_system.hpp"
 
 // stlib
 #include <cassert>
@@ -141,8 +142,9 @@ GLFWwindow* WorldSystem::create_window() {
 	return window;
 }
 
-void WorldSystem::init(RenderSystem* renderer_arg) {
+void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg) {
 	this->renderer = renderer_arg;
+	this->ui = ui_arg;
 	//std::stringstream title_ss;
 	//title_ss << "Touch of the Void";
 	//glfwSetWindowTitle(window, title_ss.str().c_str());
@@ -180,20 +182,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
-	// Update HUD
-	int roundedHealth = std::max(0, static_cast<int>(registry.healths.get(player).current_health)); // round to nearest int so the HUD doesn't get cluttered
-	std::string healthText = "HP: " + std::to_string(roundedHealth) + " / 100";
-	registry.texts.get(player_hp_text).content = healthText;
 
 	auto& motions_registry = registry.motions;
     
-	// WEAPON SYSTEM
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
+
+	// Update HUD
+	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
+
+	// WEAPON SYSTEM
 	// Handle reloading
 	if (init_reload) {
 		init_reload = false;
-		registry.texts.get(ammo_text).content = "Ammo: Reloading...";
+		//registry.texts.get(ammo_text).content = "Ammo: Reloading...";
 		Mix_PlayChannel(-1, reload_start_sound, 0);
 		p.is_reloading = true;
 	}
@@ -205,7 +207,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			p.is_reloading = false;
 			p.reload_timer_ms = p.reload_times[p.weapon_type];
 			p.ammo_count = p.magazine_sizes[p.weapon_type]; // Refill ammo after reload
-			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+			//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 			Mix_PlayChannel(-1, reload_end_sound, 0);
 		}
 	}
@@ -238,7 +240,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 				break;
 			}
 			registry.players.get(player).ammo_count -= 1;
-			registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+			//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 
 			if (p.ammo_count <= 0) {
 				init_reload = true;
@@ -406,12 +408,11 @@ void WorldSystem::restart_game() {
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
-
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
-		createText(renderer, "TOUCH OF THE VOID", { 440.0f, 700.0f }, 1.5f, COLOR_RED);
-		createText(renderer, "Press 'enter' to start", { 760.0f, 560.0f }, 0.5f, COLOR_WHITE);
+		createText(renderer, "TOUCH OF THE VOID", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		break;
 
 	case GAME_STATE::GAME:
@@ -421,25 +422,23 @@ void WorldSystem::restart_game() {
 		// Create a level
 		registry.players.get(player).current_room = createBackground(renderer);
 
-		// Tutorial Text
-		createText(renderer, "CONTROLS", { 40.0f, 880.0f }, 1.4f, COLOR_WHITE);
-		createText(renderer, "WASD to move", { 40.0f, 800.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "Mouse to aim", { 40.0f, 740.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "Right-Click to shoot", { 40.0f, 680.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "R to reload", { 40.0f, 620.0f }, 0.8f, COLOR_WHITE);
-		createText(renderer, "Q/E to change weapons", { 40.0f, 460.0f }, 0.8f, COLOR_WHITE);
+		//// Tutorial Text
+		createText(renderer, "CONTROLS", { 38.0f, 144.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "WASD to move", { 30.0f, 224.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Mouse to aim", { 30.0f, 264.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Right-Click to shoot", { 30.0f, 304.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "R to reload", { 30.0f, 344.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Q/E to change weapons", { 30.0f, 384.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
-		// Create HUD
-		player_hp_text = createText(renderer, "HP: 100 / 100", { 1560.0f, 800.0f }, .5f, COLOR_RED);
-		weapon_text = createText(renderer, "Weapon: Machine Gun", { 1560.0f, 720.0f }, .5f, COLOR_GREEN);
-		ammo_text = createText(renderer, "Ammo: 30 / 30", { 1560.0f, 640.0f }, .5f, COLOR_GREEN);
-		score_text = createText(renderer, "Score: 0", { 1560.0f, 240.0f }, 1.4f, COLOR_GREEN);
-		score = 0;
+		//// Create HUD
+		score = 100;
+		multiplier = 1.0;
+		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
 		break;
 
 	case GAME_STATE::GAME_OVER:
-		createText(renderer, "GAME OVER", { 680.0f, 700.0f }, 3.f, COLOR_RED);
-		createText(renderer, "Press 'enter' to play again", { 700.0f, 560.0f }, 1.f, COLOR_WHITE);
+		createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		break;
 
 	default:
@@ -472,6 +471,7 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	// Render the room
 	render_room(renderer, room);
+	ui->reinit();
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
@@ -582,7 +582,7 @@ void WorldSystem::handle_collisions() {
 						// remove the first element in enemy set 
 						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 						score++;
-						registry.texts.get(score_text).content = "Score: " + std::to_string(score);
+						//registry.texts.get(score_text).content = "Score: " + std::to_string(score);
 						Mix_PlayChannel(-1, explosion_sound, 0);
 					}
 				}
@@ -675,7 +675,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
 			debugging.show_fps = !debugging.show_fps;
 			if (debugging.show_fps) {
-				fps_text = createText(renderer, "FPS:", { 920.0f, 480.0f }, 0.5f, { 0.0f, 1.0f, 1.0f });
+				fps_text = createText(renderer, "FPS:", { 1760.0f, 30.0f }, 0.8f, { 0.0f, 1.0f, 1.0f }, TextAlignment::LEFT);
 			}
 			else {
 				registry.remove_all_components_of(fps_text);
@@ -790,8 +790,8 @@ void WorldSystem::cycle_weapon(int direction) {
 
 	// Update ammo counters and reload timers
 	p.ammo_count = p.magazine_ammo_count[p.weapon_type];
-	registry.texts.get(weapon_text).content = weaponString;
-	registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
+	//registry.texts.get(weapon_text).content = weaponString;
+	//registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 	Mix_PlayChannel(-1, cycle_weapon_sound, 0);
 }
 
