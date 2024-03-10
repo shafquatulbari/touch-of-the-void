@@ -44,8 +44,8 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			case Player::WeaponType::SHOTGUN:
 				for (int i = 0; i < 10; i++) {
 					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
-					play_sound(shotgun_sound);
 				}
+				play_sound(shotgun_sound);
 				break;
 
 			default:
@@ -56,9 +56,12 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			// registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(p.ammo_count) + " / " + std::to_string(p.magazine_sizes[p.weapon_type]);
 
 			if (p.ammo_count <= 0) {
-				init_reload = true;
+				reload_weapon();
 			}
 		}
+	}
+	if (p.is_firing && !p.is_reloading && p.ammo_count <= 0) {
+		reload_weapon();
 	}
 	p.fire_rate_timer_ms -= elapsed_ms;
 }
