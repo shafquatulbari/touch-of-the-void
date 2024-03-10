@@ -262,10 +262,13 @@ struct Mesh
 	std::vector<uint16_t> vertex_indices;
 };
 
+enum class TextAlignment { LEFT, RIGHT, CENTER };
+
 struct Text
 {
 	std::string content;
 	vec3 color;
+	TextAlignment alignment = TextAlignment::LEFT;
 };
 
 // A structure to store the font data of a single character
@@ -311,7 +314,8 @@ struct Sprite {
 enum class TEXTURE_ASSET_ID {
 	BULLET = 0,
 	ENEMY_SPITTER = BULLET + 1,
-	LEVEL1_BACKGROUND = ENEMY_SPITTER + 1,
+	INFINITY_AMMO = ENEMY_SPITTER + 1,
+	LEVEL1_BACKGROUND = INFINITY_AMMO + 1,
 	LEVEL1_DOORS = LEVEL1_BACKGROUND + 1,
 
 	// Full wall closed door textures
@@ -335,9 +339,13 @@ enum class TEXTURE_ASSET_ID {
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
 	LEVEL1_WALL = LEVEL1_WALL_TOP_CORNER + 1,
 
-	PLAYER = LEVEL1_WALL + 1,
+	PLAYER_STATUS_HUD = LEVEL1_WALL + 1,
+	PLAYER = PLAYER_STATUS_HUD + 1,
 
-	TEXTURE_COUNT = PLAYER + 1
+	GATLING_GUN_EQUIPPED = PLAYER + 1,
+	GATLING_GUN_UNEQUIPPED = GATLING_GUN_EQUIPPED + 1,
+
+	TEXTURE_COUNT = GATLING_GUN_UNEQUIPPED + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 

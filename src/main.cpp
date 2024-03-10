@@ -10,6 +10,7 @@
 #include "render_system/render_system.hpp"
 #include "world_system/world_system.hpp"
 #include "ai_system/ai_system.hpp"
+#include "ui_system/ui_system.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -20,6 +21,7 @@ int main()
 	WorldSystem world;
 	RenderSystem renderer;
 	PhysicsSystem physics;
+	UISystem ui;
 	AISystem ai(&renderer);
 
 	// Initializing window
@@ -33,7 +35,7 @@ int main()
 
 	// initialize the main systems
 	renderer.init(window);
-	world.init(&renderer);
+	world.init(&renderer, &ui);
 
 	renderer.initializeFonts();
 

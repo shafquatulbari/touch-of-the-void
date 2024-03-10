@@ -20,12 +20,16 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	motion.max_velocity = 400.0f;
 	motion.scale = vec2({PLAYER_BB_WIDTH, PLAYER_BB_HEIGHT});
 
-	
+	Shield& shield = registry.shields.emplace(entity);
+	shield.current_shield = 100.0f;
+	shield.max_shield = 100.0f;
+	shield.recharge_delay = 2000.0f;
+	shield.recharge_rate = 10.0f;
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
-	health.current_health = 100.0f;
-	health.max_health = 100.0f;
+	health.current_health = 32.0f;
+	health.max_health = 32.0f;
 
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
@@ -536,17 +540,37 @@ Entity createLine(vec2 position, vec2 scale)
 }
 
 
-Entity createText(RenderSystem* render, std::string content, vec2 pos, float scale, vec3 color)
+Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)
 {
 	auto entity = Entity();
 
 	Text& text = registry.texts.emplace(entity);
 	text.content = content;
 	text.color = color;
+	text.alignment = alignment;
 
 	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { pos.x, pos.y };
+	motion.position = { pos.x, window_height_px - pos.y }; // flip y axis as text is rendered from top to bottom, but we use bottom to top everywhere else
 	motion.scale = vec2({ scale, scale });
+
+	return entity;
+}
+
+Entity createStatusHud(RenderSystem* render)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = vec2{ window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::PLAYER_STATUS_HUD,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::FOREGROUND });
 
 	return entity;
 }
@@ -578,6 +602,63 @@ Entity createExplosion(RenderSystem* render, vec2 pos, bool repeat)
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::FOREGROUND});
+
+	return entity;
+}
+
+Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ WEAPON_EQUIPPED_ICON_BB_WIDTH, WEAPON_EQUIPPED_ICON_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GATLING_GUN_EQUIPPED,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
+Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ WEAPON_UNEQUIPPED_ICON_BB_WIDTH, WEAPON_UNEQUIPPED_ICON_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
+Entity createIconInfinity(RenderSystem* render, vec2 pos)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ ICON_INFINITY_BB_WIDTH, ICON_INFINITY_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INFINITY_AMMO,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
 
 	return entity;
 }

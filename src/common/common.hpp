@@ -43,8 +43,17 @@ const float aspect_ratio = (float)window_width_px / (float)window_height_px;
 
 // Colors
 const vec3 COLOR_WHITE = vec3(1.0f, 1.0f, 1.0f);
+const vec3 COLOR_BLACK = vec3(0.0f, 0.0f, 0.0f);
 const vec3 COLOR_RED = vec3(1.0f, 0.15f, 0.15f);
-const vec3 COLOR_GREEN = vec3(0.26f, 0.97f, 0.19f);
+//const vec3 COLOR_GREEN = vec3(0.26f, 0.97f, 0.19f);
+// 153, 229, 80
+const vec3 COLOR_BRIGHT_GREEN = vec3(0.6f, 0.9f, 0.31f);
+// 135, 229, 80 
+const vec3 COLOR_GREEN = vec3(0.53f, 0.9f, 0.31f);
+// 75, 105, 47
+const vec3 COLOR_DARK_GREEN = vec3(0.29f, 0.41f, 0.18f);
+// 217, 160, 102
+const vec3 COLOR_GOLD = vec3(0.85f, 0.63f, 0.4f);
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f

@@ -28,7 +28,32 @@ endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/ext/project_path.hpp.in" "${CMAKE_CURRENT_SOURCE_DIR}/ext/project_path.hpp")
 
 # You can switch to use the file GLOB for simplicity but at your own risk
-file(GLOB SOURCE_FILES src/*.cpp src/*.hpp src/ai_system/*.cpp src/ai_system/*.hpp src/common/*.cpp src/common/*.hpp src/components/*.cpp src/components/*.hpp src/ecs/*.cpp src/ecs/*.hpp src/ecs_registry/*.cpp src/ecs_registry/*.hpp src/physics_system/*.cpp src/physics_system/*.hpp src/render_system/*.cpp src/render_system/*.hpp src/world_init/*.cpp src/world_init/*.hpp src/world_system/*.cpp src/world_system/*.hpp src/world_generator/*.cpp src/world_generator/*.hpp)
+file(GLOB SOURCE_FILES 
+src/*.cpp 
+src/*.hpp 
+src/ai_system/*.cpp 
+src/ai_system/*.hpp 
+src/common/*.cpp 
+src/common/*.hpp 
+src/components/*.cpp 
+src/components/*.hpp 
+src/ecs/*.cpp 
+src/ecs/*.hpp 
+src/ecs_registry/*.cpp 
+src/ecs_registry/*.hpp 
+src/physics_system/*.cpp 
+src/physics_system/*.hpp 
+src/render_system/*.cpp 
+src/render_system/*.hpp 
+src/world_init/*.cpp 
+src/world_init/*.hpp 
+src/world_system/*.cpp 
+src/world_system/*.hpp 
+src/world_generator/*.cpp 
+src/world_generator/*.hpp 
+src/ui_system/*.cpp
+src/ui_system/*.hpp
+)
 
 # external libraries will be installed into /usr/local/include and /usr/local/lib but that folder is not automatically included in the search on MACs
 if (IS_OS_MAC)
