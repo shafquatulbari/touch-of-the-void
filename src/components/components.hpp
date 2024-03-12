@@ -1,5 +1,6 @@
 #pragma once
 #include "common/common.hpp"
+#include "weapon_system/weapon_constants.hpp"
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
@@ -52,51 +53,18 @@ struct Room {
 // Player component
 struct Player
 {
-	enum class WeaponType {
-		MACHINE_GUN,
-		SNIPER,
-		SHOTGUN,
-		// Add more weapon types here
-		// Example: ROCKET_LAUNCHER, FLAMETHROWER, etc.
-		TOTAL_WEAPON_TYPES // Keep this as the last element
-	};
-
-	// Magazine sizes for each weapon
-	std::unordered_map<WeaponType, int> magazine_sizes = {
-		{WeaponType::MACHINE_GUN, 100},
-		{WeaponType::SNIPER, 1},
-		{WeaponType::SHOTGUN, 6},
-		// Add more weapon types and their magazine sizes here
-	};
-
 	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
-		{WeaponType::MACHINE_GUN, 100},
+		{WeaponType::GATLING_GUN, 100},
 		{WeaponType::SNIPER, 1},
 		{WeaponType::SHOTGUN, 6},
-		// Add more weapon types and their magazine sizes here
-	};
-
-	// Reload times for each weapon
-	std::unordered_map<WeaponType, float> reload_times = {
-		{WeaponType::MACHINE_GUN, 2000.0f},
-		{WeaponType::SNIPER, 1500.0f},
-		{WeaponType::SHOTGUN, 1500.0f},
-		// Add more weapon types and their reload times here
-	};
-
-	// Time between each bullet
-	std::unordered_map<WeaponType, float> fire_rates = {
-		{WeaponType::MACHINE_GUN, 40.0f},
-		{WeaponType::SNIPER, 0.0f},
-		{WeaponType::SHOTGUN, 300.0f},
-		// Add more weapon types and their fire rates here
+		{WeaponType::ROCKET_LAUNCHER, 1}
 	};
 
 	bool is_firing = false; // player is currently firing projectiles
 	float fire_length_ms = 0.0f; // time the player has been firing
 	float fire_rate_timer_ms = 0.0f; // timer for fully-automatic weapons
-	WeaponType weapon_type = WeaponType::MACHINE_GUN;
+	WeaponType weapon_type = WeaponType::GATLING_GUN;
 	int max_ammo_count;
 	int ammo_count;
 	bool is_reloading = false; // player is currently reloading and cannot fire
@@ -106,8 +74,20 @@ struct Player
 	bool is_moving_rooms = false;
 	// the room that the player is moving to if it is moving rooms
 	Entity current_room;
-	// Constructor to set the initial magazine size
-	Player() : max_ammo_count(magazine_sizes[weapon_type]), ammo_count(max_ammo_count), reload_timer_ms(reload_times[weapon_type]) {}
+
+	// Constructor to set the initial values
+	Player() : 
+		max_ammo_count(weapon_stats[weapon_type].magazine_size),
+		ammo_count(max_ammo_count),
+		reload_timer_ms(weapon_stats[weapon_type].reload_time) {}
+};
+
+// Projectile component
+struct Projectile
+{
+	float lifetime = 0.0f;	// time before the projectile disappears
+	Entity source; // New attribute to store the source entity of the projectile
+	WeaponType weapon_type;
 };
 
 // Obstacle component
@@ -127,13 +107,6 @@ struct Obstacle
 struct NoCollisionCheck 
 {
 
-};
-
-// Projectile component
-struct Projectile 
-{
-	float lifetime = 0.0f;	// time before the projectile disappears
-	Entity source; // New attribute to store the source entity of the projectile
 };
 
 struct AI
@@ -189,13 +162,6 @@ struct Motion {
 	float turn_rate = 0.0f;		// how fast the entity can turn
 
 	bool is_passable = false; // if the entity is passable (cannot be collided with)
-};
-
-
-// A time to track reload times
-struct ReloadTimer
-{
-	float counter_ms = 2000.0f;
 };
 
 // Stucture to store collision information
