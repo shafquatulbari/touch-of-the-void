@@ -477,26 +477,6 @@ void WorldSystem::handle_collisions() {
 						weapons->handle_rocket_collision(renderer, entity);
 					}
 				}
-				// Check for dead enemies
-				for (Entity e : registry.ais.entities) {
-					vec2 e_pos = registry.motions.get(e).position;
-					Health& e_health = registry.healths.get(e);
-
-					if (e_health.current_health <= 0) {
-						registry.remove_all_components_of(e);
-						
-						Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
-						// Arbitrarily remove one enemy from the internal room state when an enemy dies.
-						current_room.enemy_count--;
-						// remove the first element in enemy set 
-						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
-						score++;
-						
-						// UX Effects
-						createExplosion(renderer, e_pos, 1.0f, false);
-						play_sound(explosion_sound);
-					}
-				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
 
