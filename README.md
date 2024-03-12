@@ -14,3 +14,6 @@ Audio Asset References:
 - Weapon Swap:https://freesound.org/people/twisterman/sounds/159450/
 - Hit 1: https://freesound.org/people/MaoDin204/sounds/721797/
 - Hit 2: https://freesound.org/people/LittleRobotSoundFactory/sounds/270325/
+- Start Menu Music: https://freesound.org/people/sonically_sound/sounds/647908/
+- Game Over: https://freesound.org/people/Fupicat/sounds/475347/
+- Menu Select: https://freesound.org/people/pumodi/sounds/150222/
