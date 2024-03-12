@@ -18,3 +18,4 @@ Audio Asset References:
 - Game Over: https://freesound.org/people/Fupicat/sounds/475347/
 - Menu Select: https://freesound.org/people/pumodi/sounds/150222/
 - Game Music: https://freesound.org/people/levelplane/sounds/412080/
+- Flamethrower: https://freesound.org/people/MATRIXXX_/sounds/459884/
