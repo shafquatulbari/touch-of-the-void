@@ -8,6 +8,7 @@ Audio Asset References:
 - Machine Gun: https://pixabay.com/sound-effects/blaster-103340/
 - Sniper: https://pixabay.com/sound-effects/blaster-2-81267/
 - Shotgun: https://freesound.org/people/newlocknew/sounds/514058/
+- Rocket Launcher: https://freesound.org/people/Mrthenoronha/sounds/517169/
 - Reload: https://freesound.org/people/LAGtheNoggin/sounds/15545/
 - Explosion: https://freesound.org/people/timgormly/sounds/170144/
 - Weapon Swap:https://freesound.org/people/twisterman/sounds/159450/
