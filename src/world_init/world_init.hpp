@@ -52,6 +52,8 @@ Entity createSniperProjectile(RenderSystem* renderer, vec2 position, float angle
 Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
 // a single rocket projectile
 Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
+// a single flamethrower projectile
+Entity createFlamethrowerProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // debug line
 Entity createLine(vec2 position, vec2 scale);
 // a hard coded room

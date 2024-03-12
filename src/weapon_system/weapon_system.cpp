@@ -4,6 +4,7 @@
 void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player) 
 {
 	step_projectile_lifetime(elapsed_ms);
+	step_dot_timers(elapsed_ms);
 
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
@@ -56,6 +57,11 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 				play_sound(rocket_launcher_sound);
 				break;
 
+			case WeaponType::FLAMETHROWER:
+				createFlamethrowerProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				play_sound(flamethrower_sound);
+				break;
+
 			default:
 				// Handle an unknown weapon type (should never reach here, hopefully...)
 				break;
@@ -80,6 +86,31 @@ void WeaponSystem::step_projectile_lifetime(float elapsed_ms)
 		registry.projectiles.get(e).lifetime -= elapsed_ms;
 		if (registry.projectiles.get(e).lifetime <= 0.0f) {
 			registry.remove_all_components_of(e);
+		}
+	}
+}
+
+void WeaponSystem::step_dot_timers(float elapsed_ms) 
+{
+	for (Entity entity : registry.onFireTimers.entities) {
+		// progress timer
+		OnFireTimer& timer = registry.onFireTimers.get(entity);
+		timer.counter_ms -= elapsed_ms;
+
+		// deal dot damage
+		if (registry.healths.has(entity)) {
+			float dot_damage = 0.0f;
+			if (timer.total_time_ms - timer.counter_ms > 0) {
+				dot_damage = (timer.total_damage / timer.total_time_ms) * elapsed_ms;
+			}
+		
+			registry.healths.get(entity).current_health -= dot_damage;
+		}
+
+		// restart the game once the death timer expired
+		if (timer.counter_ms <= 0) {
+			registry.onFireTimers.remove(entity);
+			// TODO: remove some fire effect when enemies are on fire
 		}
 	}
 }
@@ -129,10 +160,14 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 	case WeaponType::ROCKET_LAUNCHER:
 		weaponString = "Weapon: Rocket Launcher";
 		break;
+	case WeaponType::FLAMETHROWER:
+		weaponString = "Weapon: Flamethrower";
+		break;
 	default:
 		weaponString = "Unknown Weapon";
 		break;
 	}
+	std::cout << weaponString << std::endl;
 
 	// Update ammo counters and reload timers
 	player.ammo_count = player.magazine_ammo_count[player.weapon_type];
@@ -140,7 +175,7 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 	play_sound(cycle_weapon_sound);
 }
 
-// Handles collisions for rockets, returns how many enemies are killed
+// Handles collisions for rockets
 void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projectile)
 {
 	Deadly& deadly = registry.deadlies.get(projectile);
@@ -160,5 +195,14 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 				registry.healths.get(e).current_health -= deadly.damage;
 			}
 		}
+	}
+}
+
+// Handles collisions for flamethrower
+void WeaponSystem::handle_flamethrower_collision(RenderSystem* renderer, Entity projectile, Entity enemy)
+{
+	if (!registry.onFireTimers.has(enemy)) {
+		registry.onFireTimers.emplace(enemy);
+		// TODO: add some fire effect when enemies are on fire
 	}
 }

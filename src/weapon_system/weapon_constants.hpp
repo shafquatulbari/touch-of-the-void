@@ -8,8 +8,7 @@ enum class WeaponType {
 	SNIPER,
 	SHOTGUN,
 	ROCKET_LAUNCHER,
-	// Add more weapon types here
-	// Example: FLAMETHROWER, etc.
+	FLAMETHROWER,
 	TOTAL_WEAPON_TYPES // Keep this as the last element
 };
 
