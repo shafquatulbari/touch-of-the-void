@@ -50,6 +50,8 @@ Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, floa
 Entity createSniperProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // a single shotgun projectile
 Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
+// a single rocket projectile
+Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // debug line
 Entity createLine(vec2 position, vec2 scale);
 // a hard coded room
@@ -59,7 +61,7 @@ Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float s
 // render the room
 void render_room(RenderSystem* renderer, Room& room);
 // an explosion animation
-Entity createExplosion(RenderSystem* renderer, vec2 position, bool repeat);
+Entity createExplosion(RenderSystem* renderer, vec2 position, float scale, bool repeat);
 // a player status HUD
 Entity createStatusHud(RenderSystem* render);
 // a weapon equipped icon

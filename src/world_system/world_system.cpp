@@ -3,7 +3,7 @@
 #include "world_init/world_init.hpp"
 #include "physics_system/physics_system.hpp"
 #include "ui_system/ui_system.hpp"
-#include <weapon_system/weapon_system.hpp>
+#include "weapon_system/weapon_system.hpp"
 
 // stlib
 #include <cassert>
@@ -388,7 +388,6 @@ void WorldSystem::handle_collisions() {
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 
-		
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
 			Obstacle& obstacle = registry.obstacles.get(entity_other);
 			if (obstacle.is_passable)
@@ -458,7 +457,10 @@ void WorldSystem::handle_collisions() {
 				bounce_back(player, entity_other);
 			}
 		}
-		if (registry.projectiles.has(entity)) {
+
+		// PROJECTILE COLLISONS
+		if (registry.projectiles.has(entity)) 
+		{
 			Projectile& projectile = registry.projectiles.get(entity);
 			Entity projectileSource = projectile.source;
 
@@ -470,22 +472,9 @@ void WorldSystem::handle_collisions() {
 					Health& enemyHealth = registry.healths.get(entity_other);
 					enemyHealth.current_health -= deadly.damage;
 					play_sound(enemy_hit_sound);
-					if (enemyHealth.current_health <= 0) {
-						// enemy is dead, trigger an explosion animation
-						if (registry.motions.has(entity_other)) {
-							Motion& motion = registry.motions.get(entity_other);
-							createExplosion(renderer, motion.position, false); // Create explosion
-						}
-						registry.remove_all_components_of(entity_other); // Remove enemy if health drops to 0
-						Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
 
-						// Arbitrarily remove one enemy from the internal room state when an enemy dies.
-						current_room.enemy_count--;
-						// remove the first element in enemy set 
-						current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
-						score++;
-						//registry.texts.get(score_text).content = "Score: " + std::to_string(score);
-						play_sound(explosion_sound);
+					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
+						weapons->handle_rocket_collision(renderer, entity);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -515,20 +504,43 @@ void WorldSystem::handle_collisions() {
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
-		}
-		
-		// Handle collisions projectiles and obstacles
-		if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
-            Projectile& projectile = registry.projectiles.get(entity);
-            Entity projectileSource = projectile.source;
 
-            // Check if the projectile comes from the player
-            if (registry.players.has(projectileSource)) {
-                // Remove the projectile, it hit an obstacle
-                registry.remove_all_components_of(entity);
-                continue; // Skip further processing for this collision
-            }
-        }
+			// Collision logic for player projectiles hitting obstacles
+			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
+				Projectile& projectile = registry.projectiles.get(entity);
+				Entity projectileSource = projectile.source;
+
+				// Check if the projectile comes from the player
+				if (registry.players.has(projectileSource)) {
+					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
+						weapons->handle_rocket_collision(renderer, entity);
+					}
+					// Remove the projectile, it hit an obstacle
+					registry.remove_all_components_of(entity);
+				}
+			}
+
+			// Check for dead enemies
+			for (Entity e : registry.ais.entities) {
+				vec2 e_pos = registry.motions.get(e).position;
+				Health& e_health = registry.healths.get(e);
+
+				if (e_health.current_health <= 0) {
+					registry.remove_all_components_of(e);
+
+					Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
+					// Arbitrarily remove one enemy from the internal room state when an enemy dies.
+					current_room.enemy_count--;
+					// remove the first element in enemy set 
+					current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+					score++;
+
+					// UX Effects
+					createExplosion(renderer, e_pos, 1.0f, false);
+					play_sound(explosion_sound);
+				}
+			}
+		}
 	}
 
 	// Remove all collisions from this simulation step

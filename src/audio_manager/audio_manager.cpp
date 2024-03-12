@@ -1,8 +1,9 @@
 #include "audio_manager/audio_manager.hpp"
 
-Mix_Chunk* machine_gun_sound = nullptr;
+Mix_Chunk* gatling_gun_sound = nullptr;
 Mix_Chunk* sniper_sound = nullptr;
 Mix_Chunk* shotgun_sound = nullptr;
+Mix_Chunk* rocket_launcher_sound = nullptr;
 Mix_Chunk* reload_start_sound = nullptr;
 Mix_Chunk* reload_end_sound = nullptr;
 Mix_Chunk* explosion_sound = nullptr;
@@ -22,9 +23,10 @@ bool init_audio() {
     }
 
     // Load music and sounds
-    machine_gun_sound = Mix_LoadWAV(audio_path("machine_gun.wav").c_str());
+    gatling_gun_sound = Mix_LoadWAV(audio_path("gatling_gun.wav").c_str());
     sniper_sound = Mix_LoadWAV(audio_path("sniper.wav").c_str());
     shotgun_sound = Mix_LoadWAV(audio_path("shotgun.wav").c_str());
+    rocket_launcher_sound = Mix_LoadWAV(audio_path("rocket_launcher_sound.wav").c_str());
     reload_start_sound = Mix_LoadWAV(audio_path("reload_start_sound.wav").c_str());
     reload_end_sound = Mix_LoadWAV(audio_path("reload_end_sound.wav").c_str());
     explosion_sound = Mix_LoadWAV(audio_path("explosion.wav").c_str());
@@ -32,9 +34,10 @@ bool init_audio() {
     player_hit_sound = Mix_LoadWAV(audio_path("player_hit_sound.wav").c_str());
     enemy_hit_sound = Mix_LoadWAV(audio_path("enemy_hit_sound.wav").c_str());
 
-    if (machine_gun_sound == nullptr ||
+    if (gatling_gun_sound == nullptr ||
         sniper_sound == nullptr ||
         shotgun_sound == nullptr ||
+        rocket_launcher_sound == nullptr ||
         reload_start_sound == nullptr ||
         reload_end_sound == nullptr ||
         explosion_sound == nullptr ||
@@ -55,12 +58,14 @@ void play_sound(Mix_Chunk* sound) {
 }
 
 void close_audio() {
-    if (machine_gun_sound != nullptr)
-        Mix_FreeChunk(machine_gun_sound);
+    if (gatling_gun_sound != nullptr)
+        Mix_FreeChunk(gatling_gun_sound);
     if (sniper_sound != nullptr)
         Mix_FreeChunk(sniper_sound);
     if (shotgun_sound != nullptr)
         Mix_FreeChunk(shotgun_sound);
+    if (rocket_launcher_sound != nullptr)
+        Mix_FreeChunk(rocket_launcher_sound);
     if (reload_start_sound != nullptr)
         Mix_FreeChunk(reload_start_sound);
     if (reload_end_sound != nullptr)

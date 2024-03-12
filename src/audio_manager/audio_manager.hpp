@@ -17,9 +17,10 @@ void play_sound(Mix_Chunk* sound);
 void close_audio();
 
 // Sound references
-extern Mix_Chunk* machine_gun_sound;
+extern Mix_Chunk* gatling_gun_sound;
 extern Mix_Chunk* sniper_sound;
 extern Mix_Chunk* shotgun_sound;
+extern Mix_Chunk* rocket_launcher_sound;
 extern Mix_Chunk* reload_start_sound;
 extern Mix_Chunk* reload_end_sound;
 extern Mix_Chunk* explosion_sound;

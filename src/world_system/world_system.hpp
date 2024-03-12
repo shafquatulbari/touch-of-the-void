@@ -5,7 +5,7 @@
 #include "common/common.hpp"
 #include "render_system/render_system.hpp"
 #include "ui_system/ui_system.hpp"
-#include <weapon_system/weapon_system.hpp>
+#include "weapon_system/weapon_system.hpp"
 
 // stlib
 #include <vector>
