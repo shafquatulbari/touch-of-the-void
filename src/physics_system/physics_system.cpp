@@ -2,7 +2,7 @@
 #include "physics_system/physics_system.hpp"
 #include "world_init/world_init.hpp"
 
-// TODO: Improve bounding box collision detection into a more accurate one
+// TODO: Improve bounding box collision detection into a more accurate 
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion &motion)
@@ -19,7 +19,7 @@ vec2 get_bounding_box(const Motion &motion)
 // https://code.tutsplus.com/collision-detection-using-the-separating-axis-theorem--gamedev-169t
 
 // Narrow check
-bool sat_collision_check(Entity e1, Entity e2) {
+bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 	Motion& m1 = registry.motions.get(e1);
 	Motion& m2 = registry.motions.get(e2);
 
@@ -27,12 +27,13 @@ bool sat_collision_check(Entity e1, Entity e2) {
 	std::vector<vec2> e2_pts;
 
 	// Get all vertices of the convex hull for entity1
+	Transform t;
+	t.translate(m1.position);
+	t.rotate(m1.look_angle);
+	t.scale(m1.scale);
+
 	if (registry.meshPtrs.has(e1)) {
 		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e1)->vertices;
-		Transform t;
-		t.translate(m1.position);
-		t.rotate(m1.look_angle);
-		t.scale(m1.scale);
 
 		for (int i = 0; i < vertices.size(); i++) {
 			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
@@ -113,6 +114,8 @@ bool sat_collision_check(Entity e1, Entity e2) {
 				max_e2 = dot_prod;
 			}
 		}
+		
+		displacement = min(displacement, min(max_e1, max_e2) - max(min_e1, min_e2));
 
 		// We can draw a line between the two entities, return no collision
 		if (min_e1 > max_e2 || min_e2 > max_e1) {
@@ -144,6 +147,8 @@ bool sat_collision_check(Entity e1, Entity e2) {
 				max_e2 = dot_prod;
 			}
 		}
+		
+		displacement = min(displacement, min(max_e1, max_e2) - max(min_e1, min_e2));
 
 		// We can draw a line between the two entities, return no collision
 		if (min_e1 > max_e2 || min_e2 > max_e1) {
@@ -173,7 +178,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 }
 
 // Returns whether two entities collide based on AABB collision detection
-bool collides(const Entity entity1, const Entity entity2)
+bool collides(const Entity entity1, const Entity entity2, float& displacement)
 {
 	Motion& m1 = registry.motions.get(entity1);
 	Motion& m2 = registry.motions.get(entity2);
@@ -182,7 +187,7 @@ bool collides(const Entity entity1, const Entity entity2)
 		return false;
 	}
 
-	return sat_collision_check(entity1, entity2);
+	return sat_collision_check(entity1, entity2, displacement);
 }
 
 void update_motion(Motion &motion, float step_seconds)
@@ -294,6 +299,8 @@ void PhysicsSystem::step(float elapsed_ms)
 	}
 
 	// Check for collisions between all moving entities
+	float displacement_scalar;
+
 	ComponentContainer<Motion> &motion_container = registry.motions;
 	for (uint i = 0; i < motion_container.components.size(); i++)
 	{
@@ -307,18 +314,24 @@ void PhysicsSystem::step(float elapsed_ms)
 		// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 		for (uint j = i + 1; j < motion_container.components.size(); j++)
 		{
+			displacement_scalar = std::numeric_limits<float>::max();
 			Entity entity_j = motion_container.entities[j];	
 
 			if (registry.noCollisionChecks.has(entity_j)) {
 				continue;
 			}
 
-			if (collides(entity_i, entity_j))
+			if (collides(entity_i, entity_j, displacement_scalar))
 			{
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
-				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
-				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
+				Collision& collision1 = registry.collisions.emplace_with_duplicates(entity_i, entity_j);
+				Collision& collision2 = registry.collisions.emplace_with_duplicates(entity_j, entity_i);
+
+				if (registry.players.has(entity_i) && registry.obstacles.has(entity_j)) {
+					collision1.scalar = displacement_scalar;
+					collision2.scalar = displacement_scalar;
+				}
 			}
 		}
 	}

@@ -290,6 +290,30 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		SDL_Delay((1000.0f / maxFps) - frameTicks);
 	}*/
 
+	////////////////////////////////////////////////////////////////////////////////////
+	// Render mesh lines
+	Mesh& p_mesh = *(registry.meshPtrs.get(player));
+	Motion& p_motion = registry.motions.get(player);
+
+	Transform t;
+	t.translate(p_motion.position);
+	t.rotate(p_motion.look_angle);
+	t.scale(p_motion.scale);
+
+	for (int i = 0; i < p_mesh.vertices.size(); i++) {
+		Entity e = createLine(
+			p_mesh.vertices[i],
+			p_mesh.vertices[(i + 1) % p_mesh.vertices.size()],
+			t.mat,
+			{ 1.f, 0.f, 0.f },
+			5
+		);
+
+		p_mesh_lines[i] = e;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////
+
 	return true;
 }
 
@@ -387,9 +411,15 @@ void WorldSystem::handle_collisions() {
 		// The entity and its collider
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
-
+		float scalar = collisionsRegistry.components[i].scalar;
 		
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
+
+			for (Entity e : p_mesh_lines) {
+				registry.lines.get(e).from.color = { 0.f, 1.f, 0.f };
+				registry.lines.get(e).to.color = { 0.f, 1.f, 0.f };
+			}
+
 			Obstacle& obstacle = registry.obstacles.get(entity_other);
 			if (obstacle.is_passable)
 			{
@@ -455,7 +485,7 @@ void WorldSystem::handle_collisions() {
 				}
 			}
 			else {
-				bounce_back(player, entity_other);
+				bounce_back(player, entity_other, scalar);
 			}
 		}
 		if (registry.projectiles.has(entity)) {
@@ -647,7 +677,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 }
 
-void WorldSystem::bounce_back(Entity player, Entity obstacle) {
+void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar) {
 	// Bounce back functionality by moving back by a bit
 	//Motion& playerMotion = registry.motions.get(player);
 	//playerMotion.velocity *= -1;
@@ -656,48 +686,51 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
 
-	vec2& p_pos = p_motion.position;
-	vec2& p_size = p_motion.scale;
-	vec2& obs_pos = obs_motion.position;
-	vec2& obs_size = obs_motion.scale;
+	vec2 player_to_obs = obs_motion.position - p_motion.position;
+	p_motion.position -= glm::normalize(player_to_obs) * scalar;
 
-	float p_minx = p_pos.x - p_size.x / 2;
-	float p_maxx = p_pos.x + p_size.x / 2;
-	float p_miny = p_pos.y + p_size.y / 2;
-	float p_maxy = p_pos.y - p_size.y / 2;
+	//vec2& p_pos = p_motion.position;
+	//vec2& p_size = p_motion.scale;
+	//vec2& obs_pos = obs_motion.position;
+	//vec2& obs_size = obs_motion.scale;
 
-	float obs_left = obs_pos.x - obs_size.x / 2;
-	float obs_right = obs_pos.x + obs_size.x / 2;
-	float obs_bottom = obs_pos.y + obs_size.y / 2;
-	float obs_top = obs_pos.y - obs_size.y / 2;
- 
-	float angle = atan2(obs_pos.y - p_pos.y, obs_pos.x - p_pos.x);
-	
-	float obs_topleft_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_left);
-	float obs_topright_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_right);
-	float obs_bottomleft_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_left);
-	float obs_bottomright_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_right);
+	//float p_minx = p_pos.x - p_size.x / 2;
+	//float p_maxx = p_pos.x + p_size.x / 2;
+	//float p_miny = p_pos.y + p_size.y / 2;
+	//float p_maxy = p_pos.y - p_size.y / 2;
 
-	// Check if player travels upwards
-	if (angle > obs_bottomright_angle && angle <= obs_bottomleft_angle) {
-		p_pos.y = obs_bottom + p_size.y / 2;
-		p_motion.velocity.y = 0;
-	}
-	// Check if player travels downwards
-	else if (angle > obs_topleft_angle && angle <= obs_topright_angle) {
-		p_pos.y = obs_top - p_size.y / 2;
-		p_motion.velocity.y = 0;
-	}
-	// Check if player travels rightwards
-	else if (angle > obs_bottomleft_angle && angle <= obs_topleft_angle) {	
-		p_pos.x = obs_left - p_size.x / 2;
-		p_motion.velocity.x = 0;
-	}
-	// Check if player travels leftwards
-	else if (angle >= obs_topright_angle || angle <= obs_bottomright_angle) {
-		p_pos.x = obs_right + p_size.x / 2;
-		p_motion.velocity.x = 0;
-	}
+	//float obs_left = obs_pos.x - obs_size.x / 2;
+	//float obs_right = obs_pos.x + obs_size.x / 2;
+	//float obs_bottom = obs_pos.y + obs_size.y / 2;
+	//float obs_top = obs_pos.y - obs_size.y / 2;
+ //
+	//float angle = atan2(obs_pos.y - p_pos.y, obs_pos.x - p_pos.x);
+	//
+	//float obs_topleft_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_left);
+	//float obs_topright_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_right);
+	//float obs_bottomleft_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_left);
+	//float obs_bottomright_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_right);
+
+	//// Check if player travels upwards
+	//if (angle > obs_bottomright_angle && angle <= obs_bottomleft_angle) {
+	//	p_pos.y = obs_bottom + p_size.y / 2;
+	//	p_motion.velocity.y = 0;
+	//}
+	//// Check if player travels downwards
+	//else if (angle > obs_topleft_angle && angle <= obs_topright_angle) {
+	//	p_pos.y = obs_top - p_size.y / 2;
+	//	p_motion.velocity.y = 0;
+	//}
+	//// Check if player travels rightwards
+	//else if (angle > obs_bottomleft_angle && angle <= obs_topleft_angle) {	
+	//	p_pos.x = obs_left - p_size.x / 2;
+	//	p_motion.velocity.x = 0;
+	//}
+	//// Check if player travels leftwards
+	//else if (angle >= obs_topright_angle || angle <= obs_bottomright_angle) {
+	//	p_pos.x = obs_right + p_size.x / 2;
+	//	p_motion.velocity.x = 0;
+	//}
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 

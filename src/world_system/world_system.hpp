@@ -35,7 +35,7 @@ public:
 	// Check for collisions
 	void handle_collisions();
 
-	void bounce_back(Entity player, Entity obstacle);
+	void bounce_back(Entity player, Entity obstacle, float scalar);
 
 	// Should the game be over ?
 	bool is_over()const;
@@ -62,6 +62,8 @@ private:
 	UISystem* ui;
 	WeaponSystem* weapons;
 	Entity player;
+
+	std::array<Entity, 10> p_mesh_lines; // for debug
 
 	enum class GAME_STATE {
 		START_MENU,

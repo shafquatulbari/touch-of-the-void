@@ -204,6 +204,9 @@ struct Collision
 	// Note, the first object is stored in the ECS container.entities
 	Entity other; // the second object involved in the collision
 	Collision(Entity& other) { this->other = other; };
+
+	// Scalar of the displacement vector
+	float scalar;
 };
 
 // Data structure for toggling debug mode
@@ -263,6 +266,14 @@ struct Mesh
 };
 
 enum class TextAlignment { LEFT, RIGHT, CENTER };
+
+struct Line 
+{
+	float width;
+	ColoredVertex from;
+	ColoredVertex to;
+	mat3 trans;
+};
 
 struct Text
 {

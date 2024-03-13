@@ -32,6 +32,7 @@ public:
 	ComponentContainer<Animation> animations;
 	ComponentContainer<AnimationTimer> animationTimers;
 	ComponentContainer<NoCollisionCheck> noCollisionChecks;
+	ComponentContainer<Line> lines;
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
 	ECSRegistry()
@@ -57,6 +58,7 @@ public:
 		registry_list.push_back(&noCollisionChecks);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&animationTimers);
+		registry_list.push_back(&lines);
 	}
 
 	void clear_all_components() {

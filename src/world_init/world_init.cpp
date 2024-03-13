@@ -9,7 +9,6 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 
 	Mesh& p_mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::PLAYER_CH);
 	registry.meshPtrs.emplace(entity, &p_mesh);
-	
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -39,7 +38,6 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND});
-
 	
 	return entity;
 }
@@ -516,29 +514,21 @@ Entity createRoom(RenderSystem* render)
 	return starting_room_entity;
 }
 
-Entity createLine(vec2 position, vec2 scale)
-{
-	Entity entity = Entity();
+Entity createLine(ColoredVertex from, ColoredVertex to, mat3 trans, vec3 color, float width) {
+	Entity e = Entity();
+	Line& line = registry.lines.emplace(e);
 
-	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-		 EFFECT_ASSET_ID::LINE,
-		 GEOMETRY_BUFFER_ID::DEBUG_LINE,
-		RENDER_LAYER::UI});
+	line.from = from;
+	line.to = to;
+	line.trans = trans;
+	line.width = width;
 
-	// Create motion
-	Motion& motion = registry.motions.emplace(entity);
-	motion.look_angle = 0.f;
-	motion.velocity = { 0, 0 };
-	motion.position = position;
-	motion.scale = scale;
+	line.to.color = color;
+	line.from.color = color;
 
-	registry.debugComponents.emplace(entity);
-	return entity;
+	registry.debugComponents.emplace(e);
+	return e;
 }
-
 
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)
 {

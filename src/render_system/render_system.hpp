@@ -159,6 +159,7 @@ private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen(const mat3& projection);
+	void drawLine(Line& line);
 
 	// Window handle
 	GLFWwindow* window;

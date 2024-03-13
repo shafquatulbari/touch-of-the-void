@@ -137,7 +137,6 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 
 	GLsizei num_indices = size / sizeof(uint16_t);
-	
 
 	GLint currProgram;
 	glGetIntegerv(GL_CURRENT_PROGRAM, &currProgram);
@@ -175,9 +174,52 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		glUniform2f(sprite_sheet_size_loc, 1, 1);
 	}
 	gl_has_errors();
-	// Drawing of num_indices/3 triangles specified in the index buffer
+	// Drawing of num_indices/3 triangles specified in the index buffer	
 	glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_SHORT, nullptr);
 	gl_has_errors();
+}
+
+void RenderSystem::drawLine(Line& line) {
+	// Initialize program
+	GLuint program = effects[(GLuint)EFFECT_ASSET_ID::LINE];
+	glUseProgram(program);
+	gl_has_errors();
+
+	// Bind vertex and index buffers
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::DEBUG_LINE]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(GLuint)GEOMETRY_BUFFER_ID::DEBUG_LINE]);
+	gl_has_errors();
+
+	// Get uniform locations
+	GLint in_position_loc = glGetAttribLocation(program, "in_position");
+	GLint in_color_loc = glGetAttribLocation(program, "in_color");
+	gl_has_errors();
+	
+	glEnableVertexAttribArray(in_position_loc);
+	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
+	glEnableVertexAttribArray(in_color_loc);
+	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	gl_has_errors();
+
+	// Set uniform transform and projection variables
+	GLint transform_loc = glGetUniformLocation(program, "transform");
+	GLint proj_loc = glGetUniformLocation(program, "projection");
+	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(line.trans));
+	glUniformMatrix3fv(proj_loc, 1, GL_FALSE, glm::value_ptr(createProjectionMatrix()));
+	gl_has_errors();
+
+	 std::vector<ColoredVertex> vertices = { line.from, line.to };
+
+	// Put line vertex data into the VBO
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices.data());
+
+	glLineWidth(line.width);
+	glEnable(GL_LINE_SMOOTH);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	
+	glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, nullptr);
+	
+	glDisable(GL_LINE_SMOOTH);
 }
 
 // draw the intermediate texture to the screen, with some distortion to simulate
@@ -453,6 +495,10 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
+	for (Line& line : registry.lines.components) {
+		drawLine(line);
+	}
+
 	drawText(projection_2D);
 
 	// Truely render to the screen
@@ -477,6 +523,7 @@ mat3 RenderSystem::createProjectionMatrix()
 	float sy = 2.f / (top - bottom);
 	float tx = -(right + left) / (right - left);
 	float ty = -(top + bottom) / (top - bottom);
+	
 	return { {sx, 0.f, 0.f}, {0.f, sy, 0.f}, {tx, ty, 1.f} };
 }
 

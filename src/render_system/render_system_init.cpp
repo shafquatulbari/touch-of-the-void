@@ -242,24 +242,30 @@ void RenderSystem::initializeGlGeometryBuffers()
 	std::vector<uint16_t> line_indices;
 
 	constexpr float depth = 0.5f;
-	constexpr vec3 red = { 0.8,0.1,0.1 };
+	constexpr vec3 black = { 0.f, 0.f, 0.f };
 
-	// Corner points
+	//// Corner points
+	//line_vertices = {
+	//	{{-0.5,-0.5, depth}, red},
+	//	{{-0.5, 0.5, depth}, red},
+	//	{{ 0.5, 0.5, depth}, red},
+	//	{{ 0.5,-0.5, depth}, red},
+	//};
+
+	//// Two triangles
+	//line_indices = { 0, 1, 3, 1, 2, 3 };
+
+	// Render lines as "lines" and not as "triangles"
 	line_vertices = {
-		{{-0.5,-0.5, depth}, red},
-		{{-0.5, 0.5, depth}, red},
-		{{ 0.5, 0.5, depth}, red},
-		{{ 0.5,-0.5, depth}, red},
+		{ {0.f, 0.f, 0.f}, black },
+		{ {0.f, 0.f, 0.f}, black }
 	};
-
-	// Two triangles
-	line_indices = { 0, 1, 3, 1, 2, 3 };
+	line_indices = { 0, 1 };
 
 	int geom_index = (int)GEOMETRY_BUFFER_ID::DEBUG_LINE;
 	meshes[geom_index].vertices = line_vertices;
 	meshes[geom_index].vertex_indices = line_indices;
 	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
-
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).
