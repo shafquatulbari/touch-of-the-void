@@ -58,7 +58,8 @@ struct Player
 		{WeaponType::GATLING_GUN, 100},
 		{WeaponType::SNIPER, 1},
 		{WeaponType::SHOTGUN, 6},
-		{WeaponType::ROCKET_LAUNCHER, 1}
+		{WeaponType::ROCKET_LAUNCHER, 1},
+		{WeaponType::FLAMETHROWER, 200}
 	};
 
 	bool is_firing = false; // player is currently firing projectiles
@@ -88,6 +89,14 @@ struct Projectile
 	float lifetime = 0.0f;	// time before the projectile disappears
 	Entity source; // New attribute to store the source entity of the projectile
 	WeaponType weapon_type;
+};
+
+// Burned status timer
+struct OnFireTimer
+{
+	float total_damage = 300.0f; // amount of damage that will be dealt over counter_ms
+	float counter_ms = 2000.0f;
+	float total_time_ms = 2000.0f;
 };
 
 // Obstacle component

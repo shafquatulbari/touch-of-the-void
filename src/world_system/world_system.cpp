@@ -252,6 +252,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}
 
 	// heal obstacles over time
+	/*
 	for (auto& obstacle : registry.obstacles.entities) {
         if (registry.healths.has(obstacle)) {
 			Health& health = registry.healths.get(obstacle);
@@ -261,6 +262,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			}
         }
     }
+	*/
 
 	// heal player over timne
 	if (registry.healths.has(player)) {
@@ -310,14 +312,22 @@ void WorldSystem::restart_game() {
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
+
+	// Stop playing music
+	stop_music();
+
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
+		play_music(start_menu_music);
+
 		createText(renderer, "TOUCH OF THE VOID", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
 		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		break;
 
 	case GAME_STATE::GAME:
+		play_music(game_music);
+
 		// Create a new player
 		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
@@ -450,6 +460,7 @@ void WorldSystem::handle_collisions() {
 						motion.is_moving_left = false;
 						motion.is_moving_right = false;
 						registry.deathTimers.emplace(player);
+						play_sound(game_over_sound);
 					}
 				}
 			}
@@ -473,8 +484,15 @@ void WorldSystem::handle_collisions() {
 					enemyHealth.current_health -= deadly.damage;
 					play_sound(enemy_hit_sound);
 
-					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
+					switch (projectile.weapon_type) 
+					{
+					case WeaponType::ROCKET_LAUNCHER:
 						weapons->handle_rocket_collision(renderer, entity);
+						break;
+
+					case WeaponType::FLAMETHROWER:
+						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
+						break;
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -499,6 +517,7 @@ void WorldSystem::handle_collisions() {
 							motion.is_moving_left = false;
 							motion.is_moving_right = false;
 							registry.deathTimers.emplace(player);
+							play_sound(game_over_sound);
 						}
 					}
 				}
@@ -519,27 +538,27 @@ void WorldSystem::handle_collisions() {
 					registry.remove_all_components_of(entity);
 				}
 			}
+		}
+	}
 
-			// Check for dead enemies
-			for (Entity e : registry.ais.entities) {
-				vec2 e_pos = registry.motions.get(e).position;
-				Health& e_health = registry.healths.get(e);
+	// Check for dead enemies
+	for (Entity e : registry.ais.entities) {
+		vec2 e_pos = registry.motions.get(e).position;
+		Health& e_health = registry.healths.get(e);
 
-				if (e_health.current_health <= 0) {
-					registry.remove_all_components_of(e);
+		if (e_health.current_health <= 0) {
+			registry.remove_all_components_of(e);
 
-					Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
-					// Arbitrarily remove one enemy from the internal room state when an enemy dies.
-					current_room.enemy_count--;
-					// remove the first element in enemy set 
-					current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
-					score++;
+			Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
+			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
+			current_room.enemy_count--;
+			// remove the first element in enemy set 
+			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+			score++;
 
-					// UX Effects
-					createExplosion(renderer, e_pos, 1.0f, false);
-					play_sound(explosion_sound);
-				}
-			}
+			// UX Effects
+			createExplosion(renderer, e_pos, 1.0f, false);
+			play_sound(explosion_sound);
 		}
 	}
 
@@ -566,6 +585,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// Enter key to start the game
 		if (action == GLFW_RELEASE && key == GLFW_KEY_ENTER) {
 			game_state = GAME_STATE::GAME;
+			play_sound(game_start_sound);
 			restart_game();
 		}
 		break;
@@ -649,6 +669,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// Enter key to start the game
 		if (action == GLFW_RELEASE && key == GLFW_KEY_ENTER) {
 			game_state = GAME_STATE::GAME;
+			play_sound(game_start_sound);
 			restart_game();
 		}
 		break;

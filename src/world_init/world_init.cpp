@@ -2,6 +2,7 @@
 #include "ecs_registry/ecs_registry.hpp"
 #include "world_generator/world_generator.hpp"
 #include <world_system/world_system.hpp>
+#include <glm/gtc/random.hpp>
 
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
@@ -295,6 +296,47 @@ Entity createRocketProjectile(RenderSystem* render, vec2 position, float angle, 
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
+{
+	auto entity = Entity();
+
+	// Actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	angle += (rng - 0.5f) * accuracy;
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle + M_PI / 4;
+	motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
+	motion.velocity = vec2({ 600.0f * cos(angle), 600.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::FLAMETHROWER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	registry.colors.emplace(entity);
+	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);
 
 	return entity;
 }
