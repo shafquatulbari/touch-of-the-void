@@ -1,6 +1,8 @@
 // internal
 #include "ai_system/ai_system.hpp"
 #include <world_system/world_system.hpp>
+#include <world_init/world_init.hpp>
+#include <components/components.hpp>
 #include <queue> // For priority queue (open list)
 #include <unordered_set>  
 #include <algorithm> 
@@ -8,7 +10,19 @@
 #include <cmath>
 #include <memory>
 #include <map>
-#include <world_init/world_init.hpp>
+#include <iostream>
+
+// coordinate system details
+// world is 960x960
+// each cell is 64x64 so there are 15x15 cells
+// the top left cell is (0,0) and the bottom right cell is (12,12)
+// the world is placed in the middle of the screen (where the screen is 1920x1024)
+// so the top left corner of the world is at (480, 32)
+const float cellSize = 64.0f;
+const int numCells = 15;
+const int maxIterations = 1000;
+const float xOffSet = 480.0f; 
+const float yOffSet = 32.0f;
 
 struct Vec2Hash {
     std::size_t operator()(const vec2& v) const {
@@ -17,38 +31,84 @@ struct Vec2Hash {
 };
 
 bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
-    vec2 direction = normalize(end - start);
-    float distance = length(end - start);
-    float step = 10.0f; // Adjust based on your needs
+    // http://www.cse.yorku.ca/~amana/research/grid.pdf
+    // Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
+    // This is a simple implementation of the Bresenham's line algorithm
 
-    for (float t = 0.0f; t <= distance; t += step) {
-        vec2 currentPosition = start + direction * t;
-        if (isObstacleAtPosition(currentPosition)) {
-            return true; // note set it back to false
+    int cellX = static_cast<int>(floor((start.x - xOffSet) / cellSize));
+    int cellY = static_cast<int>(floor((start.y - yOffSet) / cellSize));
+
+    int endCellX = static_cast<int>(floor((end.x - xOffSet) / cellSize));
+    int endCellY = static_cast<int>(floor((end.y - yOffSet) / cellSize));
+
+    assert(0 <= cellX <= numCells && 0 <= cellY <= numCells);
+
+    vec2 direction = end - start;
+    int stepX = (direction.x > 0) ? 1 : -1;
+    int stepY = (direction.y > 0) ? 1 : -1;
+
+    float boundaryX = cellX * cellSize + ((stepX > 0) ? cellSize : 0);
+    float boundaryY = cellY * cellSize + ((stepY > 0) ? cellSize : 0);
+
+    float deltaT_X = fabs(cellSize / direction[0]);
+    float deltaT_Y = fabs(cellSize / direction[1]);
+
+    float remainingT_X = deltaT_X * (1 - fmod(start.x, cellSize));
+    float remainingT_Y = deltaT_Y * (1 - fmod(start.y, cellSize));
+
+    std::cout << "start: " << start.x << ", " << start.y << std::endl;
+    std::cout << "start-cell: " << cellX << ", " << cellY << std::endl;
+    std::cout << "end: " << end.x << ", " << end.y << std::endl;
+    std::cout << "end-cell: " << endCellX << ", " << endCellY << std::endl;
+
+    
+   for (int i = 0; i < maxIterations; i++) {
+		if (remainingT_X < remainingT_Y) {
+			cellX += stepX;
+			remainingT_X += deltaT_X;
+		}
+		else {
+			cellY += stepY;
+			remainingT_Y += deltaT_Y;
+		}
+
+        cellX = std::max(0, std::min(cellX, numCells - 1));
+        cellY = std::max(0, std::min(cellY, numCells - 1));
+
+        if (isObstacleAtPosition(vec2(cellX, cellY))) {
+            return false;
         }
-    }
 
-    return true;
+        if (cellX == endCellX && cellY == endCellY) {
+            break;
+		}
+
+        boundaryX = deltaT_X * stepX;
+        boundaryY = deltaT_Y * stepY;
+
+        //std::cout << "-> " << cellX << ", " << cellY << std::endl;
+
+	}
+
+   return true;
 }
 
 // Adjusted obstacle detection to consider the full bounding box of obstacles
 bool AISystem::isObstacleAtPosition(const vec2& position) {
-    // Iterate through all obstacles in the game world
-    for (const auto& obstacleEntity : registry.obstacles.entities) {
-        const Motion& obstacle = registry.motions.get(obstacleEntity);
+    // position is in grid coordinates
+    // check if there is an obstacle at the given position
+    // NEED A WAY TO BE TOLD THE CURENT ROOM
+    // once has would something along these lines
 
-        // Calculate the obstacle's bounding box in world coordinates
-        vec2 topLeft = obstacle.position - (obstacle.scale / 2.0f);
-        vec2 bottomRight = obstacle.position + (obstacle.scale / 2.0f);
+   /* Room& room = registry.rooms.get(currentRoom);
 
-        // Check if the given position falls within the obstacle's bounding box
-        if (position.x >= topLeft.x && position.x <= bottomRight.x &&
-            position.y >= topLeft.y && position.y <= bottomRight.y) {
-            return false; // The position intersects with an obstacle , note: set it back to true
-        }
-    }
+    for (auto& pos : room.obstacle_positions) {
+        if (pos.x == position.x && pos.y == position.y) {
+            return true;
+        };
+	}*/
 
-    return false; // No collision detected
+    return false;
 }
 
 // Basic structure for A* nodes
@@ -190,20 +250,20 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
             // Ranged AI behavior
             handleRangedAI(entity, motion, ai, elapsed_ms, playerPosition);
         }
-        else if (ai.type == AI::AIType::MELEE) {
-            // Melee AI behavior using A* for pathfinding
-            std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
-            if (path.size() > 1) { // Ensure path has more than just the starting position
-                vec2 nextStep = path[1]; // Get the next step towards the player
+        //else if (ai.type == AI::AIType::MELEE) {
+        //    // Melee AI behavior using A* for pathfinding
+        //    std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
+        //    if (path.size() > 1) { // Ensure path has more than just the starting position
+        //        vec2 nextStep = path[1]; // Get the next step towards the player
 
-                direction = normalize(nextStep - motion.position);
-                motion.look_angle = atan2(direction.y, direction.x);
-                float speed = 10.0f; // Define a suitable speed for the melee enemy
+        //        direction = normalize(nextStep - motion.position);
+        //        motion.look_angle = atan2(direction.y, direction.x);
+        //        float speed = 10.0f; // Define a suitable speed for the melee enemy
 
-                // Update velocity towards the next step in the path
-                motion.velocity = direction * speed;
-            }
-        }
+        //        // Update velocity towards the next step in the path
+        //        motion.velocity = direction * speed;
+        //    }
+        //}
     }
     else {
         // If there's no line of sight, stop movement
@@ -217,7 +277,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     if (lineOfSightClear(motion.position, playerPosition)) {
         // Rotate towards the player
         vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x);
+        motion.look_angle = atan2(direction.y, direction.x) - M_PI/2;
 
         if (distanceToPlayer > ai.safe_distance) {
             // Continue moving closer until within a safe distance, then stop
@@ -230,8 +290,8 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
             // Shooting logic with cooldown
             ai.shootingCooldown -= elapsed_ms / 1000.0f; // Convert milliseconds to seconds
             if (ai.shootingCooldown <= 0) {
-                createProjectileForEnemy(motion.position, motion.look_angle, entity);
-                ai.shootingCooldown = 2.5f; // Reset cooldown to 2.5 seconds or appropriate value
+                createProjectileForEnemy(motion.position, motion.look_angle + M_PI/2, entity);
+                ai.shootingCooldown = 1.0f; // Reset cooldown to 2.5 seconds or appropriate value
             }
         }
     }
