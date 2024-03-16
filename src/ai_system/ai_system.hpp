@@ -22,6 +22,8 @@ public:
 
 	std::vector<vec2> findPathAStar(const vec2& start, const vec2& goal);
 
+	vec2 flockMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float playerAvoidanceDistance);
+
 	void step(float elapsed_ms);
 	void idleState(Entity entity, Motion& motion);
 	void activeState(Entity entity, Motion& motion, float elapsed_ms);

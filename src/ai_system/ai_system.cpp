@@ -186,6 +186,79 @@ std::vector<vec2> AISystem::findPathAStar(const vec2& start, const vec2& goal) {
     return path;
 }
 
+// https://en.wikipedia.org/wiki/Boids
+//Reynolds, C. W. (1987). Flocks, herds and schools: A distributed behavioral model. 
+// In Proceedings of the 14th annual conference on Computer graphics and interactive techniques (pp. 25-34).
+// The Boids algorithm for flocking behavior
+vec2 AISystem::flockMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float playerAvoidanceDistance) {
+    vec2 alignment = vec2(0.0f, 0.0f); // Direction that aligns with neighboring boids
+    vec2 cohesion = vec2(0.0f, 0.0f);  // Direction towards the center of mass of neighboring boids
+    vec2 separation = vec2(0.0f, 0.0f); // Direction to maintain a minimum distance from neighboring boids
+    vec2 avoidance = vec2(0.0f, 0.0f); // Direction to avoid projectiles
+
+    int neighborCount = 0;
+    //These are the tuning parameters
+    float maxSpeed = 100.0f;
+    float perceptionRadius = 150.0f;
+    float separationDistance = 100.0f;
+
+    // Loop through all entities to apply alignment, cohesion, and separation
+    for (auto& otherEntity : registry.ais.entities) {
+        if (otherEntity == entity) continue; // Skip self
+
+        Motion& otherMotion = registry.motions.get(otherEntity);
+        vec2 direction = otherMotion.position - motion.position;
+        float distance = length(direction);
+
+        if (distance < perceptionRadius && distance > 0) {
+            alignment += otherMotion.velocity;
+            cohesion += otherMotion.position;
+
+            if (distance < separationDistance) {
+                separation -= (direction / distance) * (separationDistance - distance);
+            }
+
+            neighborCount++;
+        }
+    }
+
+    // Normalize and apply maxSpeed to alignment, cohesion, and separation
+    if (neighborCount > 0) {
+        alignment = (normalize(alignment) * maxSpeed - motion.velocity) / 8.0f; // Tweaking the factor for smoothness
+        cohesion = (normalize((cohesion / (float)neighborCount) - motion.position) * maxSpeed - motion.velocity) / 8.0f;
+        separation = (separation / (float)neighborCount) * maxSpeed;
+    }
+
+    // Avoidance behavior for projectiles
+    for (auto& projectileEntity : registry.projectiles.entities) {
+        Motion& projectileMotion = registry.motions.get(projectileEntity);
+        vec2 directionToProjectile = projectileMotion.position - motion.position;
+        float distanceToProjectile = length(directionToProjectile);
+
+        if (distanceToProjectile < perceptionRadius && distanceToProjectile > 0) {
+            avoidance -= (directionToProjectile / distanceToProjectile) * maxSpeed;
+        }
+    }
+
+    // Calculate avoidance vector for the player
+    vec2 directionToPlayer = motion.position - playerPosition;
+    float distanceToPlayer = length(directionToPlayer);
+
+    if (distanceToPlayer < playerAvoidanceDistance && distanceToPlayer > 0) {
+        avoidance += (directionToPlayer / distanceToPlayer) * maxSpeed;
+    }
+
+    // Combine the steering vectors
+    vec2 steer = alignment + cohesion + separation + avoidance;
+
+    // Ensure the speed does not exceed maxSpeed
+    if (length(steer) > maxSpeed) {
+        steer = normalize(steer) * maxSpeed;
+    }
+
+    return steer;
+}
+
 
 //For now just implement BFS so that enemy of type Melee can follow the player
 void AISystem::step(float elapsed_ms)
@@ -262,31 +335,47 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
 }
 
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+
+    float playerAvoidanceDistance = 200.0f; // Adjust as necessary
+
+    // Calculate the flock movement vector for the current entity
+    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+
+    float maxSpeed = 100.0f; // Adjust as necessary
+
+    // Calculate distance to the player
     float distanceToPlayer = length(playerPosition - motion.position);
-    if (lineOfSightClear(motion.position, playerPosition)) {
-        // Rotate towards the player
-        vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x) - M_PI/2;
 
-        if (distanceToPlayer > ai.safe_distance) {
-            // Continue moving closer until within a safe distance, then stop
-            motion.velocity = direction * 10.0f; // Assume 10.0f is a speed value for the AI
-        }
-        else {
-            // Within safe distance, stop moving
-            motion.velocity = vec2(0.0f, 0.0f);
-        }
-
-        // Shooting logic with cooldown
-        ai.shootingCooldown -= elapsed_ms / 1000.0f; // Convert milliseconds to seconds
-        if (ai.shootingCooldown <= 0) {
-            createProjectileForEnemy(motion.position, motion.look_angle + M_PI/2, entity);
-            ai.shootingCooldown = 1.0f; // Reset cooldown to 2.5 seconds or appropriate value
-        }
+    // Decide on the movement: flocking behavior but also maintain a safe distance from the player
+    if (distanceToPlayer > ai.safe_distance) {
+        // If too far from the player, move closer using the flocking behavior but also towards the player
+        vec2 towardsPlayer = normalize(playerPosition - motion.position);
+        // Mix the flockMove with some movement towards the player to ensure enemies don't stray too far
+        motion.velocity = flockMove + towardsPlayer * (maxSpeed * 0.5f); // Adjust the weight as necessary
+    }
+    else if (distanceToPlayer < ai.safe_distance * 0.5f) {
+        // If too close to the player, move away
+        vec2 awayFromPlayer = normalize(motion.position - playerPosition);
+        motion.velocity = awayFromPlayer * maxSpeed;
     }
     else {
-        // No line of sight to the player, stop moving
-        motion.velocity = vec2(0.0f, 0.0f);
+        // Maintain current behavior and distance
+        motion.velocity = flockMove;
+    }
+
+    // Limit the velocity to the maxSpeed
+    if (length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    // Shooting logic
+    ai.shootingCooldown -= elapsed_ms / 1000.0f; // Convert milliseconds to seconds
+    if (ai.shootingCooldown <= 0 && distanceToPlayer <= ai.safe_distance * 1.5f) {
+        // Enemy shoots towards the player if within a certain range and cooldown has passed
+        vec2 shootingDirection = normalize(playerPosition - motion.position);
+        float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
+        createProjectileForEnemy(motion.position, shootingAngle, entity);
+        ai.shootingCooldown = 2.5f; // Reset cooldown, adjust as necessary
     }
 }
 
