@@ -67,8 +67,8 @@ Entity createExplosion(RenderSystem* renderer, vec2 position, float scale, bool 
 // a player status HUD
 Entity createStatusHud(RenderSystem* render);
 // a weapon equipped icon
-Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos);
+Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId);
 // a weapon unequipped icon
-Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos);
+Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId);
 // an infinity icon
 Entity createIconInfinity(RenderSystem* render, vec2 pos);
