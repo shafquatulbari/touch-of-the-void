@@ -725,7 +725,7 @@ Entity createRocketLauncherExplosion(RenderSystem* render, vec2 pos, bool repeat
 	return entity;
 }
 
-Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos)
+Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId)
 {
 	auto entity = Entity();
 
@@ -736,7 +736,7 @@ Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos)
 
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::GATLING_GUN_EQUIPPED,
+		{ textureId,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::UI });
@@ -744,7 +744,7 @@ Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos)
 	return entity;
 }
 
-Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos)
+Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId)
 {
 	auto entity = Entity();
 
@@ -755,11 +755,11 @@ Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos)
 
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED,
+		{ textureId,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::UI });
-
+	
 	return entity;
 }
 
