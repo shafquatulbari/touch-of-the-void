@@ -1,14 +1,23 @@
 #include "audio_manager/audio_manager.hpp"
 
-Mix_Chunk* machine_gun_sound = nullptr;
+// Sounds
+Mix_Chunk* gatling_gun_sound = nullptr;
 Mix_Chunk* sniper_sound = nullptr;
 Mix_Chunk* shotgun_sound = nullptr;
+Mix_Chunk* rocket_launcher_sound = nullptr;
+Mix_Chunk* flamethrower_sound = nullptr;
 Mix_Chunk* reload_start_sound = nullptr;
 Mix_Chunk* reload_end_sound = nullptr;
 Mix_Chunk* explosion_sound = nullptr;
 Mix_Chunk* cycle_weapon_sound = nullptr;
 Mix_Chunk* player_hit_sound = nullptr;
 Mix_Chunk* enemy_hit_sound = nullptr;
+Mix_Chunk* game_start_sound = nullptr;
+Mix_Chunk* game_over_sound = nullptr;
+
+// Music
+Mix_Music* start_menu_music = nullptr;
+Mix_Music* game_music = nullptr;
 
 bool init_audio() {
     // Loading music and sounds with SDL
@@ -21,26 +30,40 @@ bool init_audio() {
         return nullptr;
     }
 
-    // Load music and sounds
-    machine_gun_sound = Mix_LoadWAV(audio_path("machine_gun.wav").c_str());
+    // Load sounds
+    gatling_gun_sound = Mix_LoadWAV(audio_path("gatling_gun.wav").c_str());
     sniper_sound = Mix_LoadWAV(audio_path("sniper.wav").c_str());
     shotgun_sound = Mix_LoadWAV(audio_path("shotgun.wav").c_str());
+    rocket_launcher_sound = Mix_LoadWAV(audio_path("rocket_launcher_sound.wav").c_str());
+    flamethrower_sound = Mix_LoadWAV(audio_path("flamethrower_sound.wav").c_str());
     reload_start_sound = Mix_LoadWAV(audio_path("reload_start_sound.wav").c_str());
     reload_end_sound = Mix_LoadWAV(audio_path("reload_end_sound.wav").c_str());
     explosion_sound = Mix_LoadWAV(audio_path("explosion.wav").c_str());
     cycle_weapon_sound = Mix_LoadWAV(audio_path("cycle_weapon_sound.wav").c_str());
     player_hit_sound = Mix_LoadWAV(audio_path("player_hit_sound.wav").c_str());
     enemy_hit_sound = Mix_LoadWAV(audio_path("enemy_hit_sound.wav").c_str());
+    game_start_sound = Mix_LoadWAV(audio_path("game_start_sound.wav").c_str());
+    game_over_sound = Mix_LoadWAV(audio_path("game_over_sound.wav").c_str());
 
-    if (machine_gun_sound == nullptr ||
+    // Load music
+    start_menu_music = Mix_LoadMUS(audio_path("start_menu_music.wav").c_str());
+    game_music = Mix_LoadMUS(audio_path("game_music.wav").c_str());
+
+    if (gatling_gun_sound == nullptr ||
         sniper_sound == nullptr ||
         shotgun_sound == nullptr ||
+        rocket_launcher_sound == nullptr ||
+        flamethrower_sound == nullptr ||
         reload_start_sound == nullptr ||
         reload_end_sound == nullptr ||
         explosion_sound == nullptr ||
         cycle_weapon_sound == nullptr ||
         player_hit_sound == nullptr ||
-        enemy_hit_sound == nullptr) {
+        enemy_hit_sound == nullptr ||
+        game_start_sound == nullptr ||
+        game_over_sound == nullptr ||
+        start_menu_music == nullptr ||
+        game_music == nullptr) {
         fprintf(stderr, "Failed to load sounds make sure the data directory is present");
         return nullptr;
     }
@@ -54,13 +77,28 @@ void play_sound(Mix_Chunk* sound) {
     }
 }
 
+void play_music(Mix_Music* music) {
+    if (music != nullptr) {
+        Mix_PlayMusic(music, -1);
+    }
+}
+
+void stop_music() {
+    Mix_HaltMusic();
+}
+
 void close_audio() {
-    if (machine_gun_sound != nullptr)
-        Mix_FreeChunk(machine_gun_sound);
+    // Free sounds
+    if (gatling_gun_sound != nullptr)
+        Mix_FreeChunk(gatling_gun_sound);
     if (sniper_sound != nullptr)
         Mix_FreeChunk(sniper_sound);
     if (shotgun_sound != nullptr)
         Mix_FreeChunk(shotgun_sound);
+    if (rocket_launcher_sound != nullptr)
+        Mix_FreeChunk(rocket_launcher_sound);
+    if (flamethrower_sound != nullptr)
+        Mix_FreeChunk(flamethrower_sound);
     if (reload_start_sound != nullptr)
         Mix_FreeChunk(reload_start_sound);
     if (reload_end_sound != nullptr)
@@ -73,4 +111,14 @@ void close_audio() {
         Mix_FreeChunk(player_hit_sound);
     if (enemy_hit_sound != nullptr)
         Mix_FreeChunk(enemy_hit_sound);
+    if (game_start_sound != nullptr)
+        Mix_FreeChunk(game_start_sound);
+    if (game_over_sound != nullptr)
+        Mix_FreeChunk(game_over_sound);
+
+    // Free music
+    if (start_menu_music != nullptr)
+        Mix_FreeMusic(start_menu_music);
+    if (game_music != nullptr)
+        Mix_FreeMusic(game_music);
 }

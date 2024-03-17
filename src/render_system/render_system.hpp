@@ -76,8 +76,16 @@ class RenderSystem {
 		textures_path("player_64x64.png"),
 
 		// WEAPON TEXTURES
+		textures_path("weapon_icon_flame_thrower_equipped_192x192.png"),
+		textures_path("weapon_icon_flame_thrower_unequipped_128x128.png"),
 		textures_path("weapon_icon_gatling_gun_equipped_192x192.png"),
-		textures_path("weapon_icon_gatling_gun_unequipped_128x128.png")
+		textures_path("weapon_icon_gatling_gun_unequipped_128x128.png"),
+		textures_path("weapon_icon_rocket_launcher_equipped_192x192.png"),
+		textures_path("weapon_icon_rocket_launcher_unequipped_128x128.png"),
+		textures_path("weapon_icon_shotgun_blast_equipped_192x192.png"),
+		textures_path("weapon_icon_shotgun_blast_unequipped_128x128.png"),
+		textures_path("weapon_icon_sniper_rifle_equipped_192x192.png"),
+		textures_path("weapon_icon_sniper_rifle_unequipped_128x128.png"),
 	};
 
 	std::array<GLuint, effect_count> effects;
