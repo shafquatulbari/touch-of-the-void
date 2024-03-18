@@ -97,6 +97,10 @@ void WeaponSystem::step_dot_timers(float elapsed_ms)
 		OnFireTimer& timer = registry.onFireTimers.get(entity);
 		timer.counter_ms -= elapsed_ms;
 
+		// move the fire
+		registry.motions.get(timer.fire).position = registry.motions.get(entity).position;
+		registry.motions.get(timer.fire).look_angle = registry.motions.get(entity).look_angle;
+
 		// deal dot damage
 		if (registry.healths.has(entity)) {
 			float dot_damage = 0.0f;
@@ -107,10 +111,10 @@ void WeaponSystem::step_dot_timers(float elapsed_ms)
 			registry.healths.get(entity).current_health -= dot_damage;
 		}
 
-		// restart the game once the death timer expired
+		// remove fire when timer is up
 		if (timer.counter_ms <= 0) {
+			registry.remove_all_components_of(timer.fire);
 			registry.onFireTimers.remove(entity);
-			// TODO: remove some fire effect when enemies are on fire
 		}
 	}
 }
@@ -202,7 +206,7 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 void WeaponSystem::handle_flamethrower_collision(RenderSystem* renderer, Entity projectile, Entity enemy)
 {
 	if (!registry.onFireTimers.has(enemy)) {
-		registry.onFireTimers.emplace(enemy);
-		// TODO: add some fire effect when enemies are on fire
+		OnFireTimer& timer = registry.onFireTimers.emplace(enemy);
+		timer.fire = createFire(renderer, registry.motions.get(enemy).position, 2.0, true);
 	}
 }
