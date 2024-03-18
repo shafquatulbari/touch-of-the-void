@@ -383,7 +383,7 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 
 	// Render the room
 	render_room(renderer, room);
-	ui->reinit();
+	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
@@ -409,8 +409,8 @@ void WorldSystem::handle_collisions() {
 					vec2 next_pos;
 					float x_mid = window_width_px / 2;
 					float y_mid = window_height_px / 2;
-					float x_delta = game_window_size_px / 2 - 16;
-					float y_delta = game_window_size_px / 2 - 16;
+					float x_delta = game_window_size_px / 2 - 32;
+					float y_delta = game_window_size_px / 2 - 32;
 					float x_max = x_mid + x_delta;
 					float x_min = x_mid - x_delta;
 					float y_max = y_mid + y_delta;
@@ -419,22 +419,22 @@ void WorldSystem::handle_collisions() {
 					if (obstacle.is_bottom_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).bottom_room;
-						next_pos = { x_mid, y_min + 32 };
+						next_pos = { x_mid, y_min + 64 };
 					}
 					else if (obstacle.is_top_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).top_room;
-						next_pos = { x_mid, y_max - 32 };
+						next_pos = { x_mid, y_max - 64 };
 					}
 					else if (obstacle.is_left_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).left_room;
-						next_pos = { x_max - 32, y_mid };
+						next_pos = { x_max - 64, y_mid };
 					}
 					else if (obstacle.is_right_door)
 					{
 						player.current_room = registry.rooms.get(player.current_room).right_room;
-						next_pos = { x_min + 32, y_mid };
+						next_pos = { x_min + 64, y_mid };
 					}
 				
 					// darken effect
