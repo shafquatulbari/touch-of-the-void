@@ -493,6 +493,9 @@ void WorldSystem::handle_collisions() {
 					case WeaponType::FLAMETHROWER:
 						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
 						break;
+					
+					default:
+						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision

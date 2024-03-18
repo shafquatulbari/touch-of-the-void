@@ -725,6 +725,37 @@ Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 	return entity;
 }
 
+Entity createBulletImpact(RenderSystem* render, vec2 pos, float scale, bool repeat)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ BULLET_IMPACT_BB_WIDTH * scale, BULLET_IMPACT_BB_HEIGHT * scale });
+
+	assert(!registry.animations.has(entity));
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BULLET_IMPACT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 50, 50, 50, 50 };
+	animation.loop = repeat;
+
+	assert(!registry.animationTimers.has(entity));
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(entity, {
+		TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		EFFECT_ASSET_ID::TEXTURED,
+		GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::FOREGROUND });
+
+	return entity;
+}
+
 Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId)
 {
 	auto entity = Entity();

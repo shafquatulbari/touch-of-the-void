@@ -27,6 +27,9 @@ const float EXPLOSION_BB_HEIGHT = 192.0f;
 const float FIRE_BB_WIDTH = 32.0f;
 const float FIRE_BB_HEIGHT = 32.0f;
 
+const float BULLET_IMPACT_BB_WIDTH = 32.0f;
+const float BULLET_IMPACT_BB_HEIGHT = 32.0f;
+
 const float WALL_BB_WIDTH = 832.0f;
 const float WALL_BB_HEIGHT = 64.0F;
 
@@ -69,6 +72,8 @@ void render_room(RenderSystem* renderer, Room& room);
 Entity createExplosion(RenderSystem* renderer, vec2 position, float scale, bool repeat);
 // a fire animation
 Entity createFire(RenderSystem* renderer, vec2 position, float scale, bool repeat);
+// a bullet impact animation
+Entity createBulletImpact(RenderSystem* renderer, vec2 position, float scale, bool repeat);
 // a player status HUD
 Entity createStatusHud(RenderSystem* render);
 // a weapon equipped icon
