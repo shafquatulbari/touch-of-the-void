@@ -685,32 +685,32 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar) {
 
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
-
+	
 	vec2 player_to_obs = obs_motion.position - p_motion.position;
-	p_motion.position -= glm::normalize(player_to_obs) * scalar;
-
+	p_motion.position += glm::normalize(player_to_obs) * scalar;
+	
 	//vec2& p_pos = p_motion.position;
 	//vec2& p_size = p_motion.scale;
 	//vec2& obs_pos = obs_motion.position;
 	//vec2& obs_size = obs_motion.scale;
-
+	//
 	//float p_minx = p_pos.x - p_size.x / 2;
 	//float p_maxx = p_pos.x + p_size.x / 2;
 	//float p_miny = p_pos.y + p_size.y / 2;
 	//float p_maxy = p_pos.y - p_size.y / 2;
-
+	//
 	//float obs_left = obs_pos.x - obs_size.x / 2;
 	//float obs_right = obs_pos.x + obs_size.x / 2;
 	//float obs_bottom = obs_pos.y + obs_size.y / 2;
 	//float obs_top = obs_pos.y - obs_size.y / 2;
- //
+	//
 	//float angle = atan2(obs_pos.y - p_pos.y, obs_pos.x - p_pos.x);
 	//
 	//float obs_topleft_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_left);
 	//float obs_topright_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_right);
 	//float obs_bottomleft_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_left);
 	//float obs_bottomright_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_right);
-
+	//
 	//// Check if player travels upwards
 	//if (angle > obs_bottomright_angle && angle <= obs_bottomleft_angle) {
 	//	p_pos.y = obs_bottom + p_size.y / 2;

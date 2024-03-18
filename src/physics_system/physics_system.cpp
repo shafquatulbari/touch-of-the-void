@@ -299,7 +299,7 @@ void PhysicsSystem::step(float elapsed_ms)
 	}
 
 	// Check for collisions between all moving entities
-	float displacement_scalar;
+	float displacement_scalar = INFINITY;
 
 	ComponentContainer<Motion> &motion_container = registry.motions;
 	for (uint i = 0; i < motion_container.components.size(); i++)
@@ -314,7 +314,7 @@ void PhysicsSystem::step(float elapsed_ms)
 		// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 		for (uint j = i + 1; j < motion_container.components.size(); j++)
 		{
-			displacement_scalar = std::numeric_limits<float>::max();
+			displacement_scalar = INFINITY;
 			Entity entity_j = motion_container.entities[j];	
 
 			if (registry.noCollisionChecks.has(entity_j)) {

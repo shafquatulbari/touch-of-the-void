@@ -180,14 +180,21 @@ void RenderSystem::initializeGlEffects()
 template <class T>
 void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
+	GLenum usage;
+	if (gid == GEOMETRY_BUFFER_ID::DEBUG_LINE) {
+		usage = GL_DYNAMIC_DRAW;
+	} else {
+		usage = GL_STATIC_DRAW;
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(uint)gid]);
 	glBufferData(GL_ARRAY_BUFFER,
-		sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		sizeof(vertices[0]) * vertices.size(), vertices.data(), usage);
 	gl_has_errors();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(uint)gid]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
+		sizeof(indices[0]) * indices.size(), indices.data(), usage);
 	gl_has_errors();
 }
 

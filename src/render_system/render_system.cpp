@@ -195,10 +195,10 @@ void RenderSystem::drawLine(Line& line) {
 	GLint in_color_loc = glGetAttribLocation(program, "in_color");
 	gl_has_errors();
 	
-	glEnableVertexAttribArray(in_position_loc);
 	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
-	glEnableVertexAttribArray(in_color_loc);
+	glEnableVertexAttribArray(in_position_loc);
 	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
+	glEnableVertexAttribArray(in_color_loc);
 	gl_has_errors();
 
 	// Set uniform transform and projection variables
@@ -214,10 +214,10 @@ void RenderSystem::drawLine(Line& line) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices.data());
 
 	glLineWidth(line.width);
-	glEnable(GL_LINE_SMOOTH);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable(GL_LINE_SMOOTH);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
-	glDrawElements(GL_LINE_STRIP, 2, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
 	
 	glDisable(GL_LINE_SMOOTH);
 }
