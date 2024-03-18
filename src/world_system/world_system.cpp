@@ -493,6 +493,9 @@ void WorldSystem::handle_collisions() {
 					case WeaponType::FLAMETHROWER:
 						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
 						break;
+					
+					default:
+						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
 					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
@@ -547,6 +550,12 @@ void WorldSystem::handle_collisions() {
 		Health& e_health = registry.healths.get(e);
 
 		if (e_health.current_health <= 0) {
+
+			// remove the fire effect if an enemy dies
+			if (registry.onFireTimers.has(e)) {
+				registry.remove_all_components_of(registry.onFireTimers.get(e).fire);
+			}
+
 			registry.remove_all_components_of(e);
 
 			Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
