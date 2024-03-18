@@ -22,6 +22,6 @@ private:
 	Entity current_ammo_icon;
 public:
 	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
-	void reinit();
+	void reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
 	void update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
 };
