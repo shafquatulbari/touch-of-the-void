@@ -5,9 +5,11 @@
 #include "common/common.hpp"
 #include "components/components.hpp"
 #include "ecs_registry/ecs_registry.hpp"
-#include <render_system/render_system.hpp>
-#include <world_init/world_init.hpp>
+#include "render_system/render_system.hpp"
+#include "weapon_system/weapon_constants.hpp"
+#include "world_init/world_init.hpp"
 
+#include <iostream>
 #include <SDL_mixer.h>
 #include <random>
 
@@ -22,6 +24,10 @@ private:
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 public:
 	void step(float elapsed_ms, RenderSystem* renderer, Entity& player);
+	void step_projectile_lifetime(float elapsed_ms);
+	void step_dot_timers(float elapsed_ms);
 	void reload_weapon();
 	void cycle_weapon(int direction, Player& player);
+	void handle_rocket_collision(RenderSystem* renderer, Entity projectile);
+	void handle_flamethrower_collision(RenderSystem* renderer, Entity projectile, Entity enemy);
 };

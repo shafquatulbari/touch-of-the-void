@@ -53,6 +53,8 @@ src/world_generator/*.cpp
 src/world_generator/*.hpp 
 src/ui_system/*.cpp
 src/ui_system/*.hpp
+src/weapon_constants/*.cpp
+src/weapon_constants/*.hpp
 src/weapon_system/*.cpp
 src/weapon_system/*.hpp
 src/audio_manager/*.cpp

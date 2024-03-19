@@ -12,12 +12,16 @@ private:
 	Entity player_max_health_text;
 	Entity player_shield_text;
 	Entity player_ammo_text;
-	//Entity weapon_text;
-	//Entity ammo_text;
 	Entity score_text;
 	Entity multiplier_text;
+	Entity weapon_slot_1; // unequipped 
+	Entity weapon_slot_2; // equipped
+	Entity weapon_slot_3; // unequipped
+	Entity weapon_slot_4; // unequipped
+	Entity total_ammo_icon;
+	Entity current_ammo_icon;
 public:
 	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
-	void reinit();
+	void reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
 	void update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
 };

@@ -50,6 +50,10 @@ Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, floa
 Entity createSniperProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // a single shotgun projectile
 Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
+// a single rocket projectile
+Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
+// a single flamethrower projectile
+Entity createFlamethrowerProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // debug line
 Entity createLine(ColoredVertex from, ColoredVertex to, mat3 trans, vec3 color, float width);
 // a hard coded room
@@ -59,12 +63,12 @@ Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float s
 // render the room
 void render_room(RenderSystem* renderer, Room& room);
 // an explosion animation
-Entity createExplosion(RenderSystem* renderer, vec2 position, bool repeat);
+Entity createExplosion(RenderSystem* renderer, vec2 position, float scale, bool repeat);
 // a player status HUD
 Entity createStatusHud(RenderSystem* render);
 // a weapon equipped icon
-Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos);
+Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId);
 // a weapon unequipped icon
-Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos);
+Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId);
 // an infinity icon
 Entity createIconInfinity(RenderSystem* render, vec2 pos);
