@@ -25,7 +25,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	shield.current_shield = 100.0f;
 	shield.max_shield = 100.0f;
 	shield.recharge_delay = 2000.0f;
-	shield.recharge_rate = 10.0f;
+	shield.recharge_rate = 1.0f;
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
