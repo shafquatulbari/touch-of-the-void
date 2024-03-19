@@ -602,17 +602,24 @@ Entity createRoom(RenderSystem* render)
 	return starting_room_entity;
 }
 
-Entity createLine(ColoredVertex from, ColoredVertex to, mat3 trans, vec3 color, float width) {
-	Entity e = Entity();
-	Line& line = registry.lines.emplace(e);
+Entity createLine(vec2 position, vec2 scale, float angle)
+{
+	Entity entity = Entity();
 
-	line.from = from;
-	line.to = to;
-	line.trans = trans;
-	line.width = width;
+	// Store a reference to the potentially re-used mesh object (the value is stored in the resource cache)
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::LINE,
+		 GEOMETRY_BUFFER_ID::DEBUG_LINE,
+		RENDER_LAYER::FOREGROUND });
 
-	line.to.color = color;
-	line.from.color = color;
+	// Create motion
+	Motion& motion = registry.motions.emplace(entity);
+	motion.velocity = { 0, 0 };
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = scale;
 
 	registry.debugComponents.emplace(e);
 	return e;
@@ -684,22 +691,53 @@ Entity createExplosion(RenderSystem* render, vec2 pos, float scale, bool repeat)
 	return entity;
 }
 
-Entity createRocketLauncherExplosion(RenderSystem* render, vec2 pos, bool repeat)
+Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 {
 	auto entity = Entity();
 
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = pos;
-	motion.scale = vec2({ EXPLOSION_BB_WIDTH * 2, EXPLOSION_BB_HEIGHT * 2 });
+	motion.scale = vec2({ FIRE_BB_WIDTH * scale, FIRE_BB_HEIGHT * scale });
 
 	assert(!registry.animations.has(entity));
 	Animation& animation = registry.animations.emplace(entity);
-	animation.sheet_id = SPRITE_SHEET_ID::EXPLOSION;
-	animation.total_frames = 12;
+	animation.sheet_id = SPRITE_SHEET_ID::FIRE;
+	animation.total_frames = 4;
 	animation.current_frame = 0;
-	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };
-	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = repeat;
+
+	assert(!registry.animationTimers.has(entity));
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(entity, {
+		TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		EFFECT_ASSET_ID::TEXTURED,
+		GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::FOREGROUND });
+
+	return entity;
+}
+
+Entity createBulletImpact(RenderSystem* render, vec2 pos, float scale, bool repeat)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = pos;
+	motion.scale = vec2({ BULLET_IMPACT_BB_WIDTH * scale, BULLET_IMPACT_BB_HEIGHT * scale });
+
+	assert(!registry.animations.has(entity));
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BULLET_IMPACT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 50, 50, 50, 50 };
 	animation.loop = repeat;
 
 	assert(!registry.animationTimers.has(entity));

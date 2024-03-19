@@ -97,6 +97,8 @@ struct OnFireTimer
 	float total_damage = 300.0f; // amount of damage that will be dealt over counter_ms
 	float counter_ms = 2000.0f;
 	float total_time_ms = 2000.0f;
+
+	Entity fire;
 };
 
 // Obstacle component
@@ -373,11 +375,13 @@ enum class SPRITE_SHEET_ID {
 	//BLUE_EFFECT = 0,
 	EXPLOSION = 0,
 	ENEMY_EXPLODER = EXPLOSION + 1,
+	FIRE = ENEMY_EXPLODER + 1,
+	BULLET_IMPACT = FIRE + 1,
 	//GREEN_EFFECT = EXPLOSION + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
 	//RED_EFFECT = PURPLE_EFFECT + 1,
 	//YELLOW_EFFECT = RED_EFFECT + 1,
-	SPRITE_SHEET_COUNT = ENEMY_EXPLODER + 1
+	SPRITE_SHEET_COUNT = BULLET_IMPACT + 1
 };
 const int sheet_count = (int)SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
 
