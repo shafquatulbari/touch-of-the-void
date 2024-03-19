@@ -87,19 +87,17 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
 
 // Adjusted obstacle detection to consider the full bounding box of obstacles
 bool AISystem::isObstacleAtPosition(const vec2& position) {
-    // position is in grid coordinates
-    // check if there is an obstacle at the given position
-    // NEED A WAY TO BE TOLD THE CURENT ROOM
-    // once has would something along these lines
-   /* Room& room = registry.rooms.get(currentRoom);
+    if (!registry.rooms.has(currentRoomEntity)) {
+        return false; // Current room entity not found or does not have a Room component
+    }
 
-    for (auto& pos : room.obstacle_positions) {
-        if (pos.x == position.x && pos.y == position.y) {
-            return true;
-        };
-	}*/
-
-    return false;
+    const Room& room = registry.rooms.get(currentRoomEntity);
+    for (const auto& obstaclePos : room.obstacle_positions) {
+        if (obstaclePos == position) {
+            return true; // Found an obstacle at the given position
+        }
+    }
+    return false; // No obstacle at the given position
 }
 
 // Basic structure for A* nodes
@@ -268,7 +266,8 @@ void AISystem::step(float elapsed_ms)
 	{
         AI& ai = ai_registry.components[i];
 		Entity entity = ai_registry.entities[i];
-		         
+        currentRoomEntity = registry.players.get(registry.players.entities[0]).current_room;
+        
             Motion& motion = registry.motions.get(entity);
             // State machine for AI behavior
             switch (ai.state) {
@@ -315,22 +314,33 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
             handleRangedAI(entity, motion, ai, elapsed_ms, playerPosition);
             break;
         case AI::AIType::MELEE:
-            //handleMeleeAI(entity, motion, ai, elapsed_ms, playerPosition);
-            // Melee AI behavior using A* for pathfinding
-            //    std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
-            //    if (path.size() > 1) { // Ensure path has more than just the starting position
-            //        vec2 nextStep = path[1]; // Get the next step towards the player
-
-            //        direction = normalize(nextStep - motion.position);
-            //        motion.look_angle = atan2(direction.y, direction.x);
-            //        float speed = 10.0f; // Define a suitable speed for the melee enemy
-
-            //        // Update velocity towards the next step in the path
-            //        motion.velocity = direction * speed;
-            //    }
+            handleMeleeAI(entity, motion, ai, elapsed_ms, playerPosition);
             break;
         default:
             break;
+    }
+}
+
+void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    // Check for line of sight
+    if (lineOfSightClear(motion.position, playerPosition)) {
+        // Generate path using A* if the line of sight is clear
+        std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
+        if (!path.empty()) {
+            // Assume the path includes the current position as the first element,
+            // the next position to move towards as the second element, and so on.
+            vec2 nextStep = path[1]; // Get the next step towards the player
+            
+            // Calculate direction to the next step and update the enemy's velocity
+            vec2 direction = normalize(nextStep - motion.position);
+            float speed = 10.0f; // Define a suitable speed for the melee enemy
+            
+            // Update velocity towards the next step in the path
+            motion.velocity = direction * speed;
+        }
+    } else {
+        // handle cases where the line of sight is not clear
+        motion.velocity = vec2(0.0f, 0.0f);
     }
 }
 
@@ -374,8 +384,8 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     // bounce back on boundary
     if (!isPositionWithinBounds(nextPosition)) {
         // reverse direction when hitting a boundary
-        motion.velocity.x *= -1;
-        motion.velocity.y *= -1;
+        motion.velocity.x *= -10;
+        motion.velocity.y *= -10;
     }
 
     // Apply the movement
