@@ -30,5 +30,6 @@ public:
 	void handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 	bool lineOfSightClear(const vec2& start, const vec2& end, float fraction);
 	void createProjectileForEnemy(vec2 position, float angle, Entity source);
+	bool isPositionWithinBounds(const vec2& position);
 
 };

@@ -368,6 +368,19 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         motion.velocity = normalize(motion.velocity) * maxSpeed;
     }
 
+    // Calculate the next position without moving towards the player
+    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // bounce back on boundary
+    if (!isPositionWithinBounds(nextPosition)) {
+        // reverse direction when hitting a boundary
+        motion.velocity.x *= -1;
+        motion.velocity.y *= -1;
+    }
+
+    // Apply the movement
+    motion.position += motion.velocity * elapsed_ms / 1000.0f;
+
     // Shooting logic
     ai.shootingCooldown -= elapsed_ms / 1000.0f; // Convert milliseconds to seconds
     if (ai.shootingCooldown <= 0 && distanceToPlayer <= ai.safe_distance * 1.5f) {
@@ -377,6 +390,18 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         createProjectileForEnemy(motion.position, shootingAngle, entity);
         ai.shootingCooldown = 2.5f; // Reset cooldown, adjust as necessary
     }
+}
+
+bool AISystem::isPositionWithinBounds(const vec2& position) {
+    // Using the game world boundaries 
+    float leftBound = xMin + 64.0f; 
+    float rightBound = xMax - 64.0f; 
+    float topBound = yMin + 64.0f;
+    float bottomBound = yMax - 64.0f; 
+
+    // Check if the position is within bounds
+    return position.x >= leftBound && position.x <= rightBound &&
+        position.y >= topBound && position.y <= bottomBound;
 }
 
 // Create projectile for enemy
