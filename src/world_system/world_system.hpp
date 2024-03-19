@@ -51,8 +51,8 @@ private:
 	// enter room
 	void enter_room(Room& room, vec2 player_pos);
 
-	// fps
-	void fpsCalculate();
+	// Progress game timers
+	bool progress_timers(Player& player, float elapsed_ms_since_last_update);
 
 	// OpenGL window handle
 	GLFWwindow* window;
@@ -80,12 +80,6 @@ private:
 	int score;
 	float multiplier; // Min 0.0, Max 9.9
 	int delta_score; // Score gained in the current period TBD what a period is
-
-	// FPS 
-	Entity fps_text;
-	float fps;
-	float maxFps;
-	float frameTime;
 
 	// C++ random number generator
 	std::default_random_engine rng;

@@ -204,6 +204,12 @@ struct DebugComponent
 	// Note, an empty struct has size 1
 };
 
+struct DamagedTimer
+{
+	float damage = 0.0f;
+	float counter_ms = 0.0f;
+};
+
 // A timer that will be associated to dying player
 struct DeathTimer
 {
