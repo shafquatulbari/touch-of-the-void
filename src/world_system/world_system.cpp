@@ -292,6 +292,31 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		SDL_Delay((1000.0f / maxFps) - frameTicks);
 	}*/
 
+	/////////////////////////////////////////////////////////////////////////////////
+	std::vector<ColoredVertex>& m_vertices = registry.meshPtrs.get(player)->vertices;
+	Motion& p_motion = registry.motions.get(player);
+
+	Transform t;
+	t.translate(p_motion.position);
+	t.rotate(p_motion.look_angle);
+	t.scale(p_motion.scale);
+
+	for (int i = 0; i < m_vertices.size(); i++) {
+		vec3 v1 = t.mat * vec3({ m_vertices[i].position.x, m_vertices[i].position.y, 0.f });
+		vec3 v2 = t.mat * vec3({ 
+			m_vertices[(i + 1) % m_vertices.size()].position.x, 
+			m_vertices[(i + 1) % m_vertices.size()].position.y, 
+			0.f 
+		});
+
+		vec2 center = p_motion.position + 0.5f * (vec2({ v1.x, v1.y }) - vec2({ v2.x, v2.y }));
+		float angle = atan2(v1.y - v2.y, v1.x - v2.x);
+
+		float line_w = glm::length(vec3({v1.x - v2.x, v1.y - v2.y, 0}));
+		createLine({center.x, center.y}, { line_w, 2.f }, angle);
+	}
+	/////////////////////////////////////////////////////////////////////////////////
+
 	return true;
 }
 

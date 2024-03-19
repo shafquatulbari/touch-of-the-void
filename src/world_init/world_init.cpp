@@ -604,7 +604,7 @@ Entity createRoom(RenderSystem* render)
 	return starting_room_entity;
 }
 
-Entity createLine(vec2 position, vec2 scale)
+Entity createLine(vec2 position, vec2 scale, float angle)
 {
 	Entity entity = Entity();
 
@@ -614,13 +614,13 @@ Entity createLine(vec2 position, vec2 scale)
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::LINE,
 		 GEOMETRY_BUFFER_ID::DEBUG_LINE,
-		RENDER_LAYER::UI});
+		RENDER_LAYER::FOREGROUND });
 
 	// Create motion
 	Motion& motion = registry.motions.emplace(entity);
-	motion.look_angle = 0.f;
 	motion.velocity = { 0, 0 };
 	motion.position = position;
+	motion.look_angle = angle;
 	motion.scale = scale;
 
 	registry.debugComponents.emplace(entity);
