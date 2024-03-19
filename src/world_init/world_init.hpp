@@ -61,7 +61,7 @@ Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle
 // a single flamethrower projectile
 Entity createFlamethrowerProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // debug line
-Entity createLine(vec2 position, vec2 scale, float angle);
+Entity createLine(vec2 position, vec2 scale, float angle, vec3 color);
 // a hard coded room
 Entity createRoom(RenderSystem* renderer);
 // a text object

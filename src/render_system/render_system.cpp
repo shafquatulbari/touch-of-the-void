@@ -105,7 +105,6 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE,
 			sizeof(ColoredVertex), (void*)sizeof(vec3));
 		gl_has_errors();
-
 	}
 	else
 	{
@@ -126,7 +125,12 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
-	const vec3 color = registry.colors.has(entity) ? (registry.deathTimers.has(entity) ? vec3(1, 0, 0) : registry.colors.get(entity)) : vec3(1);
+	
+	vec3 color;
+	if (render_request.used_effect == EFFECT_ASSET_ID::LINE)
+		color = registry.colors.get(entity);
+	else
+		color = registry.colors.has(entity) ? (registry.deathTimers.has(entity) ? vec3(1, 0, 0) : registry.colors.get(entity)) : vec3(1);
 
 	glUniform3fv(color_uloc, 1, (float*)&color);
 	gl_has_errors();

@@ -602,7 +602,7 @@ Entity createRoom(RenderSystem* render)
 	return starting_room_entity;
 }
 
-Entity createLine(vec2 position, vec2 scale, float angle)
+Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 {
 	Entity entity = Entity();
 
@@ -621,8 +621,11 @@ Entity createLine(vec2 position, vec2 scale, float angle)
 	motion.look_angle = angle;
 	motion.scale = scale;
 
-	registry.debugComponents.emplace(e);
-	return e;
+	registry.colors.emplace(entity) = {1.f, 0.f, 0.f};
+
+
+	registry.debugComponents.emplace(entity);
+	return entity;
 }
 
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)

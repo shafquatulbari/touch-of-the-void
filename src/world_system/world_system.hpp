@@ -63,7 +63,7 @@ private:
 	WeaponSystem* weapons;
 	Entity player;
 
-	std::array<Entity, 10> p_mesh_lines; // for debug
+	std::vector<Entity> p_mesh_lines; // for debug
 
 	enum class GAME_STATE {
 		START_MENU,

@@ -26,17 +26,17 @@ bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 	std::vector<vec2> e1_pts;
 	std::vector<vec2> e2_pts;
 
-	// Get all vertices of the convex hull for entity1
-	Transform t;
-	t.translate(m1.position);
-	t.rotate(m1.look_angle);
-	t.scale(m1.scale);
-
 	if (registry.meshPtrs.has(e1)) {
+		// Get all vertices of the convex hull for entity1
+		Transform t;
+		t.rotate(m1.look_angle);
+		t.scale(m1.scale);
+
 		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e1)->vertices;
 
 		for (int i = 0; i < vertices.size(); i++) {
-			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
+			vec3 vert = t.mat * vec3({ vertices[i].position.x, -vertices[i].position.y, 0.0f });
+			vert += vec3({ m1.position.x, m1.position.y, 0.f });
 			e1_pts.push_back({vert.x, vert.y});
 		}
 
@@ -51,12 +51,12 @@ bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 	if (registry.meshPtrs.has(e2)) {
 		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e2)->vertices;
 		Transform t;
-		t.translate(m2.position);
 		t.rotate(m2.look_angle);
 		t.scale(m2.scale);
 
 		for (int i = 0; i < vertices.size(); i++) {
-			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
+			vec3 vert = t.mat * vec3({ vertices[i].position.x, -vertices[i].position.y, 0.0f });
+			vert += vec3({ m2.position.x, m2.position.y, 0.f });
 			e2_pts.push_back({ vert.x, vert.y });
 		}
 
@@ -71,18 +71,18 @@ bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 	std::vector<vec2> e2_normals;
 
 	// Get the left-normals of each face of the convex hull (since the vertices are in clockwise order)
-	for (int i = e1_pts.size() - 1; i >= 0; i--) {
+	for (int i = 0; i < e1_pts.size(); i++) {
 		vec2& p1 = e1_pts[i];
 		vec2& p2 = e1_pts[(i + 1) % e1_pts.size()];
 		
-		e1_normals.push_back(vec2({ -(p2.y - p1.y), p2.x - p1.x }));
+		e1_normals.push_back(glm::normalize(vec2({ -(p2.y - p1.y), p2.x - p1.x })));
 	}
 
-	for (int i = e2_pts.size() - 1; i >= 0; i--) {
+	for (int i = 0; i < e2_pts.size(); i++) {
 		vec2& p1 = e2_pts[i];
 		vec2& p2 = e2_pts[(i + 1) % e2_pts.size()];
 
-		e2_normals.push_back(vec2({ -(p2.y - p1.y), p2.x - p1.x }));
+		e2_normals.push_back(glm::normalize(vec2({ -(p2.y - p1.y), p2.x - p1.x })));
 	}
 
 	float min_e1;
@@ -92,27 +92,21 @@ bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 
 	// Check for SAT collision with normals of entity1
 	for (vec2& n : e1_normals) {
-		min_e1 = glm::dot(e1_pts[0], n);
-		max_e1 = min_e1;
-		min_e2 = glm::dot(e2_pts[0], n);
-		max_e2 = min_e2;
+		min_e1 = INFINITY;
+		max_e1 = -INFINITY;
+		min_e2 = INFINITY;
+		max_e2 = -INFINITY;
 
-		for (int i = 1; i < e1_pts.size(); i++) {
+		for (int i = 0; i < e1_pts.size(); i++) {
 			float dot_prod = glm::dot(e1_pts[i], n);
-			if (dot_prod < min_e1) {
-				min_e1 = dot_prod;
-			} else if (dot_prod > max_e1) {
-				max_e1 = dot_prod;
-			}
+			min_e1 = min(dot_prod, min_e1);
+			max_e1 = max(dot_prod, max_e1);
 		}
 
 		for (int i = 1; i < e2_pts.size(); i++) {
 			float dot_prod = glm::dot(e2_pts[i], n);
-			if (dot_prod < min_e2) {
-				min_e2 = dot_prod;
-			} else if (dot_prod > max_e2) {
-				max_e2 = dot_prod;
-			}
+			min_e2 = min(dot_prod, min_e2);
+			max_e2 = max(dot_prod, max_e2);
 		}
 		
 		displacement = min(displacement, min(max_e1, max_e2) - max(min_e1, min_e2));
@@ -125,27 +119,21 @@ bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 
 	// Check for SAT collision with normals from entity2
 	for (vec2& n : e2_normals) {
-		min_e1 = glm::dot(e1_pts[0], n);
-		max_e1 = min_e1;
-		min_e2 = glm::dot(e2_pts[0], n);
-		max_e2 = min_e2;
+		min_e1 = INFINITY;
+		max_e1 = -INFINITY;
+		min_e2 = INFINITY;
+		max_e2 = -INFINITY;
 
-		for (int i = 1; i < e1_pts.size(); i++) {
+		for (int i = 0; i < e1_pts.size(); i++) {
 			float dot_prod = glm::dot(e1_pts[i], n);
-			if (dot_prod < min_e1) {
-				min_e1 = dot_prod;
-			} else if (dot_prod > max_e1) {
-				max_e1 = dot_prod;
-			}
+			min_e1 = min(dot_prod, min_e1);
+			max_e1 = max(dot_prod, max_e1);
 		}
 
 		for (int i = 1; i < e2_pts.size(); i++) {
 			float dot_prod = glm::dot(e2_pts[i], n);
-			if (dot_prod < min_e2) {
-				min_e2 = dot_prod;
-			} else if (dot_prod > max_e2) {
-				max_e2 = dot_prod;
-			}
+			min_e2 = min(dot_prod, min_e2);
+			max_e2 = max(dot_prod, max_e2);
 		}
 		
 		displacement = min(displacement, min(max_e1, max_e2) - max(min_e1, min_e2));

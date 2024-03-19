@@ -249,25 +249,18 @@ void RenderSystem::initializeGlGeometryBuffers()
 	std::vector<uint16_t> line_indices;
 
 	constexpr float depth = 0.5f;
-	constexpr vec3 black = { 0.f, 0.f, 0.f };
+	constexpr vec3 white = { 1.f, 1.f, 1.f };
 
-	//// Corner points
-	//line_vertices = {
-	//	{{-0.5,-0.5, depth}, red},
-	//	{{-0.5, 0.5, depth}, red},
-	//	{{ 0.5, 0.5, depth}, red},
-	//	{{ 0.5,-0.5, depth}, red},
-	//};
-
-	//// Two triangles
-	//line_indices = { 0, 1, 3, 1, 2, 3 };
-
-	// Render lines as "lines" and not as "triangles"
+	// Corner points
 	line_vertices = {
-		{ {0.f, 0.f, 0.f}, black },
-		{ {0.f, 0.f, 0.f}, black }
+		{{-0.5,-0.5, depth}, white},
+		{{-0.5, 0.5, depth}, white},
+		{{ 0.5, 0.5, depth}, white},
+		{{ 0.5,-0.5, depth}, white},
 	};
-	line_indices = { 0, 1 };
+
+	// Two triangles
+	line_indices = { 0, 1, 3, 1, 2, 3 };
 
 	int geom_index = (int)GEOMETRY_BUFFER_ID::DEBUG_LINE;
 	meshes[geom_index].vertices = line_vertices;
