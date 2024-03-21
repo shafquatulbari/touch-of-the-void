@@ -106,7 +106,7 @@ void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSyste
 
 bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_update) {
 	ScreenState& screen = registry.screenStates.components[0];
-
+	//std::cout << "Screen state brightness: " << screen.darken_screen_factor << std::endl;
 	float min_counter_ms = 3000.f;
 	for (Entity entity : registry.deathTimers.entities) {
 		// progress timer
@@ -129,9 +129,9 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 		// progress timer
 		RoomTransitionTimer& counter = registry.roomTransitionTimers.get(entity);
 		counter.counter_ms -= elapsed_ms_since_last_update;
-		if (counter.counter_ms < min_counter_ms) {
+	/*	if (counter.counter_ms < min_counter_ms) {
 			min_counter_ms = counter.counter_ms;
-		}
+		}*/
 
 		// remove the darken effect once the timer expired
 		if (counter.counter_ms < 0) {
@@ -139,7 +139,7 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 			screen.darken_screen_factor = 0;
 			player.is_moving_rooms = false;
 			// player enters new room
-			return true;
+			//return true;
 		}
 	}
 	// reduce window brightness if any of the player is dying
@@ -351,7 +351,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 
 	// Reset darken_screen_factor on room enter
 	ScreenState& screen = registry.screenStates.components[0];
-	screen.darken_screen_factor = -1.0f;
+	screen.darken_screen_factor = 0.0f;
 
 	for (Entity e : registry.motions.entities)
 	{
@@ -371,8 +371,6 @@ void WorldSystem::enter_room(vec2 player_pos) {
 
 	// Render the room
 	Level& level_struct = registry.levels.get(level);
-	//Entity room_entity = level_struct.rooms.find(level_struct.current_room)->second;
-	//Room& room = registry.rooms.get(room_entity);
 	render_room(renderer, level_struct);
 
 	// Move the player to position
@@ -601,11 +599,13 @@ void WorldSystem::handle_collisions() {
 
 			registry.remove_all_components_of(e);
 
-			Room current_room = registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
+			std::shared_ptr<Room> current_room = registry.rooms.get_component_pointer(
+				registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
+			//Room current_room = registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
 			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
-			current_room.enemy_count--;
+			current_room->enemy_count--;
 			// remove the first element in enemy set 
-			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+			current_room->enemy_positions.erase(*current_room->enemy_positions.rbegin());
 			score++;
 
 			// UX Effects

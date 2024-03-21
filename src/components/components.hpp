@@ -69,11 +69,6 @@ struct Room {
 	bool has_top_door = false;
 	bool has_bottom_door = false;
 
-	// neighbouring rooms
-	Entity left_room;
-	Entity right_room;
-	Entity top_room;
-	Entity bottom_room;
 };
 
 // Player component

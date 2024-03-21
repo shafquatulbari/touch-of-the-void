@@ -80,13 +80,7 @@ public:
 		return components[map_entity_componentID[e]];
 	}
 
-	// A wrapper to return the component of an entity
-	/*Component* get_component_pointer(Entity e) {
-		assert(has(e) && "Entity not contained in ECS registry");
-		return &components[map_entity_componentID[e]];
-	}*/
-
-	// A wrapper to return the component of an entity
+	// A wrapper to return a safe pointer of the component of an entity
 	std::shared_ptr<Component> get_component_pointer(Entity e) {
 		assert(has(e) && "Entity not contained in ECS registry");
 		return std::make_shared<Component>(components[map_entity_componentID[e]]);

@@ -9,10 +9,10 @@ static bool shouldAvoidPosition(vec2 position) {
 	return false;
 }
 
-Room& WorldGenerator::populateRoom(Room& room)
+Room& WorldGenerator::populateRoom(std::shared_ptr<Room> room)
 {
 	// space is effectively 30x30 since 960/32 = 30 
-	room.is_cleared = false;
+	room->is_cleared = false;
 	
 	std::default_random_engine rng = std::default_random_engine(std::random_device()());
 
@@ -21,51 +21,51 @@ Room& WorldGenerator::populateRoom(Room& room)
 
 	// randomize number of enemies/obstacles per room
 	std::uniform_real_distribution<float> num_positions_uniform_dist(3, 6);
-	room.obstacle_count = num_positions_uniform_dist(rng);
-	room.enemy_count = num_positions_uniform_dist(rng);
+	room->obstacle_count = num_positions_uniform_dist(rng);
+	room->enemy_count = num_positions_uniform_dist(rng);
 	
 
 	int cur_obstacles_count = 0;
 
-	while (room.obstacle_positions.size() < room.obstacle_count) {
+	while (room->obstacle_positions.size() < room->obstacle_count) {
 		int rand_x = std::rint(position_uniform_dist(rng));
 		int rand_y = std::rint(position_uniform_dist(rng));
 		vec2 position = vec2(rand_x, rand_y);
 		if (!shouldAvoidPosition(position)) {
-			room.obstacle_positions.insert(vec2(rand_x, rand_y));
-			room.all_positions.insert(vec2(rand_x, rand_y));
+			room->obstacle_positions.insert(vec2(rand_x, rand_y));
+			room->all_positions.insert(vec2(rand_x, rand_y));
 		}
 	}
 
-	while (room.enemy_positions.size() < room.enemy_count) {
+	while (room->enemy_positions.size() < room->enemy_count) {
 		int rand_x = std::rint(position_uniform_dist(rng));
 		int rand_y = std::rint(position_uniform_dist(rng));
 		vec2 position = vec2(rand_x, rand_y);
 		// if something is not already in this position and it's not too close to the middle, add it
-		if (!room.all_positions.count(position) == 1 && !shouldAvoidPosition(position)) {
-			room.enemy_positions.insert(vec2(rand_x, rand_y));
-			room.all_positions.insert(vec2(rand_x, rand_y));
+		if (!room->all_positions.count(position) == 1 && !shouldAvoidPosition(position)) {
+			room->enemy_positions.insert(vec2(rand_x, rand_y));
+			room->all_positions.insert(vec2(rand_x, rand_y));
 		}
 		
 	}
 
-	return room;
+	return *room;
 }
 
-Room& WorldGenerator::generateStartingRoom(Room& room, Level& level)
+Room& WorldGenerator::generateStartingRoom(std::shared_ptr<Room> room, Level& level)
 {
 	std::cout << "Generating Starting Room " << std::endl;
 	// starting room always has doors on all sides
-	room.is_cleared = true;
-	room.is_visited = true;
+	room->is_cleared = true;
+	room->is_visited = true;
 
-	room.has_left_door = true;
-	room.has_right_door = true;
-	room.has_top_door = true;
-	room.has_bottom_door = true;
+	room->has_left_door = true;
+	room->has_right_door = true;
+	room->has_top_door = true;
+	room->has_bottom_door = true;
 
 	populateRoom(room);
-	std::cout << "Room # of Enemies " << room.enemy_count << std::endl;
+	std::cout << "Room # of Enemies " << room->enemy_count << std::endl;
 	// Generate the neigboring rooms
 	auto left_room = Entity();
 	//room.left_room = left_room;
@@ -93,7 +93,7 @@ Room& WorldGenerator::generateStartingRoom(Room& room, Level& level)
 	level.rooms.emplace(std::pair<int, int>(0, -1), bottom_room);
 	std::cout << "Generating Room Bottom of Starting Room " << std::addressof(bottom_room) << std::endl;
 
-	return room;
+	return *room;
 }
 
 Room& WorldGenerator::generateNewRoom(std::shared_ptr<Room> room_pointer, Level& level)
@@ -181,7 +181,7 @@ Room& WorldGenerator::generateNewRoom(std::shared_ptr<Room> room_pointer, Level&
 	std::cout << "4 room.enemy_positions.size(): " << room_pointer->enemy_positions.size() << std::endl;
 	std::cout << "4 level.rooms.size(): " << level.rooms.size() << std::endl;
 
-	populateRoom(*room_pointer);
+	populateRoom(room_pointer);
 
 
 	return *room_pointer;
