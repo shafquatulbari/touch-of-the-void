@@ -9,7 +9,7 @@ static bool shouldAvoidPosition(vec2 position) {
 	return false;
 }
 
-Room& WorldGenerator::populateRoom(std::shared_ptr<Room> room)
+void WorldGenerator::populateRoom(std::shared_ptr<Room> room)
 {
 	// space is effectively 30x30 since 960/32 = 30 
 	room->is_cleared = false;
@@ -49,10 +49,9 @@ Room& WorldGenerator::populateRoom(std::shared_ptr<Room> room)
 		
 	}
 
-	return *room;
 }
 
-Room& WorldGenerator::generateStartingRoom(std::shared_ptr<Room> room, Level& level)
+void WorldGenerator::generateStartingRoom(std::shared_ptr<Room> room, Level& level)
 {
 	std::cout << "Generating Starting Room " << std::endl;
 	// starting room always has doors on all sides
@@ -93,10 +92,10 @@ Room& WorldGenerator::generateStartingRoom(std::shared_ptr<Room> room, Level& le
 	level.rooms.emplace(std::pair<int, int>(0, -1), bottom_room);
 	std::cout << "Generating Room Bottom of Starting Room " << std::addressof(bottom_room) << std::endl;
 
-	return *room;
+	
 }
 
-Room& WorldGenerator::generateNewRoom(std::shared_ptr<Room> room_pointer, Level& level)
+void WorldGenerator::generateNewRoom(std::shared_ptr<Room> room_pointer, Level& level)
 {
 	std::cout << "1 room.obstacle_positions.size(): " << room_pointer->obstacle_positions.size() << std::endl;
 	std::cout << "1 room.enemy_positions.size(): " << room_pointer->enemy_positions.size() << std::endl;
@@ -183,6 +182,4 @@ Room& WorldGenerator::generateNewRoom(std::shared_ptr<Room> room_pointer, Level&
 
 	populateRoom(room_pointer);
 
-
-	return *room_pointer;
 }

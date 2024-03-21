@@ -518,11 +518,14 @@ void render_room(RenderSystem* render, Level& level)
 	
 	if (!room_pointer->is_visited) {
 		// set the room to visited
+		room_pointer->is_visited = true;
 		std::cout << "room not visited, generating" << std::endl;
 		// generate the room
 		WorldGenerator world_generator;
 		world_generator.generateNewRoom(room_pointer, level);
 		std::cout << "room generated, back to rendering" << std::endl;
+	} else {
+		std::cout << "revisiting room!" << std::endl;
 	}
 
 	std::cout << "Room enemy count: " << room_pointer->enemy_count << std::endl;
@@ -798,6 +801,6 @@ Entity createLevel(RenderSystem* render)
 	std::cout << "starting room # enemies " << room_pointer->enemy_count << std::endl;
 
 	// does not retrieve correctly modified values (returns 0 because the object is an empty Room component)
-	std::cout << "starting room # enemies getting from level " << registry.rooms.get(level.rooms[level.current_room]).enemy_count << std::endl;
+	std::cout << "starting room # enemies getting from level " << registry.rooms.get_component_pointer(level.rooms[level.current_room])->enemy_count << std::endl;
 	return entity;
 }
