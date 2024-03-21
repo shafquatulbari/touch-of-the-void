@@ -2,15 +2,17 @@
 #include <ctime>
 #include <random>
 
+#include "ecs_registry/ecs_registry.hpp"
+
 static bool shouldAvoidPosition(vec2 position) {
 	if (position.x >= 6 && position.x <= 8 || position.y >= 6 && position.y <= 8) return true;
 	return false;
 }
 
-Room& WorldGenerator::generateRoom(Room& room)
+Room& WorldGenerator::populateRoom(Room& room)
 {
-	// space is effectively 15x15 since 480/32 = 15 
-	room.is_cleared = true;
+	// space is effectively 30x30 since 960/32 = 30 
+	room.is_cleared = false;
 	
 	std::default_random_engine rng = std::default_random_engine(std::random_device()());
 
@@ -48,4 +50,139 @@ Room& WorldGenerator::generateRoom(Room& room)
 	}
 
 	return room;
+}
+
+Room& WorldGenerator::generateStartingRoom(Room& room, Level& level)
+{
+	std::cout << "Generating Starting Room " << std::endl;
+	// starting room always has doors on all sides
+	room.is_cleared = true;
+	room.is_visited = true;
+
+	room.has_left_door = true;
+	room.has_right_door = true;
+	room.has_top_door = true;
+	room.has_bottom_door = true;
+
+	populateRoom(room);
+	std::cout << "Room # of Enemies " << room.enemy_count << std::endl;
+	// Generate the neigboring rooms
+	auto left_room = Entity();
+	//room.left_room = left_room;
+	auto right_room = Entity();
+	//room.right_room = right_room;
+	auto top_room = Entity();
+	//room.top_room = top_room;
+	auto bottom_room = Entity();
+	//room.bottom_room = bottom_room;
+
+	registry.rooms.emplace(left_room);
+	registry.rooms.emplace(right_room);
+	registry.rooms.emplace(top_room);
+	registry.rooms.emplace(bottom_room);
+
+	// update the level with the new rooms, starting room is 0,0
+	level.rooms.emplace(std::pair<int, int>(-1, 0), left_room);
+	std::cout << "Generating Room Left of Starting Room " << std::addressof(left_room) << std::endl;
+	level.rooms.emplace(std::pair<int, int>(1, 0), right_room);
+	std::cout << "Generating Room Right of Starting Room " << std::addressof(right_room) << std::endl;
+
+	level.rooms.emplace(std::pair<int, int>(0, 1), top_room);
+	std::cout << "Generating Room Top of Starting Room " << std::addressof(top_room) << std::endl;
+
+	level.rooms.emplace(std::pair<int, int>(0, -1), bottom_room);
+	std::cout << "Generating Room Bottom of Starting Room " << std::addressof(bottom_room) << std::endl;
+
+	return room;
+}
+
+Room& WorldGenerator::generateNewRoom(std::shared_ptr<Room> room_pointer, Level& level)
+{
+	std::cout << "1 room.obstacle_positions.size(): " << room_pointer->obstacle_positions.size() << std::endl;
+	std::cout << "1 room.enemy_positions.size(): " << room_pointer->enemy_positions.size() << std::endl;
+	std::cout << "1 level.rooms.size(): " << level.rooms.size() << std::endl;
+
+	// find neighbours if they exist, if they don't coin flip to see if we should generate a new room
+	// if we should, generate a new room and add it to the level
+	std::pair<int, int> current_room_coords = level.current_room;
+	std::pair<int, int> left_room_coords = std::pair<int, int>(current_room_coords.first - 1, current_room_coords.second);
+	std::pair<int, int> right_room_coords = std::pair<int, int>(current_room_coords.first + 1, current_room_coords.second);
+	std::pair<int, int> top_room_coords = std::pair<int, int>(current_room_coords.first, current_room_coords.second + 1);
+	std::pair<int, int> bottom_room_coords = std::pair<int, int>(current_room_coords.first, current_room_coords.second - 1);
+
+
+	if (level.rooms.count(left_room_coords) > 0)
+	{
+		std::cout << "Found left room" << std::endl;
+		room_pointer->has_left_door = true;
+	}
+	else {
+			// generate a new room
+			std::cout << "Generating new left room" << std::endl;
+			room_pointer->has_left_door = true;
+			auto left_room_entity = Entity();
+			Room & new_left_room = registry.rooms.emplace(left_room_entity);
+			level.rooms.emplace(left_room_coords, left_room_entity);
+			std::cout << "New Left Room created! " << "Visited? : " <<  new_left_room.is_visited << std::endl;
+			//level.rooms.insert(std::make_pair(left_room_coords, new_room_entity));
+
+	}
+
+	Entity e = level.rooms[level.current_room];
+	if (registry.rooms.has(e)) {
+		std::cout << "Entity exists" << std::endl;
+	}
+	else {
+		std::cout << "Entity does not exist" << std::endl;
+	}
+
+	std::cout << "2 room.obstacle_positions.size(): " << room_pointer->obstacle_positions.size() << std::endl;
+	std::cout << "2 room.enemy_positions.size(): " << room_pointer->enemy_positions.size() << std::endl;
+	std::cout << "2 level.rooms.size(): " << level.rooms.size() << std::endl;
+
+
+	if (level.rooms.count(right_room_coords) > 0)
+	{
+		std::cout << "Found right room" << std::endl;
+		room_pointer->has_right_door = true;
+	}
+	else {
+			// generate a new room
+			std::cout << "Generating new right room" << std::endl;
+			room_pointer->has_right_door = true;
+			auto right_room_entity = Entity();
+			registry.rooms.emplace(right_room_entity);
+			//level.rooms.insert(std::make_pair(right_room_coords, new_room_entity));
+			level.rooms.emplace(right_room_coords, right_room_entity);
+		
+	}
+
+	std::cout << "3 room.obstacle_positions.size(): " << room_pointer->obstacle_positions.size() << std::endl;
+	std::cout << "3 room.enemy_positions.size(): " << room_pointer->enemy_positions.size() << std::endl;
+	std::cout << "3 level.rooms.size(): " << level.rooms.size() << std::endl;
+
+
+	if (level.rooms.count(top_room_coords) > 0)
+	{
+		std::cout << "Found top room" << std::endl;
+		room_pointer->has_top_door = true;
+	}
+	else {
+			// generate a new room
+			std::cout << "Generating new top room" << std::endl;
+			room_pointer->has_top_door = true;
+			auto top_room_entity = Entity();
+			Room& new_top_room = registry.rooms.emplace(top_room_entity);
+			level.rooms.emplace(top_room_coords, top_room_entity);
+			std::cout << "New Top Room created! " << "Visited? : " << new_top_room.is_visited << std::endl;
+	}
+
+	std::cout << "4 room.obstacle_positions.size(): " << room_pointer->obstacle_positions.size() << std::endl;
+	std::cout << "4 room.enemy_positions.size(): " << room_pointer->enemy_positions.size() << std::endl;
+	std::cout << "4 level.rooms.size(): " << level.rooms.size() << std::endl;
+
+	populateRoom(*room_pointer);
+
+
+	return *room_pointer;
 }

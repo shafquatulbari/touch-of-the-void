@@ -7,6 +7,7 @@
 #include <functional>
 #include <typeindex>
 #include <assert.h>
+#include <memory>
 
 // Unique identifyer for all entities
 class Entity
@@ -77,6 +78,18 @@ public:
 	Component& get(Entity e) {
 		assert(has(e) && "Entity not contained in ECS registry");
 		return components[map_entity_componentID[e]];
+	}
+
+	// A wrapper to return the component of an entity
+	/*Component* get_component_pointer(Entity e) {
+		assert(has(e) && "Entity not contained in ECS registry");
+		return &components[map_entity_componentID[e]];
+	}*/
+
+	// A wrapper to return the component of an entity
+	std::shared_ptr<Component> get_component_pointer(Entity e) {
+		assert(has(e) && "Entity not contained in ECS registry");
+		return std::make_shared<Component>(components[map_entity_componentID[e]]);
 	}
 
 	// Check if entity has a component of type 'Component'

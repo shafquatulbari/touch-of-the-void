@@ -5,8 +5,12 @@
 class WorldGenerator
 {
 public:
-	// creates a random Room entity and adds it to rooms components registry
-	Room& generateRoom(Room& room);
+	// populates the fields of a Room
+	Room& populateRoom(Room& room);
+
+	Room& generateStartingRoom(Room& room, Level& level);
+
+	Room& generateNewRoom(std::shared_ptr<Room> room, Level& level);
 
 	WorldGenerator()
 	{

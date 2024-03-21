@@ -311,7 +311,9 @@ void WorldSystem::restart_game() {
 		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
 		// Create a level
-		registry.players.get(player).current_room = createBackground(renderer);
+		createBackground(renderer);
+		level = createLevel(renderer);
+
 
 		//// Tutorial Text
 		createText(renderer, "CONTROLS", { 38.0f, 144.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
@@ -338,20 +340,27 @@ void WorldSystem::restart_game() {
 }
 
 
-// Reset the world state to its initial state
-void WorldSystem::enter_room(Room& room, vec2 player_pos) {
+
+void WorldSystem::enter_room(vec2 player_pos) {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Entering Room\n");
 
+	// Reset the game speed
+	//current_speed = 1.f;
+
 	// Reset darken_screen_factor on room enter
 	ScreenState& screen = registry.screenStates.components[0];
-	screen.darken_screen_factor = 0.0f;
+	screen.darken_screen_factor = -1.0f;
 
-	for(Entity e: registry.motions.entities)
+	for (Entity e : registry.motions.entities)
 	{
 		// clear motion registry except for player and texts.
-		if (!(registry.players.has(e) || registry.texts.has(e)))
+	/*	if (!(registry.players.has(e) || registry.texts.has(e)))
+		{
+			registry.remove_all_components_of(e);
+		}*/
+		if (registry.obstacles.has(e) || registry.deadlies.has(e))
 		{
 			registry.remove_all_components_of(e);
 		}
@@ -361,8 +370,10 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 	registry.list_all_components();
 
 	// Render the room
-	render_room(renderer, room);
-	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
+	Level& level_struct = registry.levels.get(level);
+	//Entity room_entity = level_struct.rooms.find(level_struct.current_room)->second;
+	//Room& room = registry.rooms.get(room_entity);
+	render_room(renderer, level_struct);
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
@@ -397,29 +408,32 @@ void WorldSystem::handle_collisions() {
 					// change to the room that they entered
 					if (obstacle.is_bottom_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).bottom_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first, level_struct.current_room.second - 1);
 						next_pos = { x_mid, y_min + 64 };
 					}
 					else if (obstacle.is_top_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).top_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first, level_struct.current_room.second + 1);
 						next_pos = { x_mid, y_max - 64 };
 					}
 					else if (obstacle.is_left_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).left_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first - 1, level_struct.current_room.second);
 						next_pos = { x_max - 64, y_mid };
 					}
 					else if (obstacle.is_right_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).right_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first + 1, level_struct.current_room.second);
 						next_pos = { x_min + 64, y_mid };
 					}
 				
 					// darken effect
 					registry.roomTransitionTimers.emplace(entity);
-					enter_room(registry.rooms.get(player.current_room)
-						, next_pos);
+					enter_room(next_pos);
 				}
 			}
 
@@ -587,7 +601,7 @@ void WorldSystem::handle_collisions() {
 
 			registry.remove_all_components_of(e);
 
-			Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
+			Room current_room = registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
 			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
 			current_room.enemy_count--;
 			// remove the first element in enemy set 
@@ -828,4 +842,9 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	}
+}
+
+Room WorldSystem::get_current_room()
+{
+	return registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
 }
