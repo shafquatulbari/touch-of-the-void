@@ -308,18 +308,50 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
     //    motion.look_angle = angle; // Rotate towards player
 
     AI& ai = registry.ais.get(entity);
-    switch (ai.type) {
-        case AI::AIType::RANGED:
-            // Ranged AI behavior
-            handleRangedAI(entity, motion, ai, elapsed_ms, playerPosition);
-            break;
-        case AI::AIType::MELEE:
-            // Melee AI behavior
-            handleMeleeAI(entity, motion, ai, elapsed_ms, playerPosition);
-            break;
-        default:
-            break;
+
+    vec2 avoidanceForce(0.0f);
+    float avoidanceRadius = 100.0f; // Example radius within which to avoid obstacles/projectiles
+
+    const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
+
+    // Sample avoidance logic: Check for nearby obstacles and adjust direction
+    for (const auto& obstaclePos : room.obstacle_positions) {
+        if (glm::distance(motion.position, obstaclePos) < avoidanceRadius) {
+			avoidanceForce += normalize(motion.position - obstaclePos);
+		}
+	}
+    // Check for nearby projectiles and avoid them
+    for (Entity projectile : registry.projectiles.entities) {
+		vec2 position = registry.motions.get(entity).position;
+		vec2 projectilePosition = registry.motions.get(projectile).position;
+        if (glm::distance(position, projectilePosition) < avoidanceRadius) {
+			avoidanceForce += normalize(position - projectilePosition);
+		}
+	}
+
+    // Apply avoidance force to the current motion
+    if (glm::length(avoidanceForce) > 0) {
+        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
     }
+
+    switch (ai.type) {
+    case AI::AIType::RANGED:
+        handleRangedAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
+    case AI::AIType::MELEE:
+        handleMeleeAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
+    default:
+        break;
+    }
+
+    // Ensure velocity is clamped to avoid exceeding max speed after applying avoidance
+    float maxSpeed = 50.0f; // Adjust as needed
+    if (glm::length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    motion.position += motion.velocity * elapsed_ms / 1000.0f;
 }
 
 void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {

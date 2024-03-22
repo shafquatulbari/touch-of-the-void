@@ -41,4 +41,9 @@ public:
 
 	vec2 limit(vec2 v, float max);
 
+	vec2 calculateAvoidanceForce(Entity enemy);
+
+	void updateEnemyMovement(Entity enemy, float elapsed_ms);
+
+
 };
