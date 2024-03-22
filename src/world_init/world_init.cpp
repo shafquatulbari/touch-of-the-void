@@ -514,35 +514,36 @@ void createWalls(RenderSystem* render, Room& room)
 void render_room(RenderSystem* render, Level& level)
 {
 	std::cout << "rendering room" << std::endl;
-	std::shared_ptr<Room> room_pointer = registry.rooms.get_component_pointer(level.rooms[level.current_room]);
+	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
-	if (!room_pointer->is_visited) {
+	if (!current_room.is_visited) {
 		// set the room to visited
-		room_pointer->is_visited = true;
+		current_room.is_visited = true;
 		std::cout << "room not visited, generating" << std::endl;
 		// generate the room
 		WorldGenerator world_generator;
-		world_generator.generateNewRoom(room_pointer, level);
+		world_generator.generateNewRoom(current_room, level);
 		std::cout << "room generated, back to rendering" << std::endl;
 	} else {
 		std::cout << "revisiting room!" << std::endl;
 	}
 
-	std::cout << "Room enemy count: " << room_pointer->enemy_count << std::endl;
+	// in case current room was not visited, re-retrieve current room 
+	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
+	std::cout << "Room enemy count: " << current_room.enemy_count << std::endl;
+	std::cout << "Room enemy count 2: " << room_to_render.enemy_count << std::endl;
 
-	Room& room_pointer_room = *room_pointer;
-	std::cout << "Room enemy count: " << room_pointer_room.enemy_count << std::endl;
 
 	std::cout << "retreived room" << std::endl;
-	std::cout << "room.visited " << room_pointer_room.is_visited << std::endl;
+	std::cout << "room.visited " << room_to_render.is_visited << std::endl;
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
 
 	std::cout << "creating obstacles" << std::endl;
 	std::cout << "reading room fields" << std::endl;
-	std::cout << "room.obstacle_positions.size() " << room_pointer_room.obstacle_positions.size() << std::endl;
-	for (auto& pos : room_pointer_room.obstacle_positions)
+	std::cout << "room.obstacle_positions.size() " << room_to_render.obstacle_positions.size() << std::endl;
+	for (auto& pos : room_to_render.obstacle_positions)
 	{
 		std::cout << "creating obstacle" << std::endl;
 		float x = x_origin + pos.x * game_window_block_size;
@@ -556,7 +557,7 @@ void render_room(RenderSystem* render, Level& level)
 	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
 
 	// Create each enemy with their specified type
-	for (auto& pos : room_pointer_room.enemy_positions) {
+	for (auto& pos : room_to_render.enemy_positions) {
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
@@ -564,7 +565,7 @@ void render_room(RenderSystem* render, Level& level)
 	}
 
 	std::cout << "created enemies" << std::endl;
-	createWalls(render, room_pointer_room);
+	createWalls(render, room_to_render);
 	std::cout << "created walls" << std::endl;
 }
 
@@ -789,18 +790,17 @@ Entity createLevel(RenderSystem* render)
 	level.current_room = std::pair<int, int>(0, 0);
 	level.rooms.emplace(level.current_room, starting_room_entity);
 
-	registry.rooms.emplace(starting_room_entity);
+	Room& starting_room = registry.rooms.emplace(starting_room_entity);
 	WorldGenerator world_generator;
-	std::shared_ptr<Room> room_pointer = registry.rooms.get_component_pointer(starting_room_entity);
 
 	// modifies Room component using pointer to Room component
-	world_generator.generateStartingRoom(room_pointer, level);
+	world_generator.generateStartingRoom(starting_room, level);
 
 	render_room(render, level);
 	// retrieves correctly modified values
-	std::cout << "starting room # enemies " << room_pointer->enemy_count << std::endl;
+	std::cout << "starting room # enemies " << registry.rooms.get(level.rooms[level.current_room]).enemy_count << std::endl;
+
 
 	// does not retrieve correctly modified values (returns 0 because the object is an empty Room component)
-	std::cout << "starting room # enemies getting from level " << registry.rooms.get_component_pointer(level.rooms[level.current_room])->enemy_count << std::endl;
 	return entity;
 }

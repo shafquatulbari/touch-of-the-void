@@ -6,11 +6,11 @@ class WorldGenerator
 {
 public:
 	// populates the fields of a Room
-	void populateRoom(std::shared_ptr<Room> room);
+	void populateRoom(Room& room);
 
-	void generateStartingRoom(std::shared_ptr<Room> room, Level& level);
+	void generateStartingRoom(Room& room, Level& level);
 
-	void generateNewRoom(std::shared_ptr<Room> room, Level& level);
+	void generateNewRoom(Room& room, Level& level);
 
 	WorldGenerator()
 	{

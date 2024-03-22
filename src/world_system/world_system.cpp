@@ -599,13 +599,13 @@ void WorldSystem::handle_collisions() {
 
 			registry.remove_all_components_of(e);
 
-			std::shared_ptr<Room> current_room = registry.rooms.get_component_pointer(
+			Room& current_room = registry.rooms.get(
 				registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
 			//Room current_room = registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
 			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
-			current_room->enemy_count--;
+			current_room.enemy_count--;
 			// remove the first element in enemy set 
-			current_room->enemy_positions.erase(*current_room->enemy_positions.rbegin());
+			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
 
 			// UX Effects
