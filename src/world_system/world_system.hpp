@@ -32,6 +32,7 @@ public:
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms);
 
+
 	// Check for collisions
 	void handle_collisions();
 
@@ -45,11 +46,13 @@ private:
 	void on_mouse_move(vec2 pos);
 	void on_mouse_click(int button, int action, int mod);
 
+	Room get_current_room();
+
 	// restart level
 	void restart_game();
 
 	// enter room
-	void enter_room(Room& room, vec2 player_pos);
+	void enter_room(vec2 player_pos);
 
 	// Progress game timers
 	bool progress_timers(Player& player, float elapsed_ms_since_last_update);
@@ -62,7 +65,8 @@ private:
 	UISystem* ui;
 	WeaponSystem* weapons;
 	Entity player;
-
+	// the current level 
+	Entity level; 
 	enum class GAME_STATE {
 		START_MENU,
 		GAME,

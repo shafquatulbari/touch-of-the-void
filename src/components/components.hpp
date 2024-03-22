@@ -1,9 +1,25 @@
 #pragma once
+#include <iostream>
+#include <map>
+
 #include "common/common.hpp"
 #include "weapon_system/weapon_constants.hpp"
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
+
+
+struct Level {
+	// the current level of the game
+	int current_level = 1;
+	// the 2d array of rooms in the level
+	std::map<std::pair<int, int>, Entity> rooms;
+	// the current room the player is in
+	std::pair<int, int> current_room;
+};
+
+
+
 struct vec2comp {
 	bool operator() (vec2 lhs, vec2 rhs) const
 	{
@@ -16,8 +32,18 @@ struct vec2comp {
 
 // All data relevant to the contents of a game room
 struct Room {
-	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
+	Room()
+	{
+		std::cout << "Room constructor:" << std::addressof(this->is_cleared) << std::endl;
+	}
+
+	~Room()
+	{
+		std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
+	}
+	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
+	bool is_visited = false; // if the room has been visited
 	// The number of enemies in the room
 	int enemy_count = 0;
 
@@ -33,9 +59,9 @@ struct Room {
 	std::set<vec2, vec2comp> obstacle_positions;
 
 	// The number of powerups in the room
-	int powerup_count = 0;
+	//int powerup_count = 0;
 	// the positions of the powerups in the room
-	std::set<vec2, vec2comp> powerup_positions;
+	//std::set<vec2, vec2comp> powerup_positions;
 
 	// fields concerning the doors of the room
 	bool has_left_door = false;
@@ -43,11 +69,6 @@ struct Room {
 	bool has_top_door = false;
 	bool has_bottom_door = false;
 
-	// neighbouring rooms
-	Entity left_room;
-	Entity right_room;
-	Entity top_room;
-	Entity bottom_room;
 };
 
 // Player component

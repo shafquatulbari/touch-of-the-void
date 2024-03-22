@@ -144,9 +144,8 @@ Entity createBackground(RenderSystem *renderer)
 			RENDER_LAYER::BACKGROUND});
 
 	// return the starting room entity
-	return createRoom(renderer);
-	//return Entity();
-	//return entity;
+	//return createLevel(renderer);
+	return Entity();
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -511,97 +510,63 @@ void createWalls(RenderSystem* render, Room& room)
 		RENDER_LAYER::MIDDLEGROUND });
 
 }
-void render_room(RenderSystem* render, Room& room)
-{
-	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
-	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
-	for (auto& pos : room.obstacle_positions)
+void render_room(RenderSystem* render, Level& level)
+{
+	std::cout << "rendering room" << std::endl;
+	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
+	
+	if (!current_room.is_visited) {
+		// set the room to visited
+		current_room.is_visited = true;
+		std::cout << "room not visited, generating" << std::endl;
+		// generate the room
+		WorldGenerator world_generator;
+		world_generator.generateNewRoom(current_room, level);
+		std::cout << "room generated, back to rendering" << std::endl;
+	} else {
+		std::cout << "revisiting room!" << std::endl;
+	}
+
+	// in case current room was not visited, re-retrieve current room 
+	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
+	std::cout << "Room enemy count: " << current_room.enemy_count << std::endl;
+	std::cout << "Room enemy count 2: " << room_to_render.enemy_count << std::endl;
+
+
+	std::cout << "retreived room" << std::endl;
+	std::cout << "room.visited " << room_to_render.is_visited << std::endl;
+
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+
+	std::cout << "creating obstacles" << std::endl;
+	std::cout << "reading room fields" << std::endl;
+	std::cout << "room.obstacle_positions.size() " << room_to_render.obstacle_positions.size() << std::endl;
+	for (auto& pos : room_to_render.obstacle_positions)
 	{
+		std::cout << "creating obstacle" << std::endl;
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
+		std::cout << "creating obstacle at " << x << " " << y << std::endl;
 		createObstacle(render, vec2(x, y));
 	}
+	std::cout << "created obstacles" << std::endl;
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
 	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
 
 	// Create each enemy with their specified type
-	for (auto& pos : room.enemy_positions) {
+	for (auto& pos : room_to_render.enemy_positions) {
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
 		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
-	createWalls(render, room);
-
-	// Setting initial motion values
-	auto entity = Entity();
-	// Setting initial motion values
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { window_width_px / 2, window_height_px / 2 };
-	motion.scale = vec2({ BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT });
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
-		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::BACKGROUND });
-}
-
-Entity createRoom(RenderSystem* render)
-{
-	// create a starting room with a room on each side
-	auto starting_room_entity = Entity();
-	auto bottom_room_entity = Entity();
-	auto top_room_entity = Entity();
-	auto left_room_entity = Entity();
-	auto right_room_entity = Entity();
-
-
-	Room& starting_room = registry.rooms.emplace(starting_room_entity);
-	printf("rooms2 size: %llu", registry.rooms.size());
-	
-	WorldGenerator world_generator;
-	// TODO: Generate room info randomly
-	world_generator.generateRoom(starting_room);
-	// set doors for starting room and point them to the respective entity
-	starting_room.has_bottom_door = true;
-	starting_room.bottom_room = bottom_room_entity;
-	starting_room.has_top_door = true;
-	starting_room.top_room = top_room_entity;
-	starting_room.has_right_door = true;
-	starting_room.right_room = right_room_entity;
-	starting_room.has_left_door = true;
-	starting_room.left_room = left_room_entity;
-	// Important note!!! when the rooms registry is emplacing an entity, the reference to the last entity is freed
-	// For example at this point, we cannot reference starting_room unless we retrieve it from the registry 
-	Room& bottom_room = registry.rooms.emplace(bottom_room_entity);
-	world_generator.generateRoom(bottom_room);
-	bottom_room.has_top_door = true;
-	bottom_room.top_room = starting_room_entity;
-
-	Room& top_room = registry.rooms.emplace(top_room_entity);
-	world_generator.generateRoom(top_room);
-	top_room.has_bottom_door = true;
-	top_room.bottom_room = starting_room_entity;
-
-	Room& left_room = registry.rooms.emplace(left_room_entity);
-	world_generator.generateRoom(left_room);
-	left_room.has_right_door = true;
-	left_room.right_room = starting_room_entity;
-
-	Room& right_room = registry.rooms.emplace(right_room_entity);
-	world_generator.generateRoom(right_room);
-	right_room.has_left_door = true;
-	right_room.left_room = starting_room_entity;
-
-
-	Room& room1 = registry.rooms.get(starting_room_entity);
-	render_room(render, room1);
-
-	return starting_room_entity;
+	std::cout << "created enemies" << std::endl;
+	createWalls(render, room_to_render);
+	std::cout << "created walls" << std::endl;
 }
 
 Entity createLine(vec2 position, vec2 scale)
@@ -810,5 +775,32 @@ Entity createIconInfinity(RenderSystem* render, vec2 pos)
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::UI });
 
+	return entity;
+}
+
+Entity createLevel(RenderSystem* render)
+{
+	auto entity = Entity();
+
+	Level& level = registry.levels.emplace(entity);
+	level.current_level = 1;
+
+	// create a starting room with a room on each side
+	auto starting_room_entity = Entity();
+	level.current_room = std::pair<int, int>(0, 0);
+	level.rooms.emplace(level.current_room, starting_room_entity);
+
+	Room& starting_room = registry.rooms.emplace(starting_room_entity);
+	WorldGenerator world_generator;
+
+	// modifies Room component using pointer to Room component
+	world_generator.generateStartingRoom(starting_room, level);
+
+	render_room(render, level);
+	// retrieves correctly modified values
+	std::cout << "starting room # enemies " << registry.rooms.get(level.rooms[level.current_room]).enemy_count << std::endl;
+
+
+	// does not retrieve correctly modified values (returns 0 because the object is an empty Room component)
 	return entity;
 }
