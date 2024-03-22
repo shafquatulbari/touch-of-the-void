@@ -346,8 +346,6 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	registry.list_all_components();
 	printf("Entering Room\n");
 
-	// Reset the game speed
-	//current_speed = 1.f;
 
 	// Reset darken_screen_factor on room enter
 	ScreenState& screen = registry.screenStates.components[0];
@@ -355,11 +353,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 
 	for (Entity e : registry.motions.entities)
 	{
-		// clear motion registry except for player and texts.
-	/*	if (!(registry.players.has(e) || registry.texts.has(e)))
-		{
-			registry.remove_all_components_of(e);
-		}*/
+		
 		if (registry.obstacles.has(e) || registry.deadlies.has(e))
 		{
 			registry.remove_all_components_of(e);
@@ -429,8 +423,9 @@ void WorldSystem::handle_collisions() {
 						next_pos = { x_min + 64, y_mid };
 					}
 				
-					// darken effect
 					registry.roomTransitionTimers.emplace(entity);
+					ScreenState& screen = registry.screenStates.components[0];
+					screen.darken_screen_factor = 1.0f;
 					enter_room(next_pos);
 				}
 			}
