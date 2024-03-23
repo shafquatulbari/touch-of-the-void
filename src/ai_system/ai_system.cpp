@@ -96,11 +96,11 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
 bool AISystem::isObstacleAtPosition(const vec2& position) {
     //convert the position from world to grid position
     vec2 grid_position = vec2(floor((position.x - 480.0f) / 64.0f), floor((position.y - 32.0f) / 64.0f));
-    if (!registry.rooms.has(registry.players.get(registry.players.entities[0]).current_room)) {
-        return false; // Current room entity not found or does not have a Room component
-    }
 
-    const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
+    Level& level = registry.levels.get(registry.levels.entities[0]);
+    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+
+    
     for (const auto& obstaclePos : room.obstacle_positions) {
         if (obstaclePos == grid_position) {
             return true; // Found an obstacle at the given position
@@ -390,7 +390,8 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
     float projectileAvoidanceRadius = 50.0f; // radius within which to avoid projectiles
 
-    const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
+    Level& level = registry.levels.get(registry.levels.entities[0]);
+    Room& room = registry.rooms.get(level.rooms[level.current_room]);
    
     vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
 
