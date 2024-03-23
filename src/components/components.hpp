@@ -94,8 +94,7 @@ struct Player
 
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
-	// the room that the player is moving to if it is moving rooms
-	Entity current_room;
+
 
 	// Constructor to set the initial values
 	Player() : 
