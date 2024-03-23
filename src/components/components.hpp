@@ -16,6 +16,8 @@ struct Level {
 	std::map<std::pair<int, int>, Entity> rooms;
 	// the current room the player is in
 	std::pair<int, int> current_room;
+	// the number of rooms the player needs to clear until the boss appears
+	int num_rooms_until_boss = 1;
 };
 
 

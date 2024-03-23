@@ -353,8 +353,8 @@ void WorldSystem::enter_room(vec2 player_pos) {
 
 	for (Entity e : registry.motions.entities)
 	{
-		
-		if (registry.obstacles.has(e) || registry.deadlies.has(e))
+		// remove all enemies, obstacles, animations
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e))
 		{
 			registry.remove_all_components_of(e);
 		}
@@ -603,6 +603,11 @@ void WorldSystem::handle_collisions() {
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
 
+			if (current_room.enemy_count == 0)
+			{
+				registry.levels.get(level).num_rooms_until_boss--;
+				std::cout << "# of rooms until boss fight: " << registry.levels.get(level).num_rooms_until_boss << std::endl;
+			}
 			// UX Effects
 			createExplosion(renderer, e_pos, 1.0f, false);
 			play_sound(explosion_sound);

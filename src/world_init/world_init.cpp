@@ -520,9 +520,16 @@ void render_room(RenderSystem* render, Level& level)
 		// set the room to visited
 		current_room.is_visited = true;
 		std::cout << "room not visited, generating" << std::endl;
+
+		if (level.num_rooms_until_boss <= 0)
+		{
+			WorldGenerator world_generator;
+			world_generator.generateNewRoom(current_room, level, true);
+			std::cout << "boss room generated, back to rendering" << std::endl;
+		}
 		// generate the room
 		WorldGenerator world_generator;
-		world_generator.generateNewRoom(current_room, level);
+		world_generator.generateNewRoom(current_room, level, false);
 		std::cout << "room generated, back to rendering" << std::endl;
 	} else {
 		std::cout << "revisiting room!" << std::endl;
