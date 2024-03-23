@@ -128,6 +128,7 @@ struct AI
 	AIState state = AIState::ACTIVE;
 	float safe_distance = 150.0f; // the distance that the AI will start behaving from the player
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
+
 };
 
 // Harmful collision component

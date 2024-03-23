@@ -39,7 +39,7 @@ public:
 
 	vec2 limit(vec2 v, float max);
 
-	void updateEnemyMovement(Entity enemy, float elapsed_ms);
-
 	void handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
+
+	vec2 clampPositionToBounds(const vec2& position);
 };

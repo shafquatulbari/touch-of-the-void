@@ -32,6 +32,13 @@ struct Vec2Hash {
     }
 };
 
+// kept value 100, 64 is too small and enemies get stuck
+vec2 AISystem::clampPositionToBounds(const vec2& position) {
+    float clampedX = std::max(xMin + 100 , std::min(position.x, xMax - 100));
+    float clampedY = std::max(yMin + 100, std::min(position.y, yMax - 100));
+    return vec2(clampedX, clampedY);
+}
+
 bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
     // http://www.cse.yorku.ca/~amana/research/grid.pdf
     // Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
@@ -122,7 +129,11 @@ std::vector<vec2> AISystem::generateNeighbors(const vec2& position) {
     neighbors.push_back(position + vec2(-stepSize, 0)); // Left
     neighbors.push_back(position + vec2(0, stepSize)); // Up
     neighbors.push_back(position + vec2(0, -stepSize)); // Down
-    // Add more directions if needed
+    neighbors.push_back(position + vec2(stepSize, stepSize)); // Up-right
+    neighbors.push_back(position + vec2(-stepSize, stepSize)); // Up-left
+    neighbors.push_back(position + vec2(stepSize, -stepSize)); // Down-right
+    neighbors.push_back(position + vec2(-stepSize, -stepSize)); // Down-left
+
     return neighbors;
 }
 
@@ -329,7 +340,14 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         motion.velocity = normalize(motion.velocity) * maxSpeed;
     }
 
-    motion.position += motion.velocity * elapsed_ms / 1000.0f;
+    // Calculate the next position based on current velocity
+    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // Clamp the next position to ensure it's within bounds
+    vec2 clampedPosition = clampPositionToBounds(nextPosition);
+
+    // Update the entity's position to the clamped position
+    motion.position = clampedPosition;
 }
 
 void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
@@ -337,17 +355,27 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
     if (lineOfSightClear(motion.position, playerPosition)) {
         // Generate path using A* if the line of sight is clear
         std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
-        if (!path.empty()) {
-            vec2 nextStep = path[1]; // Get the next step towards the player
-            // Calculate direction to the next step and update the enemy's velocity
+        // Ensure there is a path and it has more than one point (start point is always included)
+        if (path.size() > 1) {
+            // Consider the next step in the path
+            vec2 nextStep = path[1]; // Assuming path[0] is the current position
             vec2 direction = normalize(nextStep - motion.position);
-            //TUNE THIS VALUE
-            float speed = 10.0f; 
+            float speed = 10.0f; // Tune this value as needed
+
             // Update velocity towards the next step in the path
             motion.velocity = direction * speed;
+
+            // If the AI is close to the next step, consider moving to the subsequent step
+            // This prevents stopping at each path point and smoothens movement
+            if (length(motion.position - nextStep) < speed * elapsed_ms / 1000.0f) {
+                if (path.size() > 2) { // Check if there is a next step
+                    nextStep = path[2]; // Move to the next step
+                }
+            }
         }
-    } else {
-        // if line of sight is not clear
+    }
+    else {
+        // If line of sight is not clear, stop the entity or handle accordingly
         motion.velocity = vec2(0.0f, 0.0f);
     }
 }
@@ -361,32 +389,30 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     // Calculate distance to the player
     float distanceToPlayer = length(playerPosition - motion.position);
 
+    float maxSpeed = 50.0f; // Adjust as needed
+
     // Movement logic considering player's distance and projectiles
-    if (distanceToPlayer < shootingRange) {
-        if (distanceToPlayer > playerAvoidanceDistance) {
-            // Move normally if within shooting range but outside avoidance distance
-            motion.velocity = flockMove;
-        }
-        else {
-            // Move away from the player if too close
-            vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
-            motion.velocity = flockMove + awayFromPlayer;
-        }
-    }
-    else {
-        // If player is too far, focus on flocking and avoiding obstacles
+    if (distanceToPlayer > playerAvoidanceDistance) {
+        // Move normally if within shooting range but outside avoidance distance
         motion.velocity = flockMove;
     }
+    else {
+        // Move away from the player if too close
+        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
+        motion.velocity = flockMove + awayFromPlayer;
+    }
+    
     // Calculate the next position based on current velocity
     vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
 
+    // kept value 100, 64 is too small and enemies get stuck
     // Check if the next position is within bounds
     if (!isPositionWithinBounds(nextPosition)) {
         // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + 64.0f || nextPosition.x >= xMax - 64.0f) {
+        if (nextPosition.x <= xMin + 100.0f || nextPosition.x >= xMax - 100.0f) {
             motion.velocity.x *= -1; // Invert X component if hitting left or right wall
         }
-        if (nextPosition.y <= yMin + 64.0f || nextPosition.y >= yMax - 64.0f) {
+        if (nextPosition.y <= yMin + 100.0f || nextPosition.y >= yMax - 100.0f) {
             motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
         }
     }
@@ -402,23 +428,23 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
 			avoidanceForce += normalize(motion.position - obstaclePos);
 		}
 	}
-    // Check for nearby projectiles and avoid them
-    for (Entity projectile : registry.projectiles.entities) {
-		vec2 position = registry.motions.get(entity).position;
-		vec2 projectilePosition = registry.motions.get(projectile).position;
-        if (glm::distance(position, projectilePosition) < avoidanceRadius) {
-			avoidanceForce += normalize(position - projectilePosition);
+    // Avoidance behavior for projectiles
+    for (auto& projectileEntity : registry.projectiles.entities) {
+        Motion& projectileMotion = registry.motions.get(projectileEntity);
+        vec2 directionToProjectile = projectileMotion.position - motion.position;
+        float distanceToProjectile = length(directionToProjectile);
+
+        if (distanceToProjectile < avoidanceRadius) {
+			avoidanceForce += normalize(motion.position - projectileMotion.position);
 		}
-	}
+    }
 
     // Apply avoidance force to the current motion
     if (glm::length(avoidanceForce) > 0) {
         motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
     }
 
-
     // Clamp velocity to max speed
-    float maxSpeed = 50.0f;
     if (length(motion.velocity) > maxSpeed) {
         motion.velocity = normalize(motion.velocity) * maxSpeed;
     }
@@ -454,11 +480,12 @@ void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elaps
 }
 
 bool AISystem::isPositionWithinBounds(const vec2& position) {
+    // kept value 100, 64 is too small and enemies get stuck
     // Using the game world boundaries 
-    float leftBound = xMin + 64.0f; 
-    float rightBound = xMax - 64.0f; 
-    float topBound = yMin + 64.0f;
-    float bottomBound = yMax - 64.0f; 
+    float leftBound = xMin + 100.0f;
+    float rightBound = xMax - 100.0f;
+    float topBound = yMin + 100.0f;
+    float bottomBound = yMax - 100.0f;
 
     // Check if the position is within bounds
     return position.x >= leftBound && position.x <= rightBound &&
