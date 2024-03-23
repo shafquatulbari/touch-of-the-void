@@ -122,7 +122,7 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED};
+	enum class AIType {MELEE, RANGED, TURRET};
 	AIType type = AIType::MELEE;
 	enum class AIState {IDLE, ACTIVE};
 	AIState state = AIState::ACTIVE;

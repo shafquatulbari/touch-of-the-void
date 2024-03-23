@@ -11,8 +11,6 @@ class AISystem
 private:
 	RenderSystem* renderer;
 public:
-	AISystem() {};
-
 	AISystem(RenderSystem* _renderer) : renderer(_renderer) {};
 
 	bool lineOfSightClear(const vec2& start, const vec2& end);
@@ -41,9 +39,7 @@ public:
 
 	vec2 limit(vec2 v, float max);
 
-	vec2 calculateAvoidanceForce(Entity enemy);
-
 	void updateEnemyMovement(Entity enemy, float elapsed_ms);
 
-
+	void handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 };
