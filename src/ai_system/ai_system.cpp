@@ -94,13 +94,15 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
 
 // Adjusted obstacle detection to consider the full bounding box of obstacles
 bool AISystem::isObstacleAtPosition(const vec2& position) {
+    //convert the position from world to grid position
+    vec2 grid_position = vec2(floor((position.x - 480.0f) / 64.0f), floor((position.y - 32.0f) / 64.0f));
     if (!registry.rooms.has(registry.players.get(registry.players.entities[0]).current_room)) {
         return false; // Current room entity not found or does not have a Room component
     }
 
     const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
     for (const auto& obstaclePos : room.obstacle_positions) {
-        if (obstaclePos == position) {
+        if (obstaclePos == grid_position) {
             return true; // Found an obstacle at the given position
         }
     }
@@ -383,7 +385,9 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
     float shootingRange = 300.0f; // Distance to shoot at the player
     float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
-
+    const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
+    //print all the obstacle positions
+   
     vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
 
     // Calculate distance to the player
@@ -420,12 +424,16 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     vec2 avoidanceForce(0.0f);
     float avoidanceRadius = 100.0f; // Example radius within which to avoid obstacles/projectiles
 
-    const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
+    
 
     // Sample avoidance logic: Check for nearby obstacles and adjust direction
     for (const auto& obstaclePos : room.obstacle_positions) {
-        if (glm::distance(motion.position, obstaclePos) < avoidanceRadius) {
-			avoidanceForce += normalize(motion.position - obstaclePos);
+        //convert the obstacle position to the world position
+        vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
+        vec2 directionToObstacle = world_obstacle_pos - motion.position;
+        float distanceToObstacle = length(directionToObstacle);
+        if (distanceToObstacle < avoidanceRadius) {
+			avoidanceForce += normalize(motion.position - world_obstacle_pos);
 		}
 	}
     // Avoidance behavior for projectiles
