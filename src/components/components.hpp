@@ -143,12 +143,13 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED};
+	enum class AIType {MELEE, RANGED, TURRET};
 	AIType type = AIType::MELEE;
 	enum class AIState {IDLE, ACTIVE};
 	AIState state = AIState::ACTIVE;
 	float safe_distance = 150.0f; // the distance that the AI will start behaving from the player
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
+
 };
 
 // Harmful collision component
