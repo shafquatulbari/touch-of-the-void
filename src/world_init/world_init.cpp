@@ -69,6 +69,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
 	registry.meshPtrs.emplace(entity, &mesh);
 
+	registry.obstacles.emplace(entity);
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 
@@ -544,7 +545,7 @@ void render_room(RenderSystem* render, Room& room)
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::MELEE };
+	std::vector<AI::AIType> enemy_types = { AI::AIType::RANGED, AI::AIType::RANGED, AI::AIType::RANGED };
 
 	// Create each enemy with their specified type
 	for (auto& pos : room.enemy_positions) {

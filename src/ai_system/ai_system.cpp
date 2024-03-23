@@ -383,10 +383,14 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
 }
 
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
-    float shootingRange = 300.0f; // Distance to shoot at the player
-    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
+    float shootingRange = 500.0f; // Distance to shoot at the player
+    float playerAvoidanceDistance = 150.0f; // Distance to keep from the player
+
+    vec2 avoidanceForce(0.0f);
+    float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
+    float projectileAvoidanceRadius = 50.0f; // radius within which to avoid projectiles
+
     const Room& room = registry.rooms.get(registry.players.get(registry.players.entities[0]).current_room);
-    //print all the obstacle positions
    
     vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
 
@@ -400,7 +404,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         // Move normally if within shooting range but outside avoidance distance
         motion.velocity = flockMove;
     }
-    else {
+    else if (distanceToPlayer <= playerAvoidanceDistance) {
         // Move away from the player if too close
         vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
         motion.velocity = flockMove + awayFromPlayer;
@@ -421,30 +425,32 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         }
     }
 
-    vec2 avoidanceForce(0.0f);
-    float avoidanceRadius = 100.0f; // Example radius within which to avoid obstacles/projectiles
-
-    
-
     // Sample avoidance logic: Check for nearby obstacles and adjust direction
     for (const auto& obstaclePos : room.obstacle_positions) {
         //convert the obstacle position to the world position
         vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
         vec2 directionToObstacle = world_obstacle_pos - motion.position;
         float distanceToObstacle = length(directionToObstacle);
-        if (distanceToObstacle < avoidanceRadius) {
+        if (distanceToObstacle < obstacleAvoidanceRadius) {
 			avoidanceForce += normalize(motion.position - world_obstacle_pos);
 		}
 	}
     // Avoidance behavior for projectiles
     for (auto& projectileEntity : registry.projectiles.entities) {
-        Motion& projectileMotion = registry.motions.get(projectileEntity);
-        vec2 directionToProjectile = projectileMotion.position - motion.position;
-        float distanceToProjectile = length(directionToProjectile);
+        // check if player projectile 
+        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
+            Motion& projectileMotion = registry.motions.get(projectileEntity);
+            vec2 directionToProjectile = projectileMotion.position - motion.position;
+            float distanceToProjectile = length(directionToProjectile);
 
-        if (distanceToProjectile < avoidanceRadius) {
-			avoidanceForce += normalize(motion.position - projectileMotion.position);
-		}
+            if (distanceToProjectile < projectileAvoidanceRadius) {
+                avoidanceForce += normalize(motion.position - projectileMotion.position);
+            }
+        }
+        else {
+            break; // No need to check further projectiles if not player's
+        }
+        
     }
 
     // Apply avoidance force to the current motion
