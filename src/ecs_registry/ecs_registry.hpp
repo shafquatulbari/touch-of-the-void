@@ -33,7 +33,9 @@ public:
 	ComponentContainer<AnimationTimer> animationTimers;
 	ComponentContainer<NoCollisionCheck> noCollisionChecks;
 	ComponentContainer<OnFireTimer> onFireTimers;
-	ComponentContainer<Line> lines;
+	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
+	ComponentContainer<DamagedTimer> damagedTimers;
+	ComponentContainer<Level> levels;
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
 	ECSRegistry()
@@ -61,6 +63,8 @@ public:
 		registry_list.push_back(&animationTimers);
 		registry_list.push_back(&lines);
 		registry_list.push_back(&onFireTimers);
+		registry_list.push_back(&damagedTimers);
+		registry_list.push_back(&levels);
 	}
 
 	void clear_all_components() {

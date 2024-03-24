@@ -2,17 +2,194 @@
 #include "render_system/render_system.hpp"
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
+#include "audio_manager/audio_manager.hpp"
 
 #include <iomanip>
 #include <iostream>
 
-void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier)
+void UISystem::fpsCalculate() {
+	//average these many samples to change the frames smoother
+	static const int num_samples = 10;
+	//buffer, array of the frames
+	static float frameTimes[num_samples];
+	static int currentFrame = 0;
+
+	static float prevTicks = SDL_GetTicks();
+
+	float currentTicks;
+	currentTicks = SDL_GetTicks();
+
+	frameTime = currentTicks - prevTicks;//note: first few ticks will be wrong
+	frameTimes[currentFrame % num_samples] = frameTime;
+
+	//need to set ticks again. after current tick is done, it becomes prev ticks
+	prevTicks = currentTicks;
+	int count;
+	//	currentFrame++;
+
+	if (currentFrame < num_samples) {
+		count = currentFrame;
+	}
+	else {
+		count = num_samples;
+	}
+
+	float averageFrameTime = 0;
+	for (int i = 0; i < count; i++) {
+		averageFrameTime += frameTimes[i];
+
+	}
+	averageFrameTime /= count;
+
+	if (averageFrameTime > 0) {
+		fps = 1000.0f / averageFrameTime;
+		// ms/s divided by ms/f returns frames/second which is fps
+	}
+	else {
+		//shouldn't ever reach this else case 
+		fps = 60.0f;
+	}
+	currentFrame++;
+}
+
+void UISystem::createMap(Level& level) {
+	//auto positionhelper = Entity();
+
+	//Motion& helpermotion = registry.motions.emplace(positionhelper);
+	//helpermotion.position = { 208.f, 290.f };
+	//helpermotion.scale = vec2({ 384.f, 384.f });
+
+	//registry.renderRequests.insert(
+	//	positionhelper,
+	//	{ TEXTURE_ASSET_ID::MAP_PLACEMENT_HELPER,
+	//			 EFFECT_ASSET_ID::TEXTURED,
+	//			 GEOMETRY_BUFFER_ID::SPRITE,
+	//			RENDER_LAYER::UI });
+
+	
+	std::pair<int, int> current_room_coords = level.current_room;
+	int max_step = 4;
+
+	auto entity = Entity();
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { 208.f, 290.f };
+	motion.scale = vec2({ 36.f, 36.f });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::CURRENT_ROOM,
+						 EFFECT_ASSET_ID::TEXTURED,
+						 GEOMETRY_BUFFER_ID::SPRITE,
+						RENDER_LAYER::UI });
+
+	for (int y = -max_step; y <= max_step; y++) {
+		for (int x = -max_step; x <= max_step; x++) {
+			std::pair<int, int> room_coords = std::pair<int, int>(current_room_coords.first + x, current_room_coords.second + y);
+			if (room_coords.first == current_room_coords.first && room_coords.second == current_room_coords.second) {
+				continue;
+			}
+			if (level.rooms.find(room_coords) != level.rooms.end()) {
+				assert(registry.rooms.has(level.rooms[room_coords]) && "Room does not exist in registry");
+				Room& room = registry.rooms.get(level.rooms[room_coords]);
+				auto entity = Entity();
+				if (room.is_visited) {
+
+					Motion& motion = registry.motions.emplace(entity);
+					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
+					motion.scale = vec2({ 36.f, 36.f });
+
+					registry.renderRequests.insert(
+						entity,
+						{ TEXTURE_ASSET_ID::CLEARED_ROOM,
+											EFFECT_ASSET_ID::TEXTURED,
+											GEOMETRY_BUFFER_ID::SPRITE,
+										RENDER_LAYER::UI });
+				}
+				else {
+					Motion& motion = registry.motions.emplace(entity);
+					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
+					motion.scale = vec2({ 36.f, 36.f });
+
+					registry.renderRequests.insert(
+						entity,
+						{ TEXTURE_ASSET_ID::UNVISITED_ROOM,
+											EFFECT_ASSET_ID::TEXTURED,
+											GEOMETRY_BUFFER_ID::SPRITE,
+										RENDER_LAYER::UI });
+				}
+				drawn_rooms.push_back(entity);
+			}
+		}
+	}
+}
+
+void UISystem::updateMap(Level& level) {
+	std::pair<int, int> current_room_coords = level.current_room;
+	if (current_room == current_room_coords) {
+		return;
+	}
+	else {
+		current_room = current_room_coords;
+	}
+	int max_step = 4;
+
+	// Clear the map
+	for (auto entity : drawn_rooms) {
+		registry.remove_all_components_of(entity);
+	}
+
+	for (int y = -max_step; y <= max_step; y++) {
+		for (int x = -max_step; x <= max_step; x++) {
+			std::pair<int, int> room_coords = std::pair<int, int>(current_room_coords.first + x, current_room_coords.second + y);
+			if (room_coords.first == current_room_coords.first && room_coords.second == current_room_coords.second) {
+				continue;
+			}
+			if (level.rooms.find(room_coords) != level.rooms.end()) {
+				assert(registry.rooms.has(level.rooms[room_coords]) && "Room does not exist in registry");
+				Room& room = registry.rooms.get(level.rooms[room_coords]);
+				auto entity = Entity();
+
+				if (room.is_visited) {
+					Motion& motion = registry.motions.emplace(entity);
+					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
+					motion.scale = vec2({ 36.f, 36.f });
+
+					registry.renderRequests.insert(
+						entity,
+						{ TEXTURE_ASSET_ID::CLEARED_ROOM,
+											EFFECT_ASSET_ID::TEXTURED,
+											GEOMETRY_BUFFER_ID::SPRITE,
+										RENDER_LAYER::UI });
+				}
+				else {
+
+					Motion& motion = registry.motions.emplace(entity);
+					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
+					motion.scale = vec2({ 36.f, 36.f });
+
+					registry.renderRequests.insert(
+						entity,
+						{ TEXTURE_ASSET_ID::UNVISITED_ROOM,
+											EFFECT_ASSET_ID::TEXTURED,
+											GEOMETRY_BUFFER_ID::SPRITE,
+										RENDER_LAYER::UI });
+				}
+
+				drawn_rooms.push_back(entity);
+			}
+		}
+	}
+}	
+
+void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, Level& current_level)
 {
 	this->renderer = renderer_arg;
-
+	maxFps = 144.0f;
 	// create template box
 	createStatusHud(renderer);
-	
+	current_room = std::pair<int, int>(0, 0);
+	createMap(current_level);
 
 	// health 
 	int roundedHealth = std::max(0, static_cast<int>(player_health.current_health));
@@ -25,13 +202,12 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 	// shield
 	int roundedShield = std::max(0, static_cast<int>(player_shield.current_shield));
 	int roundedMaxShield = std::max(0, static_cast<int>(player_shield.max_shield));
-	int percentage = (roundedShield / roundedMaxShield) * 100;
+	int percentage = (int)(((float)roundedShield / (float)roundedMaxShield) * 100.f);
 	std::string shieldText = std::to_string(percentage) + " %";
 	player_shield_text = createText(renderer, shieldText, { 150.f, 739.f }, 1.5f, COLOR_BRIGHT_GREEN, TextAlignment::LEFT);
 
-	// weapons and ammo
-	// TODO: create weapon icons, and ammo vizualization
-
+	// fps
+	fps_text = createText(renderer, "FPS:", { 1760.0f, 30.0f }, 0.8f, { 0.0f, 1.0f, 1.0f }, TextAlignment::LEFT);
 
 	// score
 	std::string scoreText = std::to_string(score);
@@ -86,8 +262,12 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 	}
 }
 
-void UISystem::update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore)
+void UISystem::update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore, bool showFPS, Level& level)
 {
+
+	// Update Map
+	updateMap(level);
+
 	// Update Health
 	int roundedHealth = std::max(0, static_cast<int>(player_health.current_health));
 	std::string healthText = std::to_string(roundedHealth);
@@ -100,7 +280,7 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 	// Update Shield
 	int roundedShield = std::max(0, static_cast<int>(player_shield.current_shield));
 	int roundedMaxShield = std::max(0, static_cast<int>(player_shield.max_shield));
-	int percentage = (roundedShield / roundedMaxShield) * 100;
+	int percentage = (int)(((float)roundedShield / (float)roundedMaxShield) * 100.f);
 	std::string shieldText = std::to_string(percentage) + " %";
 	registry.texts.get(player_shield_text).content = shieldText;
 
@@ -112,6 +292,24 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 	std::string multiplierText = std::to_string(multiplier);
 	multiplierText = multiplierText.substr(0, multiplierText.find(".") + 2);
 	registry.texts.get(multiplier_text).content = multiplierText;
+
+	if (showFPS) {
+		// FPS
+		float startTicks = SDL_GetTicks();
+		fpsCalculate();
+		static int frameCounter = 0;
+		frameCounter++;
+		// update fps every 50 frames 
+		if (frameCounter == 25) {
+			registry.texts.get(fps_text).content = "FPS: " + std::to_string(static_cast<int>(fps));
+			frameCounter = 0;
+		}
+		float frameTicks = SDL_GetTicks() - startTicks;
+	}
+	else {
+		registry.texts.get(fps_text).content = "";
+	}
+	
 
 	switch (player.weapon_type) {
 	case WeaponType::GATLING_GUN:

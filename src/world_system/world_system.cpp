@@ -19,8 +19,6 @@ WorldSystem::WorldSystem()
 {
 	// TODO: world initialization here
 	
-	//max fps 
-	maxFps = 144.0f;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -102,82 +100,13 @@ void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSyste
 	this->ui = ui_arg;
 	this->weapons = weapon_arg;
 
-	//std::stringstream title_ss;
-	//title_ss << "Touch of the Void";
-	//glfwSetWindowTitle(window, title_ss.str().c_str());
-
-
-	// TODO: Setup background music to play indefinitely
-	//Mix_PlayMusic(background_music, -1);
-	//fprintf(stderr, "Loaded music\n");
-
 	// Set all states to default
 	restart_game();
 }
 
-// Update our game world
-bool WorldSystem::step(float elapsed_ms_since_last_update) 
-{
-	switch (game_state)
-	{
-	case GAME_STATE::START_MENU:
-		return true;
-		break;
-	case GAME_STATE::GAME:
-		break;
-
-	case GAME_STATE::GAME_OVER:
-		return true;
-		break;
-
-	default:
-		return true;
-		break;
-	}
-
-	// Remove debug info from the last step
-	while (registry.debugComponents.entities.size() > 0)
-		registry.remove_all_components_of(registry.debugComponents.entities.back());
-
-
-	auto& motions_registry = registry.motions;
-    
-	Player& p = registry.players.get(player);
-	Motion& p_m = registry.motions.get(player);
-
-	// Update HUD
-	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
-
-	// Update Weapon System
-	weapons->step(elapsed_ms_since_last_update, renderer, player);
-
-	// Removing out of screen entities
-	// Remove entities that leave the screen on the left side
-	// Iterate backwards to be able to remove without unterfering with the next object to visit
-	// (the containers exchange the last element with the current)
-	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
-		Motion& motion = motions_registry.components[i];
-		Entity& entity = motions_registry.entities[i];
-		if (motion.position.x + abs(motion.scale.x) < 0.f) {
-			if (!registry.players.has(entity)) // don't remove the player
-				registry.remove_all_components_of(entity);
-		}
-
-		if (registry.projectiles.has(entity)) {
-			// max_position from physics_system.cpp and replaced game_window_block_size 
-			// with the entity's width and height
-			float max_position_x = (game_window_size_px / 2) - (motion.scale.x / 2);
-			float max_position_y = (game_window_size_px / 2) - (motion.scale.y / 2);
-			if (
-				abs(motion.position.x - (window_width_px / 2)) >= max_position_x ||
-				abs(motion.position.y - (window_height_px / 2)) >= max_position_y
-			)
-					registry.remove_all_components_of(entity);
-		}
-	}
-
+bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_update) {
 	ScreenState& screen = registry.screenStates.components[0];
-
+	//std::cout << "Screen state brightness: " << screen.darken_screen_factor << std::endl;
 	float min_counter_ms = 3000.f;
 	for (Entity entity : registry.deathTimers.entities) {
 		// progress timer
@@ -200,17 +129,17 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		// progress timer
 		RoomTransitionTimer& counter = registry.roomTransitionTimers.get(entity);
 		counter.counter_ms -= elapsed_ms_since_last_update;
-		if (counter.counter_ms < min_counter_ms) {
+	/*	if (counter.counter_ms < min_counter_ms) {
 			min_counter_ms = counter.counter_ms;
-		}
+		}*/
 
 		// remove the darken effect once the timer expired
 		if (counter.counter_ms < 0) {
 			registry.roomTransitionTimers.remove(entity);
 			screen.darken_screen_factor = 0;
-			p.is_moving_rooms = false;
+			player.is_moving_rooms = false;
 			// player enters new room
-			return true;
+			//return true;
 		}
 	}
 	// reduce window brightness if any of the player is dying
@@ -251,46 +180,96 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 	}
 
-	// heal obstacles over time
-	/*
-	for (auto& obstacle : registry.obstacles.entities) {
-        if (registry.healths.has(obstacle)) {
-			Health& health = registry.healths.get(obstacle);
-			if (health.current_health < health.max_health) {
-				health.current_health += (elapsed_ms_since_last_update / 1000.0f) * 50.0f; // Adjust speed here
-				health.current_health = std::min(health.current_health, health.max_health); // don't exceed max health
-			}
-        }
-    }
-	*/
+	for (Entity entity : registry.damagedTimers.entities) {
+		// progress timer
+		DamagedTimer& counter = registry.damagedTimers.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+		if (counter.counter_ms < min_counter_ms) {
+			min_counter_ms = counter.counter_ms;
+		}
 
-	// heal player over timne
-	if (registry.healths.has(player)) {
-		Health& playerHealth = registry.healths.get(player);
-		if (playerHealth.current_health < playerHealth.max_health) {
-			playerHealth.current_health += (elapsed_ms_since_last_update / 1000.0f) * 0.5; // Adjust speed here
-			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
+		// remove the damaged effect once the timer expired
+		if (counter.counter_ms < 0) {
+			registry.damagedTimers.remove(entity);
+		}
+	}
+	return false;
+}
+
+// Update our game world
+bool WorldSystem::step(float elapsed_ms_since_last_update) 
+{
+	switch (game_state)
+	{
+	case GAME_STATE::START_MENU:
+		return true;
+		break;
+	case GAME_STATE::GAME:
+		break;
+
+	case GAME_STATE::GAME_OVER:
+		return true;
+		break;
+
+	default:
+		return true;
+		break;
+	}
+
+	// Remove debug info from the last step
+	while (registry.debugComponents.entities.size() > 0)
+		registry.remove_all_components_of(registry.debugComponents.entities.back());
+
+
+	auto& motions_registry = registry.motions;
+    
+	Player& p = registry.players.get(player);
+	Motion& p_m = registry.motions.get(player);
+
+	// Update HUD
+	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, debugging.show_fps, registry.levels.get(level));
+	// Update Weapon System
+	weapons->step(elapsed_ms_since_last_update, renderer, player);
+
+	// Removing out of screen entities
+	// Remove entities that leave the screen on the left side
+	// Iterate backwards to be able to remove without unterfering with the next object to visit
+	// (the containers exchange the last element with the current)
+	for (int i = (int)motions_registry.components.size() - 1; i >= 0; --i) {
+		Motion& motion = motions_registry.components[i];
+		Entity& entity = motions_registry.entities[i];
+		if (motion.position.x + abs(motion.scale.x) < 0.f) {
+			if (!registry.players.has(entity)) // don't remove the player
+				registry.remove_all_components_of(entity);
+		}
+
+		if (registry.projectiles.has(entity)) {
+			// max_position from physics_system.cpp and replaced game_window_block_size 
+			// with the entity's width and height
+			float max_position_x = (game_window_size_px / 2) - (motion.scale.x / 2);
+			float max_position_y = (game_window_size_px / 2) - (motion.scale.y / 2);
+			if (
+				abs(motion.position.x - (window_width_px / 2)) >= max_position_x ||
+				abs(motion.position.y - (window_height_px / 2)) >= max_position_y
+			)
+					registry.remove_all_components_of(entity);
+		}
+	}
+
+	// Progress game timers
+	if (progress_timers(p, elapsed_ms_since_last_update)) { // if the timers returned true, then we should return true early
+		return true;
+	}
+
+	// heal player shield over timne
+	if (registry.shields.has(player) && !registry.damagedTimers.has(player)) {
+		Shield& playerShield = registry.shields.get(player);
+		if (playerShield.current_shield < playerShield.max_shield) {
+			playerShield.current_shield += playerShield.recharge_rate * elapsed_ms_since_last_update * 0.01f;
+			playerShield.current_shield = std::min(playerShield.current_shield, playerShield.max_shield); // don't exceed max shield
 		}
 
 	}
-
-	// FPS
-	float startTicks = SDL_GetTicks();
-	fpsCalculate();
-	static int frameCounter = 0;
-	frameCounter++;
-	// update fps every 50 frames 
-	if (frameCounter == 25) {
-		if (debugging.show_fps)
-			registry.texts.get(fps_text).content = "FPS: " + std::to_string(static_cast<int>(fps));
-		frameCounter = 0;
-	}
-	float frameTicks = SDL_GetTicks() - startTicks;
-
-	//fps limiter. 
-	/*if ((1000.0f / maxFps) > frameTicks) {
-		SDL_Delay((1000.0f / maxFps) - frameTicks);
-	}*/
 
 	/////////////////////////////////////////////////////////////////////////////////
 	//std::vector<ColoredVertex>& m_vertices = registry.meshPtrs.get(player)->vertices;
@@ -349,8 +328,18 @@ void WorldSystem::restart_game() {
 	case GAME_STATE::START_MENU:
 		play_music(start_menu_music);
 
-		createText(renderer, "TOUCH OF THE VOID", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
-		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		/*createText(renderer, "TOUCH OF THE VOID", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
+
+		createStartScreen(renderer);
+		//// Tutorial Text
+		createText(renderer, "CONTROLS", { 38.0f, 644.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "WASD to move", { 30.0f, 724.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Mouse to aim", { 30.0f, 764.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Right-Click to shoot", { 30.0f, 804.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "R to reload", { 30.0f, 844.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Q/E to change weapons", { 30.0f, 884.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+
 		break;
 
 	case GAME_STATE::GAME:
@@ -360,25 +349,19 @@ void WorldSystem::restart_game() {
 		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
 		// Create a level
-		registry.players.get(player).current_room = createBackground(renderer);
-
-		//// Tutorial Text
-		createText(renderer, "CONTROLS", { 38.0f, 144.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "WASD to move", { 30.0f, 224.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Mouse to aim", { 30.0f, 264.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Right-Click to shoot", { 30.0f, 304.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "R to reload", { 30.0f, 344.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Q/E to change weapons", { 30.0f, 384.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createBackground(renderer);
+		level = createLevel(renderer);
 
 		//// Create HUD
 		score = 100;
 		multiplier = 1.0;
-		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
+		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, registry.levels.get(level));
 		break;
 
 	case GAME_STATE::GAME_OVER:
-		createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
-		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		/*createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
+		createDeathScreen(renderer);
 		break;
 
 	default:
@@ -387,36 +370,42 @@ void WorldSystem::restart_game() {
 }
 
 
-// Reset the world state to its initial state
-void WorldSystem::enter_room(Room& room, vec2 player_pos) {
+
+void WorldSystem::enter_room(vec2 player_pos) {
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 	printf("Entering Room\n");
+
 
 	// Reset darken_screen_factor on room enter
 	ScreenState& screen = registry.screenStates.components[0];
 	screen.darken_screen_factor = 0.0f;
 
-	for(Entity e: registry.motions.entities)
-	{
-		// clear motion registry except for player and texts.
-		if (!(registry.players.has(e) || registry.texts.has(e)))
-		{
-			registry.remove_all_components_of(e);
-		}
-	}
+	remove_entities_on_entry();
+	
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
 	// Render the room
-	render_room(renderer, room);
-	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
+	Level& level_struct = registry.levels.get(level);
+	render_room(renderer, level_struct);
 
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
 }
-
+// Remove entities between rooms
+ void WorldSystem::remove_entities_on_entry()
+{
+	for (Entity e : registry.motions.entities)
+	{
+		// remove all enemies, obstacles, animations
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e))
+		{
+			registry.remove_all_components_of(e);
+		}
+	}
+}
 // Compute collisions between entities
 void WorldSystem::handle_collisions(float elapsed_ms) {
 	// Loop over all collisions detected by the physics system
@@ -452,49 +441,79 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					// change to the room that they entered
 					if (obstacle.is_bottom_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).bottom_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first, level_struct.current_room.second - 1);
 						next_pos = { x_mid, y_min + 64 };
 					}
 					else if (obstacle.is_top_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).top_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first, level_struct.current_room.second + 1);
 						next_pos = { x_mid, y_max - 64 };
 					}
 					else if (obstacle.is_left_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).left_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first - 1, level_struct.current_room.second);
 						next_pos = { x_max - 64, y_mid };
 					}
 					else if (obstacle.is_right_door)
 					{
-						player.current_room = registry.rooms.get(player.current_room).right_room;
+						Level& level_struct = registry.levels.get(level);
+						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first + 1, level_struct.current_room.second);
 						next_pos = { x_min + 64, y_mid };
 					}
-				
-					// darken effect
+					Level& level_struct = registry.levels.get(level);
+			
 					registry.roomTransitionTimers.emplace(entity);
-					enter_room(registry.rooms.get(player.current_room)
-						, next_pos);
+					ScreenState& screen = registry.screenStates.components[0];
+					screen.darken_screen_factor = 1.0f;
+					enter_room(next_pos);
 				}
 			}
 
 			// Apply damage to the player
 			else if (registry.deadlies.has(entity_other)) {
-				Health& playerHealth = registry.healths.get(player);
-				Deadly& deadly = registry.deadlies.get(entity_other);
-				playerHealth.current_health -= deadly.damage;
-				if (playerHealth.current_health <= 0) {
-					// Trigger darkening immediately, but actual effect is controlled in step
-					if (!registry.deathTimers.has(player)) {
-						// cease motion
-						Motion& motion = registry.motions.get(player);
-						motion.velocity = { 0, 0 };
-						motion.is_moving_up = false;
-						motion.is_moving_down = false;
-						motion.is_moving_left = false;
-						motion.is_moving_right = false;
-						registry.deathTimers.emplace(player);
-						play_sound(game_over_sound);
+				assert(registry.shields.has(entity) && "Player should have a shield");
+				Shield& playerShield = registry.shields.get(player);
+
+				if (registry.damagedTimers.has(player)) {
+					DamagedTimer& damagedTimer = registry.damagedTimers.get(player);
+					damagedTimer.counter_ms = playerShield.recharge_delay;
+				}
+				else {
+					DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
+					damagedTimer.counter_ms = playerShield.recharge_delay;
+				}
+
+				if (playerShield.current_shield > 0) {
+					play_sound(player_hit_sound);
+					playerShield.current_shield -= registry.deadlies.get(entity_other).damage;
+					playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
+				}
+				else {
+					assert(registry.healths.has(player) && "Player should have health");
+					assert(registry.deadlies.has(entity_other) && "Entity should have a deadly component");
+					Deadly& deadly = registry.deadlies.get(entity_other);
+					Health& playerHealth = registry.healths.get(player);
+					playerHealth.current_health -= 1; //hardcoded damage
+					if (playerHealth.current_health <= 0) {
+						// Trigger darkening immediately, but actual effect is controlled in step
+						if (!registry.deathTimers.has(player)) {
+							// cease motion
+							assert(registry.motions.has(player) && "Player should have a motion");
+							Motion& motion = registry.motions.get(player);
+							motion.velocity = { 0, 0 };
+							motion.is_moving_up = false;
+							motion.is_moving_down = false;
+							motion.is_moving_left = false;
+							motion.is_moving_right = false;
+							registry.deathTimers.emplace(player);
+							play_sound(game_over_sound);
+						}
+					}
+					else {
+						play_sound(player_hit_sound);
 					}
 				}
 			}
@@ -539,25 +558,50 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// Collision logic for enemy projectiles hitting the player
 			else if (registry.ais.has(projectileSource) && registry.players.has(entity_other)) {
 				// Apply damage to the player
-				if (registry.healths.has(entity_other)) {
-					Deadly& deadly = registry.deadlies.get(entity);
-					Health& playerHealth = registry.healths.get(entity_other);
-					playerHealth.current_health -= 1; //hardcoded damage
-					play_sound(player_hit_sound);
-					if (playerHealth.current_health <= 0) {
-						// Trigger darkening immediately, but actual effect is controlled in step
-						if (!registry.deathTimers.has(player)) {
-							// cease motion
-							Motion& motion = registry.motions.get(player);
-							motion.velocity = { 0, 0 };
-							motion.is_moving_up = false;
-							motion.is_moving_down = false;
-							motion.is_moving_left = false;
-							motion.is_moving_right = false;
-							registry.deathTimers.emplace(player);
-							play_sound(game_over_sound);
+				if (registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
+					assert(registry.shields.has(entity_other) && "Player should have a shield");
+					Shield& playerShield = registry.shields.get(entity_other);
+
+					if (registry.damagedTimers.has(entity_other)) {
+						DamagedTimer& damagedTimer = registry.damagedTimers.get(entity_other);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
+					}
+					else {
+						DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
+					}
+
+					if (playerShield.current_shield > 0) {
+						play_sound(player_hit_sound);
+						playerShield.current_shield -= 10.f; // registry.deadlies.get(entity).damage;
+						playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
+					}
+					else {
+						assert(registry.healths.has(entity_other) && "Player should have health");
+						assert(registry.deadlies.has(entity) && "Entity should have a deadly component");
+						Deadly& deadly = registry.deadlies.get(entity);
+						Health& playerHealth = registry.healths.get(entity_other);
+						playerHealth.current_health -= 1; //hardcoded damage
+						if (playerHealth.current_health <= 0) {
+							// Trigger darkening immediately, but actual effect is controlled in step
+							if (!registry.deathTimers.has(player)) {
+								// cease motion
+								assert(registry.motions.has(player) && "Player should have a motion");
+								Motion& motion = registry.motions.get(player);
+								motion.velocity = { 0, 0 };
+								motion.is_moving_up = false;
+								motion.is_moving_down = false;
+								motion.is_moving_left = false;
+								motion.is_moving_right = false;
+								registry.deathTimers.emplace(player);
+								play_sound(game_over_sound);
+							}
+						}
+						else {
+							play_sound(player_hit_sound);
 						}
 					}
+					
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
@@ -592,14 +636,27 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			}
 
 			registry.remove_all_components_of(e);
-
-			Room& current_room = registry.rooms.get(registry.players.get(player).current_room);
+			Level& current_level = registry.levels.get(level);
+			Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
 			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
 			current_room.enemy_count--;
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
 
+			if (current_room.enemy_count == 0)
+			{
+				registry.levels.get(level).num_rooms_until_boss--;
+				current_room.has_bottom_door = true;
+				current_room.has_top_door = true;
+				current_room.has_left_door = true;
+				current_room.has_right_door = true;
+
+				// tear down existing walls
+				clearExistingWalls();
+				// re-render walls with doors
+				createWalls(renderer, current_room);
+			}
 			// UX Effects
 			createExplosion(renderer, e_pos, 1.0f, false);
 			play_sound(explosion_sound);
@@ -652,12 +709,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// FPS
 		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
 			debugging.show_fps = !debugging.show_fps;
-			if (debugging.show_fps) {
-				fps_text = createText(renderer, "FPS:", { 1760.0f, 30.0f }, 0.8f, { 0.0f, 1.0f, 1.0f }, TextAlignment::LEFT);
-			}
-			else {
-				registry.remove_all_components_of(fps_text);
-			}
 		}
 
 		// Player keyboard controls
@@ -839,49 +890,4 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	}
-}
-
-void WorldSystem::fpsCalculate() {
-	//average these many samples to change the frames smoother
-	static const int num_samples = 10; 
-	//buffer, array of the frames
-	static float frameTimes[num_samples];
-	static int currentFrame = 0;
-
-	static float prevTicks = SDL_GetTicks();
-	
-	float currentTicks;
-	currentTicks = SDL_GetTicks();
-
-	frameTime = currentTicks - prevTicks;//note: first few ticks will be wrong
-	frameTimes[currentFrame % num_samples] = frameTime; 
-
-	//need to set ticks again. after current tick is done, it becomes prev ticks
-	prevTicks = currentTicks;
-	int count;
-//	currentFrame++;
-
-	if (currentFrame < num_samples) {
-		count = currentFrame;
-	}
-	else {
-		count = num_samples;
-	}
-
-	float averageFrameTime = 0;
-	for (int i = 0; i < count; i++) {
-		averageFrameTime += frameTimes[i];
-
-	}
-	averageFrameTime /= count;
-
-	if (averageFrameTime > 0) {
-		fps = 1000.0f / averageFrameTime;
-		// ms/s divided by ms/f returns frames/second which is fps
-	}
-	else {
-		//shouldn't ever reach this else case 
-		fps = 60.0f;
-	}
-	currentFrame++;
 }

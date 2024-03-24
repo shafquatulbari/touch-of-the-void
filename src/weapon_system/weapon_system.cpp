@@ -32,6 +32,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 	if (p.is_firing && !p.is_reloading && p.ammo_count > 0) {
 		p.fire_length_ms += elapsed_ms;
 		if (p.fire_rate_timer_ms <= 0) {
+			createMuzzleFlash(renderer, player);
 			p.fire_rate_timer_ms = weapon_stats[p.weapon_type].fire_rate;
 			switch (p.weapon_type)
 			{
@@ -116,6 +117,22 @@ void WeaponSystem::step_dot_timers(float elapsed_ms)
 			registry.remove_all_components_of(timer.fire);
 			registry.onFireTimers.remove(entity);
 		}
+	}
+
+	for (Entity entity : registry.muzzleFlashTimers.entities) {
+		// progress timer
+		MuzzleFlashTimer& timer = registry.muzzleFlashTimers.get(entity);
+		timer.counter_ms -= elapsed_ms;
+
+		if (timer.counter_ms <= 0 || !registry.motions.has(timer.source) || !registry.motions.has(entity)) {
+			registry.muzzleFlashTimers.remove(entity);
+		}
+		else {
+			// move the flash
+			registry.motions.get(entity).position = registry.motions.get(timer.source).position + (52.f * vec2{ cos(registry.motions.get(timer.source).look_angle - M_PI/2), sin(registry.motions.get(timer.source).look_angle - M_PI/2) });
+			registry.motions.get(entity).look_angle = registry.motions.get(timer.source).look_angle - M_PI;
+		}
+		
 	}
 }
 
