@@ -227,7 +227,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	Motion& p_m = registry.motions.get(player);
 
 	// Update HUD
-	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, debugging.show_fps);
+	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, debugging.show_fps, registry.levels.get(level));
 	// Update Weapon System
 	weapons->step(elapsed_ms_since_last_update, renderer, player);
 
@@ -304,6 +304,13 @@ void WorldSystem::restart_game() {
 		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
 
 		createStartScreen(renderer);
+		//// Tutorial Text
+		createText(renderer, "CONTROLS", { 38.0f, 644.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "WASD to move", { 30.0f, 724.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Mouse to aim", { 30.0f, 764.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Right-Click to shoot", { 30.0f, 804.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "R to reload", { 30.0f, 844.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Q/E to change weapons", { 30.0f, 884.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
 		break;
 
@@ -317,19 +324,10 @@ void WorldSystem::restart_game() {
 		createBackground(renderer);
 		level = createLevel(renderer);
 
-
-		//// Tutorial Text
-		createText(renderer, "CONTROLS", { 38.0f, 144.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "WASD to move", { 30.0f, 224.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Mouse to aim", { 30.0f, 264.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Right-Click to shoot", { 30.0f, 304.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "R to reload", { 30.0f, 344.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Q/E to change weapons", { 30.0f, 384.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-
 		//// Create HUD
 		score = 100;
 		multiplier = 1.0;
-		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier);
+		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, registry.levels.get(level));
 		break;
 
 	case GAME_STATE::GAME_OVER:
