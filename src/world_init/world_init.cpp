@@ -218,10 +218,10 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	Motion& motion = registry.motions.emplace(entity);
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
-	motion.look_angle = angle + M_PI / 4;
-	motion.scale = vec2({ BULLET_BB_WIDTH * 3, BULLET_BB_HEIGHT * 3 });
+	motion.look_angle = angle + M_PI ;
+	motion.scale = vec2({ 48.f, 48.f });
 	motion.velocity = vec2({ 2000.0f * cos(angle), 2000.0f * sin(angle) });
-	
+
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
 
@@ -231,9 +231,20 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
 	deadly.damage = weapon_stats[projectile.weapon_type].damage;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 5}, {12, 5}, {13, 5}, {14, 5} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BULLET,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
@@ -296,9 +307,20 @@ Entity createRocketProjectile(RenderSystem* render, vec2 position, float angle, 
 	Motion& motion = registry.motions.emplace(entity);
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
-	motion.look_angle = angle + M_PI / 4;
-	motion.scale = vec2({ BULLET_BB_WIDTH * 2.5, BULLET_BB_HEIGHT * 2.5 });
+	motion.look_angle = angle;
+	motion.scale = vec2({ 64.f , 64.f });
 	motion.velocity = vec2({ 400.0f * cos(angle), 400.0f * sin(angle) });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 1}, {12, 1}, {13, 1}, {14, 1} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
 	
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
@@ -311,7 +333,7 @@ Entity createRocketProjectile(RenderSystem* render, vec2 position, float angle, 
 
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BULLET,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
@@ -335,7 +357,8 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
-	motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
+	//motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
+	motion.scale = vec2({ 32.f * glm::linearRand(0.8f, 1.2f), 32.f * glm::linearRand(0.8f, 1.2f) });
 	motion.velocity = vec2({ 600.0f * cos(angle), 600.0f * sin(angle) });
 
 	// Set the source of the projectile
@@ -347,15 +370,26 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
 	deadly.damage = weapon_stats[projectile.weapon_type].damage;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {6, 9}, {7, 9}, {8, 9}, {9, 9} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BULLET,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
 
-	registry.colors.emplace(entity);
-	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);
+	/*registry.colors.emplace(entity);
+	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);*/
 
 	return entity;
 }
@@ -648,6 +682,41 @@ Entity createStatusHud(RenderSystem* render)
 	return entity;
 }
 
+Entity createMuzzleFlash(RenderSystem* render, Entity source) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& source_motion = registry.motions.get(source);
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = source_motion.position + (52.f * vec2{ cos(source_motion.look_angle - M_PI/2), sin(source_motion.look_angle - M_PI/2) });
+	motion.scale = vec2({ 48.f, 48.f });
+	motion.look_angle = source_motion.look_angle - M_PI;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;	
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 13}, {12, 13}, {13, 13}, {14, 13} };
+	animation.frame_durations_ms = { 50, 50, 50, 50 };
+	animation.loop = false;
+
+	MuzzleFlashTimer& muzzle_flash_timer = registry.muzzleFlashTimers.emplace(entity);
+	muzzle_flash_timer.counter_ms = 400;
+	muzzle_flash_timer.source = source;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
 Entity createExplosion(RenderSystem* render, vec2 pos, float scale, bool repeat)
 {
 	auto entity = Entity();
@@ -690,10 +759,10 @@ Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 
 	assert(!registry.animations.has(entity));
 	Animation& animation = registry.animations.emplace(entity);
-	animation.sheet_id = SPRITE_SHEET_ID::FIRE;
+	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
 	animation.total_frames = 4;
 	animation.current_frame = 0;
-	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.sprites = { {11, 7}, {12, 7}, {13, 7}, {14, 7} };
 	animation.frame_durations_ms = { 100, 100, 100, 100 };
 	animation.loop = repeat;
 
@@ -721,10 +790,10 @@ Entity createBulletImpact(RenderSystem* render, vec2 pos, float scale, bool repe
 
 	assert(!registry.animations.has(entity));
 	Animation& animation = registry.animations.emplace(entity);
-	animation.sheet_id = SPRITE_SHEET_ID::BULLET_IMPACT;
+	animation.sheet_id = SPRITE_SHEET_ID::YELLOW_EFFECT;
 	animation.total_frames = 4;
 	animation.current_frame = 0;
-	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.sprites = { {6, 7}, {7, 7}, {8, 7}, {9, 7} };
 	animation.frame_durations_ms = { 50, 50, 50, 50 };
 	animation.loop = repeat;
 

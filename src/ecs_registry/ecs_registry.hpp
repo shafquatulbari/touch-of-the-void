@@ -33,6 +33,7 @@ public:
 	ComponentContainer<AnimationTimer> animationTimers;
 	ComponentContainer<NoCollisionCheck> noCollisionChecks;
 	ComponentContainer<OnFireTimer> onFireTimers;
+	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
 	ComponentContainer<DamagedTimer> damagedTimers;
 	ComponentContainer<Level> levels;
 	// constructor that adds all containers for looping over them
