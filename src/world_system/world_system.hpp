@@ -33,9 +33,9 @@ public:
 	bool step(float elapsed_ms);
 
 	// Check for collisions
-	void handle_collisions();
+	void handle_collisions(float elapsed_ms);
 
-	void bounce_back(Entity player, Entity obstacle, float scalar);
+	void bounce_back(Entity player, Entity obstacle, float scalar, float step_seconds);
 
 	// Should the game be over ?
 	bool is_over()const;

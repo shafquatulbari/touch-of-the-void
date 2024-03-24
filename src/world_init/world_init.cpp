@@ -64,8 +64,8 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	deadly.damage = 10.0f;
 
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
-	registry.meshPtrs.emplace(entity, &mesh);
+	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	//registry.meshPtrs.emplace(entity, &mesh);
 
 	registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
@@ -540,6 +540,8 @@ void render_room(RenderSystem* render, Room& room)
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = { window_width_px / 2, window_height_px / 2 };
 	motion.scale = vec2({ BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT });
+
+	registry.noCollisionChecks.emplace(entity);
 	registry.renderRequests.insert(
 		entity,
 		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
@@ -623,7 +625,7 @@ Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 
 	registry.colors.emplace(entity) = {1.f, 0.f, 0.f};
 
-
+	registry.noCollisionChecks.emplace(entity);
 	registry.debugComponents.emplace(entity);
 	return entity;
 }
@@ -652,6 +654,8 @@ Entity createStatusHud(RenderSystem* render)
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = vec2{ window_width_px / 2, window_height_px / 2 };
 	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.noCollisionChecks.emplace(entity);
 
 	registry.renderRequests.insert(
 		entity,

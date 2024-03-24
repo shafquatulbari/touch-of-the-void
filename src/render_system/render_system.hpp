@@ -37,15 +37,14 @@ class RenderSystem {
 		// ex std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::CHICKEN, mesh_path("chicken.obj"))
 		
 		// player.obj contains points to a convex hull
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::PLAYER_CH, mesh_path("player_ch.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET_CH, mesh_path("bullet_ch.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH, mesh_path("enemy_spitter_ch.obj"))
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::PLAYER_CH, mesh_path("player.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET_CH, mesh_path("bullet.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH, mesh_path("enemy_spitter.obj"))
 	};
 
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, texture_count> texture_paths = {
 		// TODO: specify textures of other assets here like so:
-
 
 		textures_path("bullet_16x16.png"),
 

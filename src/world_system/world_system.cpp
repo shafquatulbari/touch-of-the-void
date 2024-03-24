@@ -297,20 +297,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	Motion& p_motion = registry.motions.get(player);
 
 	Transform t;
-	//t.translate(p_motion.position);
+	t.translate(p_motion.position);
 	t.rotate(p_motion.look_angle);
 	t.scale(p_motion.scale);
 
 	p_mesh_lines.clear();
 	for (int i = 0; i < m_vertices.size(); i++) {
-		vec3 v1 = t.mat * vec3({ m_vertices[i].position.x, -m_vertices[i].position.y, 0.f });
+		vec3 v1 = t.mat * vec3({ m_vertices[i].position.x, -m_vertices[i].position.y, 1.f });
 		vec3 v2 = t.mat * vec3({ 
 			m_vertices[(i + 1) % m_vertices.size()].position.x, 
 			-m_vertices[(i + 1) % m_vertices.size()].position.y, 
-			0.f 
+			1.f 
 		});
 
-		vec2 center = 0.5f * (vec2({ v1.x, v1.y }) + vec2({ v2.x, v2.y })) + p_motion.position;
+		vec2 center = 0.5f * (vec2({ v1.x, v1.y }) + vec2({ v2.x, v2.y }));
 		float angle = atan2(v1.y - v2.y, v1.x - v2.x);
 
 		float line_w = glm::length(vec3({v1.x - v2.x, v1.y - v2.y, 0}));
@@ -418,7 +418,7 @@ void WorldSystem::enter_room(Room& room, vec2 player_pos) {
 }
 
 // Compute collisions between entities
-void WorldSystem::handle_collisions() {
+void WorldSystem::handle_collisions(float elapsed_ms) {
 	// Loop over all collisions detected by the physics system
 	auto& collisionsRegistry = registry.collisions;
 	for (uint i = 0; i < collisionsRegistry.components.size(); i++) {
@@ -498,8 +498,9 @@ void WorldSystem::handle_collisions() {
 					}
 				}
 			}
+			
 			else {
-				bounce_back(player, entity_other, scalar);
+				//bounce_back(player, entity_other, scalar, elapsed_ms);
 			}
 		}
 
@@ -723,7 +724,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 }
 
-void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar) {
+void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar, float step_seconds) {
 	// Bounce back functionality by moving back by a bit
 	//Motion& playerMotion = registry.motions.get(player);
 	//playerMotion.velocity *= -1;
@@ -732,9 +733,41 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar) {
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
 	
-	vec2 player_to_obs = obs_motion.position - p_motion.position;
-	p_motion.position += glm::normalize(player_to_obs) * scalar;
-	
+	vec2 directions[] = {
+		vec2({0.f, 1.f}), // up
+		vec2({1.f, 0.f}), // right
+		vec2({0.f, -1.f}), // down
+		vec2({-1.f, 0.f}) // left
+	};
+
+	float max_prod = 0.0f;
+	unsigned int best_match = -1;
+	for (unsigned int i = 0; i < 4; i++) {
+		float dot_product = glm::dot(glm::normalize(p_motion.velocity), directions[i]);
+		if (dot_product > max_prod) {
+			max_prod = dot_product;
+			best_match = i;
+		}
+	}
+
+	if (best_match == 0) {
+		// player going up
+		p_motion.position.y = obs_motion.position.y + obs_motion.scale.y / 2 + p_motion.scale.y / 2;
+		return;
+	} else if (best_match == 1) {
+		// player going right
+		p_motion.position.x = obs_motion.position.x - obs_motion.scale.x / 2 - p_motion.scale.x / 2;
+		return;
+	} else if (best_match == 2) {
+		// player going down
+		p_motion.position.y = obs_motion.position.y - obs_motion.scale.y / 2 - p_motion.scale.y / 2;
+		return;
+	} else if (best_match == 3) {
+		// player going right
+		p_motion.position.x = obs_motion.position.x + obs_motion.scale.x / 2 + p_motion.scale.x / 2;
+		return;
+	}
+
 	//vec2& p_pos = p_motion.position;
 	//vec2& p_size = p_motion.scale;
 	//vec2& obs_pos = obs_motion.position;
