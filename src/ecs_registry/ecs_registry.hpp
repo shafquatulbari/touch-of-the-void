@@ -33,7 +33,6 @@ public:
 	ComponentContainer<AnimationTimer> animationTimers;
 	ComponentContainer<NoCollisionCheck> noCollisionChecks;
 	ComponentContainer<OnFireTimer> onFireTimers;
-	ComponentContainer<Line> lines;
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
 	ECSRegistry()
@@ -59,7 +58,6 @@ public:
 		registry_list.push_back(&noCollisionChecks);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&animationTimers);
-		registry_list.push_back(&lines);
 		registry_list.push_back(&onFireTimers);
 	}
 
