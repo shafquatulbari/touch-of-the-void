@@ -61,7 +61,6 @@ public:
 		registry_list.push_back(&noCollisionChecks);
 		registry_list.push_back(&animations);
 		registry_list.push_back(&animationTimers);
-		registry_list.push_back(&lines);
 		registry_list.push_back(&onFireTimers);
 		registry_list.push_back(&damagedTimers);
 		registry_list.push_back(&levels);
