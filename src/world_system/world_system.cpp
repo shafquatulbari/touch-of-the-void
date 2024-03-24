@@ -293,31 +293,31 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	}*/
 
 	/////////////////////////////////////////////////////////////////////////////////
-	std::vector<ColoredVertex>& m_vertices = registry.meshPtrs.get(player)->vertices;
-	Motion& p_motion = registry.motions.get(player);
+	//std::vector<ColoredVertex>& m_vertices = registry.meshPtrs.get(player)->vertices;
+	//Motion& p_motion = registry.motions.get(player);
 
-	Transform t;
-	t.translate(p_motion.position);
-	t.rotate(p_motion.look_angle);
-	t.scale(p_motion.scale);
+	//Transform t;
+	//t.translate(p_motion.position);
+	//t.rotate(p_motion.look_angle);
+	//t.scale(p_motion.scale);
 
-	p_mesh_lines.clear();
-	for (int i = 0; i < m_vertices.size(); i++) {
-		vec3 v1 = t.mat * vec3({ m_vertices[i].position.x, -m_vertices[i].position.y, 1.f });
-		vec3 v2 = t.mat * vec3({ 
-			m_vertices[(i + 1) % m_vertices.size()].position.x, 
-			-m_vertices[(i + 1) % m_vertices.size()].position.y, 
-			1.f 
-		});
+	//p_mesh_lines.clear();
+	//for (int i = 0; i < m_vertices.size(); i++) {
+	//	vec3 v1 = t.mat * vec3({ m_vertices[i].position.x, -m_vertices[i].position.y, 1.f });
+	//	vec3 v2 = t.mat * vec3({ 
+	//		m_vertices[(i + 1) % m_vertices.size()].position.x, 
+	//		-m_vertices[(i + 1) % m_vertices.size()].position.y, 
+	//		1.f 
+	//	});
 
-		vec2 center = 0.5f * (vec2({ v1.x, v1.y }) + vec2({ v2.x, v2.y }));
-		float angle = atan2(v1.y - v2.y, v1.x - v2.x);
+	//	vec2 center = 0.5f * (vec2({ v1.x, v1.y }) + vec2({ v2.x, v2.y }));
+	//	float angle = atan2(v1.y - v2.y, v1.x - v2.x);
 
-		float line_w = glm::length(vec3({v1.x - v2.x, v1.y - v2.y, 0}));
-		Entity e = createLine({center.x, center.y}, { line_w, 2.f }, angle, {1.f, 0.f, 0.f});
+	//	float line_w = glm::length(vec3({v1.x - v2.x, v1.y - v2.y, 0}));
+	//	Entity e = createLine({center.x, center.y}, { line_w, 2.f }, angle, {1.f, 0.f, 0.f});
 
-		p_mesh_lines.push_back(e);
-	}
+	//	//p_mesh_lines.push_back(e);
+	//}
 	/////////////////////////////////////////////////////////////////////////////////
 
 	return true;
@@ -500,7 +500,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			}
 			
 			else {
-				//bounce_back(player, entity_other, scalar, elapsed_ms);
+				bounce_back(player, entity_other);
 			}
 		}
 
@@ -724,7 +724,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 	}
 }
 
-void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar, float step_seconds) {
+void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	// Bounce back functionality by moving back by a bit
 	//Motion& playerMotion = registry.motions.get(player);
 	//playerMotion.velocity *= -1;
@@ -733,83 +733,99 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle, float scalar, floa
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
 	
-	vec2 directions[] = {
-		vec2({0.f, 1.f}), // up
-		vec2({1.f, 0.f}), // right
-		vec2({0.f, -1.f}), // down
-		vec2({-1.f, 0.f}) // left
+	//vec2 directions[] = {
+	//	vec2({0.f, 1.f}), // up
+	//	vec2({1.f, 0.f}), // right
+	//	vec2({0.f, -1.f}), // down
+	//	vec2({-1.f, 0.f}) // left
+	//};
+
+	//float max_prod = 0.0f;
+	//unsigned int best_match = -1;
+	//for (unsigned int i = 0; i < 4; i++) {
+	//	float dot_product = glm::dot(glm::normalize(p_motion.velocity), directions[i]);
+	//	if (dot_product > max_prod) {
+	//		max_prod = dot_product;
+	//		best_match = i;
+	//	}
+	//}
+
+	//if (best_match == 0) {
+	//	// player going up
+	//	p_motion.position.y = obs_motion.position.y + obs_motion.scale.y / 2 + p_motion.scale.y / 2;
+	//	return;
+	//} else if (best_match == 1) {
+	//	// player going right
+	//	p_motion.position.x = obs_motion.position.x - obs_motion.scale.x / 2 - p_motion.scale.x / 2;
+	//	return;
+	//} else if (best_match == 2) {
+	//	// player going down
+	//	p_motion.position.y = obs_motion.position.y - obs_motion.scale.y / 2 - p_motion.scale.y / 2;
+	//	return;
+	//} else if (best_match == 3) {
+	//	// player going right
+	//	p_motion.position.x = obs_motion.position.x + obs_motion.scale.x / 2 + p_motion.scale.x / 2;
+	//	return;
+	//}
+
+	vec2& p_pos = p_motion.previous_position;
+	vec2& p_size = p_motion.scale;
+	vec2& obs_pos = obs_motion.position;
+	vec2& obs_size = obs_motion.scale;
+
+	// Determine the direction of the player
+	// Source: https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-resolution
+	// Direction the player is going, origin is top-left
+	vec2 compass[] = {
+		vec2({0.f, 1.f}), // Down
+		vec2({1.f, 0.f}), // Right
+		vec2({0.f, -1.f}), // Up
+		vec2({-1.f, 0.f}), // Left
 	};
 
-	float max_prod = 0.0f;
-	unsigned int best_match = -1;
-	for (unsigned int i = 0; i < 4; i++) {
-		float dot_product = glm::dot(glm::normalize(p_motion.velocity), directions[i]);
-		if (dot_product > max_prod) {
-			max_prod = dot_product;
+	vec2 n_dif_vec = glm::normalize(obs_pos - p_pos);
+	int best_match = -1;
+	float max_prod = 0.f;
+	for (int i = 0; i < 4; i++) {
+		float dot_prod = glm::dot(n_dif_vec, compass[i]);
+		if (dot_prod > max_prod) {
+			max_prod = dot_prod;
 			best_match = i;
 		}
 	}
 
-	if (best_match == 0) {
-		// player going up
-		p_motion.position.y = obs_motion.position.y + obs_motion.scale.y / 2 + p_motion.scale.y / 2;
-		return;
-	} else if (best_match == 1) {
-		// player going right
-		p_motion.position.x = obs_motion.position.x - obs_motion.scale.x / 2 - p_motion.scale.x / 2;
-		return;
-	} else if (best_match == 2) {
-		// player going down
-		p_motion.position.y = obs_motion.position.y - obs_motion.scale.y / 2 - p_motion.scale.y / 2;
-		return;
-	} else if (best_match == 3) {
-		// player going right
-		p_motion.position.x = obs_motion.position.x + obs_motion.scale.x / 2 + p_motion.scale.x / 2;
-		return;
-	}
-
-	//vec2& p_pos = p_motion.position;
-	//vec2& p_size = p_motion.scale;
-	//vec2& obs_pos = obs_motion.position;
-	//vec2& obs_size = obs_motion.scale;
-	//
 	//float p_minx = p_pos.x - p_size.x / 2;
 	//float p_maxx = p_pos.x + p_size.x / 2;
 	//float p_miny = p_pos.y + p_size.y / 2;
 	//float p_maxy = p_pos.y - p_size.y / 2;
 	//
-	//float obs_left = obs_pos.x - obs_size.x / 2;
-	//float obs_right = obs_pos.x + obs_size.x / 2;
-	//float obs_bottom = obs_pos.y + obs_size.y / 2;
-	//float obs_top = obs_pos.y - obs_size.y / 2;
+	float obs_left = obs_pos.x - obs_size.x / 2;
+	float obs_right = obs_pos.x + obs_size.x / 2;
+	float obs_bottom = obs_pos.y + obs_size.y / 2;
+	float obs_top = obs_pos.y - obs_size.y / 2;
 	//
 	//float angle = atan2(obs_pos.y - p_pos.y, obs_pos.x - p_pos.x);
-	//
-	//float obs_topleft_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_left);
-	//float obs_topright_angle = atan2(obs_pos.y - obs_top, obs_pos.x - obs_right);
-	//float obs_bottomleft_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_left);
-	//float obs_bottomright_angle = atan2(obs_pos.y - obs_bottom, obs_pos.x - obs_right);
-	//
-	//// Check if player travels upwards
-	//if (angle > obs_bottomright_angle && angle <= obs_bottomleft_angle) {
-	//	p_pos.y = obs_bottom + p_size.y / 2;
-	//	p_motion.velocity.y = 0;
-	//}
-	//// Check if player travels downwards
-	//else if (angle > obs_topleft_angle && angle <= obs_topright_angle) {
-	//	p_pos.y = obs_top - p_size.y / 2;
-	//	p_motion.velocity.y = 0;
-	//}
-	//// Check if player travels rightwards
-	//else if (angle > obs_bottomleft_angle && angle <= obs_topleft_angle) {	
-	//	p_pos.x = obs_left - p_size.x / 2;
-	//	p_motion.velocity.x = 0;
-	//}
-	//// Check if player travels leftwards
-	//else if (angle >= obs_topright_angle || angle <= obs_bottomright_angle) {
-	//	p_pos.x = obs_right + p_size.x / 2;
-	//	p_motion.velocity.x = 0;
-	//}
+	
+	// Check if player travels upwards
+	if (best_match == 2) {
+		p_motion.position.y = obs_bottom + p_size.y / 2;
+		p_motion.velocity.y = 0;
+	}
+	// Check if player travels downwards
+	else if (best_match == 0) {
+		p_motion.position.y = obs_top - p_size.y / 2;
+		p_motion.velocity.y = 0;
+	}
+	// Check if player travels rightwards
+	else if (best_match == 1) {	
+		p_motion.position.x = obs_left - p_size.x / 2;
+		p_motion.velocity.x = 0;
+	}
+	// Check if player travels leftwards
+	else if (best_match == 3) {
+		p_motion.position.x = obs_right + p_size.x / 2;
+		p_motion.velocity.x = 0;
+	}
 }
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 

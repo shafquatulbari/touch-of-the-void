@@ -346,6 +346,8 @@ void update_motion(Motion &motion, float step_seconds)
 	// TODO: Update position with motion here
 	if (!motion.complex)
 	{
+		motion.previous_position = motion.position;
+
 		motion.position.x += motion.velocity.x * step_seconds;
 		motion.position.y += motion.velocity.y * step_seconds;
 
@@ -425,6 +427,8 @@ void update_motion(Motion &motion, float step_seconds)
 	}
 
 	// Update position
+	motion.previous_position = motion.position;
+
 	motion.position.x += motion.velocity.x * step_seconds;
 	motion.position.y += motion.velocity.y * step_seconds;
 

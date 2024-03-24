@@ -158,6 +158,8 @@ struct Motion {
 	vec2 velocity = { 0, 0 };
 	vec2 scale = { 10, 10 };
 
+	vec2 previous_position = {-1, -1};
+
 	float look_angle = 0; // angle the entity is looking at
 
 	bool complex = false; // if the entity has complex motion, i.e. not just a straight line
