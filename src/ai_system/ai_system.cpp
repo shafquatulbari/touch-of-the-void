@@ -477,6 +477,12 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
 }
 
 void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    // Check for line of sight to the player
+    if (lineOfSightClear(motion.position, playerPosition)) {
+        // Rotate turret to face player - Calculate the angle between the turret and the player
+        vec2 direction = normalize(playerPosition - motion.position);
+        motion.look_angle = atan2(direction.y, direction.x) + M_PI/2;
+
         // Shooting logic, no range for these long ranged turrets
         ai.shootingCooldown -= elapsed_ms / 1000.0f; // Cooldown reduction
         if (ai.shootingCooldown <= 0) {

@@ -92,24 +92,23 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			RENDER_LAYER::FOREGROUND });
 	}
 	if (aiType == AI::AIType::TURRET) {
-
-		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
-		animation.total_frames = 6;
-		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
-		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
-		animation.loop = true;
-
-		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
-		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
 		registry.renderRequests.insert(
 			entity,
-			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
+
+		auto base_entity = Entity();
+		Motion& base_motion = registry.motions.emplace(base_entity);
+		base_motion.position = position;
+		base_motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
+		registry.renderRequests.insert(
+			base_entity,
+			{ TEXTURE_ASSET_ID::ENEMY_TURRET_BASE,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::MIDDLEGROUND });
 	}
 	else if (aiType == AI::AIType::RANGED) {
 		registry.renderRequests.insert(
