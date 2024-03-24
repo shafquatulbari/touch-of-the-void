@@ -52,6 +52,7 @@ private:
 
 	// enter room
 	void enter_room(vec2 player_pos);
+	void remove_entities_on_entry();
 
 	// Progress game timers
 	bool progress_timers(Player& player, float elapsed_ms_since_last_update);

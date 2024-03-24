@@ -103,6 +103,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 		Motion& base_motion = registry.motions.emplace(base_entity);
 		base_motion.position = position;
 		base_motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
+		Obstacle& base_obstacle = registry.obstacles.emplace(base_entity);
 		registry.renderRequests.insert(
 			base_entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_BASE,

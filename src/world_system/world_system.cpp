@@ -351,14 +351,8 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	ScreenState& screen = registry.screenStates.components[0];
 	screen.darken_screen_factor = 0.0f;
 
-	for (Entity e : registry.motions.entities)
-	{
-		// remove all enemies, obstacles, animations
-		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e))
-		{
-			registry.remove_all_components_of(e);
-		}
-	}
+	remove_entities_on_entry();
+	
 
 	// Debugging for memory/component leaks
 	registry.list_all_components();
@@ -370,7 +364,18 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	// Move the player to position
 	registry.motions.get(player).position = player_pos;
 }
-
+// Remove entities between rooms
+ void WorldSystem::remove_entities_on_entry()
+{
+	for (Entity e : registry.motions.entities)
+	{
+		// remove all enemies, obstacles, animations
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e))
+		{
+			registry.remove_all_components_of(e);
+		}
+	}
+}
 // Compute collisions between entities
 void WorldSystem::handle_collisions() {
 	// Loop over all collisions detected by the physics system
