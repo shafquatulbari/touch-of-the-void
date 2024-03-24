@@ -677,77 +677,10 @@ void render_room(RenderSystem* render, Level& level)
 		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
-	createWalls(render, room);
-
-	// Setting initial motion values
-	auto entity = Entity();
-	// Setting initial motion values
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { window_width_px / 2, window_height_px / 2 };
-	motion.scale = vec2({ BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT });
-
-	registry.noCollisionChecks.emplace(entity);
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
-		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::BACKGROUND });
+	createWalls(render, room_to_render);
 }
 
-Entity createRoom(RenderSystem* render)
-{
-	// create a starting room with a room on each side
-	auto starting_room_entity = Entity();
-	auto bottom_room_entity = Entity();
-	auto top_room_entity = Entity();
-	auto left_room_entity = Entity();
-	auto right_room_entity = Entity();
 
-
-	Room& starting_room = registry.rooms.emplace(starting_room_entity);
-	printf("rooms2 size: %llu", registry.rooms.size());
-	
-	WorldGenerator world_generator;
-	// TODO: Generate room info randomly
-	world_generator.generateRoom(starting_room);
-	// set doors for starting room and point them to the respective entity
-	starting_room.has_bottom_door = true;
-	starting_room.bottom_room = bottom_room_entity;
-	starting_room.has_top_door = true;
-	starting_room.top_room = top_room_entity;
-	starting_room.has_right_door = true;
-	starting_room.right_room = right_room_entity;
-	starting_room.has_left_door = true;
-	starting_room.left_room = left_room_entity;
-	// Important note!!! when the rooms registry is emplacing an entity, the reference to the last entity is freed
-	// For example at this point, we cannot reference starting_room unless we retrieve it from the registry 
-	Room& bottom_room = registry.rooms.emplace(bottom_room_entity);
-	world_generator.generateRoom(bottom_room);
-	bottom_room.has_top_door = true;
-	bottom_room.top_room = starting_room_entity;
-
-	Room& top_room = registry.rooms.emplace(top_room_entity);
-	world_generator.generateRoom(top_room);
-	top_room.has_bottom_door = true;
-	top_room.bottom_room = starting_room_entity;
-
-	Room& left_room = registry.rooms.emplace(left_room_entity);
-	world_generator.generateRoom(left_room);
-	left_room.has_right_door = true;
-	left_room.right_room = starting_room_entity;
-
-	Room& right_room = registry.rooms.emplace(right_room_entity);
-	world_generator.generateRoom(right_room);
-	right_room.has_left_door = true;
-	right_room.left_room = starting_room_entity;
-
-
-	Room& room1 = registry.rooms.get(starting_room_entity);
-	render_room(render, room1);
-
-	return starting_room_entity;
-}
 
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 {
