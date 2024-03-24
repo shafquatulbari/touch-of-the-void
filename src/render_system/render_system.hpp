@@ -80,6 +80,10 @@ class RenderSystem {
 		textures_path("player_status_hud_1920x1024.png"),
 		textures_path("player_64x64.png"),
 
+		// SCREEN TEXTURES
+		textures_path("screen_death_1920x1024.png"),
+		textures_path("screen_start_1920x1024.png"),
+
 		// WEAPON TEXTURES
 		textures_path("weapon_icon_flame_thrower_equipped_192x192.png"),
 		textures_path("weapon_icon_flame_thrower_unequipped_128x128.png"),

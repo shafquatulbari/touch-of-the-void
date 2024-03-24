@@ -62,6 +62,10 @@ Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle
 Entity createFlamethrowerProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // debug line
 Entity createLine(vec2 position, vec2 scale);
+// the start screen
+Entity createStartScreen(RenderSystem* renderer);
+// the death screen
+Entity createDeathScreen(RenderSystem* renderer);
 // a hard coded room
 Entity createRoom(RenderSystem* renderer);
 // a text object
