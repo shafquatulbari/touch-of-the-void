@@ -51,6 +51,8 @@ class RenderSystem {
 
 		// ENEMIES TEXTURES
 		textures_path("enemy_spitter_64x64.png"),
+		textures_path("enemy_turret_base_64x64.png"),
+		textures_path("enemy_turret_gun_64x64.png"),
 
 		// ICON TEXTURES
 		textures_path("icon_infinity_122x54.png"),
