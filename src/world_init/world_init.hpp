@@ -68,7 +68,8 @@ Entity createRoom(RenderSystem* renderer);
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment);
 // render the room
 void render_room(RenderSystem* renderer, Level& level);
-
+// a muzzle flash
+Entity createMuzzleFlash(RenderSystem* render, Entity source);
 // an explosion animation
 Entity createExplosion(RenderSystem* renderer, vec2 position, float scale, bool repeat);
 // a fire animation

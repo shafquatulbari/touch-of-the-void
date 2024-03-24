@@ -121,6 +121,12 @@ struct OnFireTimer
 	Entity fire;
 };
 
+struct MuzzleFlashTimer
+{
+	float counter_ms = 0.0f;
+	Entity source;
+};
+
 // Obstacle component
 struct Obstacle
 {
@@ -392,16 +398,14 @@ enum class GEOMETRY_BUFFER_ID {
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 enum class SPRITE_SHEET_ID {
-	//BLUE_EFFECT = 0,
-	EXPLOSION = 0,
+	BLUE_EFFECT = 0,
+	EXPLOSION = BLUE_EFFECT + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
-	FIRE = ENEMY_EXPLODER + 1,
-	BULLET_IMPACT = FIRE + 1,
 	//GREEN_EFFECT = EXPLOSION + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
-	//RED_EFFECT = PURPLE_EFFECT + 1,
-	//YELLOW_EFFECT = RED_EFFECT + 1,
-	SPRITE_SHEET_COUNT = BULLET_IMPACT + 1
+	RED_EFFECT = ENEMY_EXPLODER + 1,
+	YELLOW_EFFECT = RED_EFFECT + 1,
+	SPRITE_SHEET_COUNT = YELLOW_EFFECT + 1
 };
 const int sheet_count = (int)SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
 

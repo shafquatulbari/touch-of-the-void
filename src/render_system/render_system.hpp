@@ -22,10 +22,11 @@ class RenderSystem {
 	std::array<ivec2, texture_count> texture_dimensions;
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
+		ivec2(20,16),
 		ivec2(12,1),
 		ivec2(6,1),
-		ivec2(4,1),
-		ivec2(4,1),
+		ivec2(20,16),
+		ivec2(20,16)
 	};
 	std::array<ivec2, sheet_count> sheet_dimensions;
 
@@ -111,15 +112,13 @@ class RenderSystem {
 	std::array<GLuint, sheet_count> sheets;
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
-		//sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("explosion_192x192.png"),
 		sheets_path("exploding_skull_64x64.png"),
-		sheets_path("fire_32x32.png"),
-		sheets_path("bullet_impact_32x32.png"),
 		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
-		//sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
-		//sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")
+		sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")
 	};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
