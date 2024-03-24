@@ -13,12 +13,13 @@
 
 // Game configuration
 // TODO: set hard coded game configuration values here
+bool fullscreen;
 
 // Create the world
 WorldSystem::WorldSystem()
 {
 	// TODO: world initialization here
-	
+	fullscreen = 0;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -68,7 +69,7 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
 	// Create the main window (for rendering, keyboard, and mouse input)
-	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
+	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
 	if (window == nullptr) {
 		fprintf(stderr, "Failed to glfwCreateWindow");
 		return nullptr;
@@ -305,12 +306,12 @@ void WorldSystem::restart_game() {
 
 		createStartScreen(renderer);
 		//// Tutorial Text
-		createText(renderer, "CONTROLS", { 38.0f, 644.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "WASD to move", { 30.0f, 724.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Mouse to aim", { 30.0f, 764.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Right-Click to shoot", { 30.0f, 804.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "R to reload", { 30.0f, 844.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Q/E to change weapons", { 30.0f, 884.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "CONTROLS", { 30.0f, 674.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "WASD to move", { 30.0f, 714.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Mouse to aim", { 30.0f, 754.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Right-Click to shoot", { 30.0f, 794.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "R to reload", { 30.0f, 834.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Q/E to change weapons", { 30.0f, 874.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
 		break;
 
@@ -674,6 +675,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// FPS
 		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
 			debugging.show_fps = !debugging.show_fps;
+		}
+
+		if (action == GLFW_RELEASE && key == GLFW_KEY_P) {
+			fullscreen = !fullscreen;
 		}
 
 		// Player keyboard controls
