@@ -103,9 +103,12 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
     vec2 endGrid = toGridCoord(end);
 
     // Bresenham's Line Algorithm variables
-    int dx = abs(int(endGrid.x - startGrid.x)), sx = startGrid.x < endGrid.x ? 1 : -1;
-    int dy = -abs(int(endGrid.y - startGrid.y)), sy = startGrid.y < endGrid.y ? 1 : -1;
-    int err = dx + dy, e2; // error value e_xy
+    int dx = abs(int(endGrid.x - startGrid.x));
+    int sx = startGrid.x < endGrid.x ? 1 : -1;
+    int dy = -abs(int(endGrid.y - startGrid.y));
+    int sy = startGrid.y < endGrid.y ? 1 : -1;
+    int err = dx + dy; // error value e_xy
+    int e2; 
 
     while (true) {
         // Check for obstacle at current grid position
