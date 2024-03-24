@@ -575,7 +575,7 @@ void render_room(RenderSystem* render, Level& level)
 	std::cout << "created obstacles" << std::endl;
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::RANGED, AI::AIType::RANGED, AI::AIType::RANGED };
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET };
 
 	// Create each enemy with their specified type
 	for (auto& pos : room_to_render.enemy_positions) {
