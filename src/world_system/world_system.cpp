@@ -733,6 +733,46 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
 	
+	vec2 directions[] = {
+		vec2({0.f, 1.f}), // up
+		vec2({1.f, 0.f}), // right
+		vec2({0.f, -1.f}), // down
+		vec2({-1.f, 0.f}) // left
+	};
+
+	float max_prod = 0.0f;
+	unsigned int best_match = -1;
+	for (unsigned int i = 0; i < 4; i++) {
+		float dot_product = glm::dot(glm::normalize(p_motion.velocity), directions[i]);
+		if (dot_product > max_prod) {
+			max_prod = dot_product;
+			best_match = i;
+		}
+	}
+
+	if (best_match == 0) {
+		// player going up
+		p_motion.position.y = obs_motion.position.y + obs_motion.scale.y / 2 + p_motion.scale.y / 2;
+		return;
+	} else if (best_match == 1) {
+		// player going right
+		p_motion.position.x = obs_motion.position.x - obs_motion.scale.x / 2 - p_motion.scale.x / 2;
+		return;
+	} else if (best_match == 2) {
+		// player going down
+		p_motion.position.y = obs_motion.position.y - obs_motion.scale.y / 2 - p_motion.scale.y / 2;
+		return;
+	} else if (best_match == 3) {
+		// player going right
+		p_motion.position.x = obs_motion.position.x + obs_motion.scale.x / 2 + p_motion.scale.x / 2;
+		return;
+	}
+
+	//vec2& p_pos = p_motion.position;
+	//vec2& p_size = p_motion.scale;
+	//vec2& obs_pos = obs_motion.position;
+	//vec2& obs_size = obs_motion.scale;
+	//
 	//vec2 directions[] = {
 	//	vec2({0.f, 1.f}), // up
 	//	vec2({1.f, 0.f}), // right
