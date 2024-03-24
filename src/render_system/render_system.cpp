@@ -499,9 +499,9 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
-	for (Line& line : registry.lines.components) {
-		drawLine(line);
-	}
+	//for (Line& line : registry.lines.components) {
+	//	drawLine(line);
+	//}
 
 	drawText(projection_2D);
 

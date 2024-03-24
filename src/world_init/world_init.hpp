@@ -62,12 +62,16 @@ Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle
 Entity createFlamethrowerProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // debug line
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color);
-// a hard coded room
-Entity createRoom(RenderSystem* renderer);
+// the start screen
+Entity createStartScreen(RenderSystem* renderer);
+// the death screen
+Entity createDeathScreen(RenderSystem* renderer);
 // a text object
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment);
 // render the room
-void render_room(RenderSystem* renderer, Room& room);
+void render_room(RenderSystem* renderer, Level& level);
+// a muzzle flash
+Entity createMuzzleFlash(RenderSystem* render, Entity source);
 // an explosion animation
 Entity createExplosion(RenderSystem* renderer, vec2 position, float scale, bool repeat);
 // a fire animation
@@ -82,3 +86,9 @@ Entity createWeaponEquippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID
 Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_ID textureId);
 // an infinity icon
 Entity createIconInfinity(RenderSystem* render, vec2 pos);
+// a game level
+Entity createLevel(RenderSystem* render);
+// clear walls
+void clearExistingWalls();
+// create walls
+void createWalls(RenderSystem* render, Room& room);

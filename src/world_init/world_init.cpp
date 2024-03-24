@@ -24,7 +24,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	shield.current_shield = 100.0f;
 	shield.max_shield = 100.0f;
 	shield.recharge_delay = 2000.0f;
-	shield.recharge_rate = 10.0f;
+	shield.recharge_rate = 1.0f;
 
 	// Setting initial health values
 	Health& health = registry.healths.emplace(entity);
@@ -68,6 +68,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	//registry.meshPtrs.emplace(entity, &mesh);
 
 	registry.obstacles.emplace(entity);
+	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 
 		Animation& animation = registry.animations.emplace(entity);
@@ -87,6 +88,26 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
+	}
+	if (aiType == AI::AIType::TURRET) {
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+
+		auto base_entity = Entity();
+		Motion& base_motion = registry.motions.emplace(base_entity);
+		base_motion.position = position;
+		base_motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
+		registry.obstacles.emplace(base_entity);
+		registry.renderRequests.insert(
+			base_entity,
+			{ TEXTURE_ASSET_ID::ENEMY_TURRET_BASE,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::MIDDLEGROUND });
 	}
 	else if (aiType == AI::AIType::RANGED) {
 		registry.renderRequests.insert(
@@ -142,9 +163,8 @@ Entity createBackground(RenderSystem *renderer)
 			RENDER_LAYER::BACKGROUND});
 
 	// return the starting room entity
-	return createRoom(renderer);
-	//return Entity();
-	//return entity;
+	//return createLevel(renderer);
+	return Entity();
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -197,10 +217,10 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	Motion& motion = registry.motions.emplace(entity);
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
-	motion.look_angle = angle + M_PI / 4;
-	motion.scale = vec2({ BULLET_BB_WIDTH * 3, BULLET_BB_HEIGHT * 3 });
+	motion.look_angle = angle + M_PI ;
+	motion.scale = vec2({ 48.f, 48.f });
 	motion.velocity = vec2({ 2000.0f * cos(angle), 2000.0f * sin(angle) });
-	
+
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
 
@@ -210,9 +230,20 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
 	deadly.damage = weapon_stats[projectile.weapon_type].damage;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 5}, {12, 5}, {13, 5}, {14, 5} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BULLET,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
@@ -275,9 +306,20 @@ Entity createRocketProjectile(RenderSystem* render, vec2 position, float angle, 
 	Motion& motion = registry.motions.emplace(entity);
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
-	motion.look_angle = angle + M_PI / 4;
-	motion.scale = vec2({ BULLET_BB_WIDTH * 2.5, BULLET_BB_HEIGHT * 2.5 });
+	motion.look_angle = angle;
+	motion.scale = vec2({ 64.f , 64.f });
 	motion.velocity = vec2({ 400.0f * cos(angle), 400.0f * sin(angle) });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 1}, {12, 1}, {13, 1}, {14, 1} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
 	
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
@@ -290,7 +332,7 @@ Entity createRocketProjectile(RenderSystem* render, vec2 position, float angle, 
 
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BULLET,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
@@ -314,7 +356,8 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
-	motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
+	//motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
+	motion.scale = vec2({ 32.f * glm::linearRand(0.8f, 1.2f), 32.f * glm::linearRand(0.8f, 1.2f) });
 	motion.velocity = vec2({ 600.0f * cos(angle), 600.0f * sin(angle) });
 
 	// Set the source of the projectile
@@ -326,17 +369,66 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
 	deadly.damage = weapon_stats[projectile.weapon_type].damage;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {6, 9}, {7, 9}, {8, 9}, {9, 9} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
 	registry.renderRequests.insert(
 		entity,
-		{ TEXTURE_ASSET_ID::BULLET,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
 
-	registry.colors.emplace(entity);
-	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);
+	/*registry.colors.emplace(entity);
+	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);*/
 
 	return entity;
+}
+
+Entity createStartScreen(RenderSystem* renderer) {
+		auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::START_SCREEN,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::BACKGROUND });
+
+	return entity;
+
+}
+
+Entity createDeathScreen(RenderSystem* renderer) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DEATH_SCREEN,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::BACKGROUND });
+
+	return entity;
+
 }
 
 // TODO: figure out whether invidiual components are smart and whether this should be moved to a separate file
@@ -362,7 +454,7 @@ void createWalls(RenderSystem* render, Room& room)
 	top_motion.scale = vec2({ WALL_BB_WIDTH, WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(topWall);
-	registry.obstacles.get(topWall).is_passable = false;
+	registry.obstacles.get(topWall).is_wall = true;
 	registry.renderRequests.insert(
 		topWall,
 		{ room.has_top_door ? TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR
@@ -394,6 +486,8 @@ void createWalls(RenderSystem* render, Room& room)
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
+	registry.obstacles.get(bottomWall).is_wall = true;
+
 	if (room.has_bottom_door) {
 		auto bottom_door = Entity();
 		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
@@ -410,6 +504,8 @@ void createWalls(RenderSystem* render, Room& room)
 	left_motion.scale = vec2({ WALL_BB_HEIGHT , WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(leftWall);
+	registry.obstacles.get(leftWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		leftWall,
 		{ room.has_left_door ? TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR
@@ -433,6 +529,8 @@ void createWalls(RenderSystem* render, Room& room)
 	right_motion.scale = vec2({ WALL_BB_HEIGHT, WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(rightWall);
+	registry.obstacles.get(rightWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		rightWall,
 		{ room.has_right_door ? TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR
@@ -462,6 +560,8 @@ void createWalls(RenderSystem* render, Room& room)
 	topLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(topLeftWall);
+	registry.obstacles.get(topLeftWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		topLeftWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
@@ -488,6 +588,8 @@ void createWalls(RenderSystem* render, Room& room)
 	bottomLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomLeftWall);
+	registry.obstacles.get(bottomLeftWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		bottomLeftWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
@@ -501,6 +603,8 @@ void createWalls(RenderSystem* render, Room& room)
 	bottomRight_motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomRightWall);
+	registry.obstacles.get(bottomRightWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		bottomRightWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
@@ -509,12 +613,53 @@ void createWalls(RenderSystem* render, Room& room)
 		RENDER_LAYER::MIDDLEGROUND });
 
 }
-void render_room(RenderSystem* render, Room& room)
-{
-	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
-	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
-	for (auto& pos : room.obstacle_positions)
+void clearExistingWalls()
+{
+	for (Entity e : registry.motions.entities)
+	{
+		// remove all enemies, obstacles, animations
+		if (registry.obstacles.has(e))
+		{
+			Obstacle obstacle = registry.obstacles.get(e);
+			if (obstacle.is_wall)
+			{
+				registry.remove_all_components_of(e);
+			}
+		}
+	}
+}
+
+void render_room(RenderSystem* render, Level& level)
+{
+	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
+	
+	if (!current_room.is_visited) {
+		// set the room to visited
+		current_room.is_visited = true;
+		WorldGenerator world_generator;
+
+		if (level.num_rooms_until_boss <= 0)
+		{
+			world_generator.generateNewRoom(current_room, level, true);
+			std::cout << "boss room generated, back to rendering" << std::endl;
+		} else
+		{
+			world_generator.generateNewRoom(current_room, level, false);
+		}
+		
+	} else {
+		std::cout << "revisiting room!" << std::endl;
+	}
+
+	// in case current room was not visited, re-retrieve current room 
+	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
+
+
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+
+	for (auto& pos : room_to_render.obstacle_positions)
 	{
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
@@ -522,87 +667,20 @@ void render_room(RenderSystem* render, Room& room)
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET };
 
 	// Create each enemy with their specified type
-	for (auto& pos : room.enemy_positions) {
+	for (auto& pos : room_to_render.enemy_positions) {
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
 		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
-	createWalls(render, room);
-
-	// Setting initial motion values
-	auto entity = Entity();
-	// Setting initial motion values
-	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { window_width_px / 2, window_height_px / 2 };
-	motion.scale = vec2({ BACKGROUND_BB_WIDTH, BACKGROUND_BB_HEIGHT });
-
-	registry.noCollisionChecks.emplace(entity);
-	registry.renderRequests.insert(
-		entity,
-		{ TEXTURE_ASSET_ID::LEVEL1_BACKGROUND,
-		 EFFECT_ASSET_ID::TEXTURED,
-		 GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::BACKGROUND });
+	createWalls(render, room_to_render);
 }
 
-Entity createRoom(RenderSystem* render)
-{
-	// create a starting room with a room on each side
-	auto starting_room_entity = Entity();
-	auto bottom_room_entity = Entity();
-	auto top_room_entity = Entity();
-	auto left_room_entity = Entity();
-	auto right_room_entity = Entity();
 
-
-	Room& starting_room = registry.rooms.emplace(starting_room_entity);
-	printf("rooms2 size: %llu", registry.rooms.size());
-	
-	WorldGenerator world_generator;
-	// TODO: Generate room info randomly
-	world_generator.generateRoom(starting_room);
-	// set doors for starting room and point them to the respective entity
-	starting_room.has_bottom_door = true;
-	starting_room.bottom_room = bottom_room_entity;
-	starting_room.has_top_door = true;
-	starting_room.top_room = top_room_entity;
-	starting_room.has_right_door = true;
-	starting_room.right_room = right_room_entity;
-	starting_room.has_left_door = true;
-	starting_room.left_room = left_room_entity;
-	// Important note!!! when the rooms registry is emplacing an entity, the reference to the last entity is freed
-	// For example at this point, we cannot reference starting_room unless we retrieve it from the registry 
-	Room& bottom_room = registry.rooms.emplace(bottom_room_entity);
-	world_generator.generateRoom(bottom_room);
-	bottom_room.has_top_door = true;
-	bottom_room.top_room = starting_room_entity;
-
-	Room& top_room = registry.rooms.emplace(top_room_entity);
-	world_generator.generateRoom(top_room);
-	top_room.has_bottom_door = true;
-	top_room.bottom_room = starting_room_entity;
-
-	Room& left_room = registry.rooms.emplace(left_room_entity);
-	world_generator.generateRoom(left_room);
-	left_room.has_right_door = true;
-	left_room.right_room = starting_room_entity;
-
-	Room& right_room = registry.rooms.emplace(right_room_entity);
-	world_generator.generateRoom(right_room);
-	right_room.has_left_door = true;
-	right_room.left_room = starting_room_entity;
-
-
-	Room& room1 = registry.rooms.get(starting_room_entity);
-	render_room(render, room1);
-
-	return starting_room_entity;
-}
 
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 {
@@ -667,6 +745,41 @@ Entity createStatusHud(RenderSystem* render)
 	return entity;
 }
 
+Entity createMuzzleFlash(RenderSystem* render, Entity source) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& source_motion = registry.motions.get(source);
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = source_motion.position + (52.f * vec2{ cos(source_motion.look_angle - M_PI/2), sin(source_motion.look_angle - M_PI/2) });
+	motion.scale = vec2({ 48.f, 48.f });
+	motion.look_angle = source_motion.look_angle - M_PI;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;	
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 13}, {12, 13}, {13, 13}, {14, 13} };
+	animation.frame_durations_ms = { 50, 50, 50, 50 };
+	animation.loop = false;
+
+	MuzzleFlashTimer& muzzle_flash_timer = registry.muzzleFlashTimers.emplace(entity);
+	muzzle_flash_timer.counter_ms = 400;
+	muzzle_flash_timer.source = source;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
 Entity createExplosion(RenderSystem* render, vec2 pos, float scale, bool repeat)
 {
 	auto entity = Entity();
@@ -709,10 +822,10 @@ Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 
 	assert(!registry.animations.has(entity));
 	Animation& animation = registry.animations.emplace(entity);
-	animation.sheet_id = SPRITE_SHEET_ID::FIRE;
+	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
 	animation.total_frames = 4;
 	animation.current_frame = 0;
-	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.sprites = { {11, 7}, {12, 7}, {13, 7}, {14, 7} };
 	animation.frame_durations_ms = { 100, 100, 100, 100 };
 	animation.loop = repeat;
 
@@ -740,10 +853,10 @@ Entity createBulletImpact(RenderSystem* render, vec2 pos, float scale, bool repe
 
 	assert(!registry.animations.has(entity));
 	Animation& animation = registry.animations.emplace(entity);
-	animation.sheet_id = SPRITE_SHEET_ID::BULLET_IMPACT;
+	animation.sheet_id = SPRITE_SHEET_ID::YELLOW_EFFECT;
 	animation.total_frames = 4;
 	animation.current_frame = 0;
-	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.sprites = { {6, 7}, {7, 7}, {8, 7}, {9, 7} };
 	animation.frame_durations_ms = { 50, 50, 50, 50 };
 	animation.loop = repeat;
 
@@ -814,5 +927,27 @@ Entity createIconInfinity(RenderSystem* render, vec2 pos)
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::UI });
 
+	return entity;
+}
+
+Entity createLevel(RenderSystem* render)
+{
+	auto entity = Entity();
+
+	Level& level = registry.levels.emplace(entity);
+	level.current_level = 1;
+
+	// create a starting room with a room on each side
+	auto starting_room_entity = Entity();
+	level.current_room = std::pair<int, int>(0, 0);
+	level.rooms.emplace(level.current_room, starting_room_entity);
+
+	Room& starting_room = registry.rooms.emplace(starting_room_entity);
+	WorldGenerator world_generator;
+
+	// modifies Room component using pointer to Room component
+	world_generator.generateStartingRoom(starting_room, level);
+
+	render_room(render, level);
 	return entity;
 }
