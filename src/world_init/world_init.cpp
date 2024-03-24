@@ -103,7 +103,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 		Motion& base_motion = registry.motions.emplace(base_entity);
 		base_motion.position = position;
 		base_motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
-		Obstacle& base_obstacle = registry.obstacles.emplace(base_entity);
+		registry.obstacles.emplace(base_entity);
 		registry.renderRequests.insert(
 			base_entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_BASE,
@@ -393,6 +393,44 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);*/
 
 	return entity;
+}
+
+Entity createStartScreen(RenderSystem* renderer) {
+		auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::START_SCREEN,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::BACKGROUND });
+
+	return entity;
+
+}
+
+Entity createDeathScreen(RenderSystem* renderer) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::DEATH_SCREEN,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::BACKGROUND });
+
+	return entity;
+
 }
 
 // TODO: figure out whether invidiual components are smart and whether this should be moved to a separate file

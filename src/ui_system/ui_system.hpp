@@ -35,8 +35,15 @@ private:
 	float fps;
 	float maxFps;
 	float frameTime;
+
+	// Map
+	std::pair<int, int> current_room;
+	std::vector<Entity> drawn_rooms;
+
+	void UISystem::createMap(Level& level);
+	void UISystem::updateMap(Level& level);
 public:
-	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier);
+	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, Level& current_level);
 	void reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
-	void update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore, bool showFPS);
+	void update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore, bool showFPS, Level& current_level);
 };
