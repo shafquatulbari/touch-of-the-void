@@ -46,7 +46,6 @@ private:
 	void on_mouse_move(vec2 pos);
 	void on_mouse_click(int button, int action, int mod);
 
-	Room get_current_room();
 
 	// restart level
 	void restart_game();
