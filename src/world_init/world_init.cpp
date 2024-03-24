@@ -554,6 +554,11 @@ void createWalls(RenderSystem* render, Room& room)
 	auto bottomLeftWall = Entity();
 	auto bottomRightWall = Entity();
 
+	registry.noCollisionChecks.emplace(topLeftWall);
+	registry.noCollisionChecks.emplace(topRightWall);
+	registry.noCollisionChecks.emplace(bottomLeftWall);
+	registry.noCollisionChecks.emplace(bottomRightWall);
+
 	// top left wall
 	Motion& topLeft_motion = registry.motions.emplace(topLeftWall);
 	topLeft_motion.position = vec2({ x_min, y_min });
