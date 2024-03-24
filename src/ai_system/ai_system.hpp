@@ -13,9 +13,9 @@ private:
 public:
 	AISystem(RenderSystem* _renderer) : renderer(_renderer) {};
 
-	bool lineOfSightClear(const vec2& start, const vec2& end);
+	bool AISystem::lineOfSightClear(const vec2& start, const vec2& end);
 
-	bool isObstacleAtPosition(const vec2& position);
+	bool isObstacleAtPosition(const vec2& gridPosition);
 
 	std::vector<vec2> generateNeighbors(const vec2& position);
 

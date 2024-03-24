@@ -39,11 +39,9 @@ vec2 AISystem::clampPositionToBounds(const vec2& position) {
     return vec2(clampedX, clampedY);
 }
 
+/*
 bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
-    // http://www.cse.yorku.ca/~amana/research/grid.pdf
-    // Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
-    // This is a simple implementation of the Bresenham's line algorithm
-
+    
     int x = static_cast<int>(start.x - xMin);
     int cellX = static_cast<int>(floor((x / cellSize)));
     int y = static_cast<int>(start.y - yMin);
@@ -91,21 +89,61 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
 	}
    return true;
 }
+*/
+// http://www.cse.yorku.ca/~amana/research/grid.pdf
+ // Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
+ // This is a simple implementation of the Bresenham's line algorithm
+bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
+    // Convert start and end positions from world coordinates to grid coordinates
+    auto toGridCoord = [&](const vec2& pos) -> vec2 {
+        return vec2(floor((pos.x - xMin) / cellSize), floor((pos.y - yMin) / cellSize));
+        };
+
+    vec2 startGrid = toGridCoord(start);
+    vec2 endGrid = toGridCoord(end);
+
+    // Bresenham's Line Algorithm variables
+    int dx = abs(int(endGrid.x - startGrid.x)), sx = startGrid.x < endGrid.x ? 1 : -1;
+    int dy = -abs(int(endGrid.y - startGrid.y)), sy = startGrid.y < endGrid.y ? 1 : -1;
+    int err = dx + dy, e2; // error value e_xy
+
+    while (true) {
+        // Check for obstacle at current grid position
+        if (isObstacleAtPosition(vec2(startGrid.x, startGrid.y))) {
+            return false; // Obstacle found, line of sight is not clear
+        }
+        if (startGrid.x == endGrid.x && startGrid.y == endGrid.y) break; // Reached target cell
+
+        e2 = 2 * err;
+        if (e2 >= dy) { // e_xy+e_x > 0
+            err += dy;
+            startGrid.x += sx;
+        }
+        if (e2 <= dx) { // e_xy+e_y < 0
+            err += dx;
+            startGrid.y += sy;
+        }
+    }
+
+    return true; // No obstacles found, line of sight is clear
+}
+
 
 // Adjusted obstacle detection to consider the full bounding box of obstacles
-bool AISystem::isObstacleAtPosition(const vec2& position) {
+bool AISystem::isObstacleAtPosition(const vec2& gridPosition) {
     Level& level = registry.levels.get(registry.levels.entities[0]);
-	Room& room = registry.rooms.get(level.rooms[level.current_room]);
+    Room& room = registry.rooms.get(level.rooms[level.current_room]);
 
     for (const auto& obstaclePos : room.obstacle_positions) {
-		//convert the obstacle position to the world position
-		vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
-        if (world_obstacle_pos.x == position.x && world_obstacle_pos.y == position.y) {
-			return true;
-		}
-	}
-	return false;
+        // Direct comparison, as both are in grid coordinates
+        if (obstaclePos == gridPosition) {
+            return true; // Obstacle found at the specified grid position
+        }
+    }
+
+    return false; // No obstacle at the specified grid position
 }
+
 
 // Basic structure for A* nodes
 struct AStarNode {
