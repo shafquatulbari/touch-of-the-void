@@ -422,7 +422,8 @@ void WorldSystem::handle_collisions() {
 						level_struct.current_room = std::pair<int, int>(level_struct.current_room.first + 1, level_struct.current_room.second);
 						next_pos = { x_min + 64, y_mid };
 					}
-				
+					Level& level_struct = registry.levels.get(level);
+			
 					registry.roomTransitionTimers.emplace(entity);
 					ScreenState& screen = registry.screenStates.components[0];
 					screen.darken_screen_factor = 1.0f;
@@ -593,10 +594,8 @@ void WorldSystem::handle_collisions() {
 			}
 
 			registry.remove_all_components_of(e);
-
-			Room& current_room = registry.rooms.get(
-				registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
-			//Room current_room = registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
+			Level& current_level = registry.levels.get(level);
+			Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
 			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
 			current_room.enemy_count--;
 			// remove the first element in enemy set 
@@ -606,7 +605,15 @@ void WorldSystem::handle_collisions() {
 			if (current_room.enemy_count == 0)
 			{
 				registry.levels.get(level).num_rooms_until_boss--;
-				std::cout << "# of rooms until boss fight: " << registry.levels.get(level).num_rooms_until_boss << std::endl;
+				current_room.has_bottom_door = true;
+				current_room.has_top_door = true;
+				current_room.has_left_door = true;
+				current_room.has_right_door = true;
+
+				// tear down existing walls
+				clearExistingWalls();
+				// re-render walls with doors
+				createWalls(renderer, current_room);
 			}
 			// UX Effects
 			createExplosion(renderer, e_pos, 1.0f, false);
@@ -842,9 +849,4 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	}
-}
-
-Room WorldSystem::get_current_room()
-{
-	return registry.rooms.get(registry.levels.get(level).rooms[registry.levels.get(level).current_room]);
 }

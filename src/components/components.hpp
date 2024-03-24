@@ -17,7 +17,7 @@ struct Level {
 	// the current room the player is in
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
-	int num_rooms_until_boss = 1;
+	int num_rooms_until_boss = 4;
 };
 
 
@@ -37,12 +37,12 @@ struct Room {
 
 	Room()
 	{
-		std::cout << "Room constructor:" << std::addressof(this->is_cleared) << std::endl;
+		//std::cout << "Room constructor:" << std::addressof(this->is_cleared) << std::endl;
 	}
 
 	~Room()
 	{
-		std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
+		//std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
 	}
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
@@ -135,6 +135,9 @@ struct Obstacle
 	bool is_bottom_door = false;
 	bool is_left_door = false;
 	bool is_right_door = false;
+
+	// if this is a wall
+	bool is_wall = false;
 };
 
 // No collision check indicator component (for background)

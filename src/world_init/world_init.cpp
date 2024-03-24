@@ -363,7 +363,7 @@ void createWalls(RenderSystem* render, Room& room)
 	top_motion.scale = vec2({ WALL_BB_WIDTH, WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(topWall);
-	registry.obstacles.get(topWall).is_passable = false;
+	registry.obstacles.get(topWall).is_wall = true;
 	registry.renderRequests.insert(
 		topWall,
 		{ room.has_top_door ? TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR
@@ -395,6 +395,8 @@ void createWalls(RenderSystem* render, Room& room)
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
+	registry.obstacles.get(bottomWall).is_wall = true;
+
 	if (room.has_bottom_door) {
 		auto bottom_door = Entity();
 		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
@@ -411,6 +413,8 @@ void createWalls(RenderSystem* render, Room& room)
 	left_motion.scale = vec2({ WALL_BB_HEIGHT , WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(leftWall);
+	registry.obstacles.get(leftWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		leftWall,
 		{ room.has_left_door ? TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR
@@ -434,6 +438,8 @@ void createWalls(RenderSystem* render, Room& room)
 	right_motion.scale = vec2({ WALL_BB_HEIGHT, WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(rightWall);
+	registry.obstacles.get(rightWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		rightWall,
 		{ room.has_right_door ? TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR
@@ -463,6 +469,8 @@ void createWalls(RenderSystem* render, Room& room)
 	topLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(topLeftWall);
+	registry.obstacles.get(topLeftWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		topLeftWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
@@ -489,6 +497,8 @@ void createWalls(RenderSystem* render, Room& room)
 	bottomLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomLeftWall);
+	registry.obstacles.get(bottomLeftWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		bottomLeftWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
@@ -502,6 +512,8 @@ void createWalls(RenderSystem* render, Room& room)
 	bottomRight_motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomRightWall);
+	registry.obstacles.get(bottomRightWall).is_wall = true;
+
 	registry.renderRequests.insert(
 		bottomRightWall,
 		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
@@ -511,54 +523,57 @@ void createWalls(RenderSystem* render, Room& room)
 
 }
 
+void clearExistingWalls()
+{
+	for (Entity e : registry.motions.entities)
+	{
+		// remove all enemies, obstacles, animations
+		if (registry.obstacles.has(e))
+		{
+			Obstacle obstacle = registry.obstacles.get(e);
+			if (obstacle.is_wall)
+			{
+				registry.remove_all_components_of(e);
+			}
+		}
+	}
+}
+
 void render_room(RenderSystem* render, Level& level)
 {
-	std::cout << "rendering room" << std::endl;
 	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
 	if (!current_room.is_visited) {
 		// set the room to visited
 		current_room.is_visited = true;
-		std::cout << "room not visited, generating" << std::endl;
+		WorldGenerator world_generator;
 
 		if (level.num_rooms_until_boss <= 0)
 		{
-			WorldGenerator world_generator;
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
+		} else
+		{
+			world_generator.generateNewRoom(current_room, level, false);
 		}
-		// generate the room
-		WorldGenerator world_generator;
-		world_generator.generateNewRoom(current_room, level, false);
-		std::cout << "room generated, back to rendering" << std::endl;
+		
 	} else {
 		std::cout << "revisiting room!" << std::endl;
 	}
 
 	// in case current room was not visited, re-retrieve current room 
 	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
-	std::cout << "Room enemy count: " << current_room.enemy_count << std::endl;
-	std::cout << "Room enemy count 2: " << room_to_render.enemy_count << std::endl;
 
-
-	std::cout << "retreived room" << std::endl;
-	std::cout << "room.visited " << room_to_render.is_visited << std::endl;
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
 
-	std::cout << "creating obstacles" << std::endl;
-	std::cout << "reading room fields" << std::endl;
-	std::cout << "room.obstacle_positions.size() " << room_to_render.obstacle_positions.size() << std::endl;
 	for (auto& pos : room_to_render.obstacle_positions)
 	{
-		std::cout << "creating obstacle" << std::endl;
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		std::cout << "creating obstacle at " << x << " " << y << std::endl;
 		createObstacle(render, vec2(x, y));
 	}
-	std::cout << "created obstacles" << std::endl;
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
 	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::MELEE, AI::AIType::RANGED };
@@ -571,9 +586,7 @@ void render_room(RenderSystem* render, Level& level)
 		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
-	std::cout << "created enemies" << std::endl;
 	createWalls(render, room_to_render);
-	std::cout << "created walls" << std::endl;
 }
 
 Entity createLine(vec2 position, vec2 scale)
@@ -804,10 +817,5 @@ Entity createLevel(RenderSystem* render)
 	world_generator.generateStartingRoom(starting_room, level);
 
 	render_room(render, level);
-	// retrieves correctly modified values
-	std::cout << "starting room # enemies " << registry.rooms.get(level.rooms[level.current_room]).enemy_count << std::endl;
-
-
-	// does not retrieve correctly modified values (returns 0 because the object is an empty Room component)
 	return entity;
 }

@@ -85,3 +85,7 @@ Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_
 Entity createIconInfinity(RenderSystem* render, vec2 pos);
 // a game level
 Entity createLevel(RenderSystem* render);
+// clear walls
+void clearExistingWalls();
+// create walls
+void createWalls(RenderSystem* render, Room& room);
