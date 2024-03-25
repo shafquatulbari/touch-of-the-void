@@ -660,7 +660,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			play_sound(game_start_sound);
 			restart_game();
 		}
-		// Exit the game on escape
+				// Exit the game on escape
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
 			// TODO: Change to different screen or close depending on the game state
 			glfwSetWindowShouldClose(window, GL_TRUE);

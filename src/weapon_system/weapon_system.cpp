@@ -237,6 +237,9 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 				//registry.healths.get(player).current_health += registry.shields.get(player).current_shield;
 				//registry.shields.get(player).current_shield = 0;
 				registry.healths.get(player).current_health -= 10;
+				if (registry.healths.get(player).current_health <= 0) {
+					registry.healths.get(player).current_health = 1;
+				}
 
 			}
 
