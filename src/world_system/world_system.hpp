@@ -32,8 +32,9 @@ public:
 	// Steps the game ahead by ms milliseconds
 	bool step(float elapsed_ms);
 
+
 	// Check for collisions
-	void handle_collisions();
+	void handle_collisions(float elapsed_ms);
 
 	void bounce_back(Entity player, Entity obstacle);
 
@@ -45,14 +46,16 @@ private:
 	void on_mouse_move(vec2 pos);
 	void on_mouse_click(int button, int action, int mod);
 
+
 	// restart level
 	void restart_game();
 
 	// enter room
-	void enter_room(Room& room, vec2 player_pos);
+	void enter_room(vec2 player_pos);
+	void remove_entities_on_entry();
 
-	// fps
-	void fpsCalculate();
+	// Progress game timers
+	bool progress_timers(Player& player, float elapsed_ms_since_last_update);
 
 	// OpenGL window handle
 	GLFWwindow* window;
@@ -63,6 +66,11 @@ private:
 	WeaponSystem* weapons;
 	Entity player;
 
+	std::vector<Entity> p_mesh_lines; // for debug
+
+	// the current level 
+	Entity level; 
+  
 	enum class GAME_STATE {
 		START_MENU,
 		GAME,
@@ -80,12 +88,6 @@ private:
 	int score;
 	float multiplier; // Min 0.0, Max 9.9
 	int delta_score; // Score gained in the current period TBD what a period is
-
-	// FPS 
-	Entity fps_text;
-	float fps;
-	float maxFps;
-	float frameTime;
 
 	// C++ random number generator
 	std::default_random_engine rng;

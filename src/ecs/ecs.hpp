@@ -7,6 +7,7 @@
 #include <functional>
 #include <typeindex>
 #include <assert.h>
+#include <memory>
 
 // Unique identifyer for all entities
 class Entity
@@ -78,6 +79,7 @@ public:
 		assert(has(e) && "Entity not contained in ECS registry");
 		return components[map_entity_componentID[e]];
 	}
+
 
 	// Check if entity has a component of type 'Component'
 	bool has(Entity entity) {

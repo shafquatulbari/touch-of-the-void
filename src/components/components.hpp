@@ -1,9 +1,27 @@
 #pragma once
+#include <iostream>
+#include <map>
+
 #include "common/common.hpp"
 #include "weapon_system/weapon_constants.hpp"
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
+
+
+struct Level {
+	// the current level of the game
+	int current_level = 1;
+	// the 2d array of rooms in the level
+	std::map<std::pair<int, int>, Entity> rooms;
+	// the current room the player is in
+	std::pair<int, int> current_room;
+	// the number of rooms the player needs to clear until the boss appears
+	int num_rooms_until_boss = 4;
+};
+
+
+
 struct vec2comp {
 	bool operator() (vec2 lhs, vec2 rhs) const
 	{
@@ -16,8 +34,18 @@ struct vec2comp {
 
 // All data relevant to the contents of a game room
 struct Room {
-	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 
+	Room()
+	{
+		//std::cout << "Room constructor:" << std::addressof(this->is_cleared) << std::endl;
+	}
+
+	~Room()
+	{
+		//std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
+	}
+	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
+	bool is_visited = false; // if the room has been visited
 	// The number of enemies in the room
 	int enemy_count = 0;
 
@@ -33,9 +61,9 @@ struct Room {
 	std::set<vec2, vec2comp> obstacle_positions;
 
 	// The number of powerups in the room
-	int powerup_count = 0;
+	//int powerup_count = 0;
 	// the positions of the powerups in the room
-	std::set<vec2, vec2comp> powerup_positions;
+	//std::set<vec2, vec2comp> powerup_positions;
 
 	// fields concerning the doors of the room
 	bool has_left_door = false;
@@ -43,11 +71,6 @@ struct Room {
 	bool has_top_door = false;
 	bool has_bottom_door = false;
 
-	// neighbouring rooms
-	Entity left_room;
-	Entity right_room;
-	Entity top_room;
-	Entity bottom_room;
 };
 
 // Player component
@@ -73,8 +96,7 @@ struct Player
 
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
-	// the room that the player is moving to if it is moving rooms
-	Entity current_room;
+
 
 	// Constructor to set the initial values
 	Player() : 
@@ -101,6 +123,12 @@ struct OnFireTimer
 	Entity fire;
 };
 
+struct MuzzleFlashTimer
+{
+	float counter_ms = 0.0f;
+	Entity source;
+};
+
 // Obstacle component
 struct Obstacle
 {
@@ -112,6 +140,9 @@ struct Obstacle
 	bool is_bottom_door = false;
 	bool is_left_door = false;
 	bool is_right_door = false;
+
+	// if this is a wall
+	bool is_wall = false;
 };
 
 // No collision check indicator component (for background)
@@ -122,12 +153,13 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED};
+	enum class AIType {MELEE, RANGED, TURRET};
 	AIType type = AIType::MELEE;
 	enum class AIState {IDLE, ACTIVE};
 	AIState state = AIState::ACTIVE;
 	float safe_distance = 150.0f; // the distance that the AI will start behaving from the player
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
+
 };
 
 // Harmful collision component
@@ -158,6 +190,8 @@ struct Motion {
 	vec2 velocity = { 0, 0 };
 	vec2 scale = { 10, 10 };
 
+	vec2 previous_position = {-1, -1};
+
 	float look_angle = 0; // angle the entity is looking at
 
 	bool complex = false; // if the entity has complex motion, i.e. not just a straight line
@@ -181,6 +215,9 @@ struct Collision
 	// Note, the first object is stored in the ECS container.entities
 	Entity other; // the second object involved in the collision
 	Collision(Entity& other) { this->other = other; };
+
+	// Scalar of the displacement vector
+	float scalar;
 };
 
 // Data structure for toggling debug mode
@@ -202,6 +239,12 @@ struct ScreenState
 struct DebugComponent
 {
 	// Note, an empty struct has size 1
+};
+
+struct DamagedTimer
+{
+	float damage = 0.0f;
+	float counter_ms = 0.0f;
 };
 
 // A timer that will be associated to dying player
@@ -240,6 +283,14 @@ struct Mesh
 };
 
 enum class TextAlignment { LEFT, RIGHT, CENTER };
+
+struct Line 
+{
+	float width;
+	ColoredVertex from;
+	ColoredVertex to;
+	mat3 trans;
+};
 
 struct Text
 {
@@ -289,37 +340,51 @@ struct Sprite {
  */
 
 enum class TEXTURE_ASSET_ID {
+	// Projectile textures
 	BULLET = 0,
+	
+	// Enemy textures
 	ENEMY_SPITTER = BULLET + 1,
-	INFINITY_AMMO = ENEMY_SPITTER + 1,
+	ENEMY_TURRET_BASE = ENEMY_SPITTER + 1,
+	ENEMY_TURRET_GUN = ENEMY_TURRET_BASE + 1,
+
+	// Ammo icon textures
+	INFINITY_AMMO = ENEMY_TURRET_GUN + 1,
+
+	// Level 1 textures
 	LEVEL1_BACKGROUND = INFINITY_AMMO + 1,
 	LEVEL1_DOORS = LEVEL1_BACKGROUND + 1,
-
-	// Full wall closed door textures
 	TOP_LEVEL1_FULL_WALL_CLOSED_DOOR = LEVEL1_DOORS + 1,
 	RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR = TOP_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR = RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR = BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
-
-	// Full wall open door textures
 	TOP_LEVEL1_FULL_WALL_OPEN_DOOR = LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR = TOP_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR = RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	LEFT_LEVEL1_FULL_WALL_OPEN_DOOR = BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
-	
 	LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
-
 	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_NO_DOOR + 1,
-
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
 	LEVEL1_WALL = LEVEL1_WALL_TOP_CORNER + 1,
 
+	// Player textures
 	PLAYER_STATUS_HUD = LEVEL1_WALL + 1,
 	PLAYER = PLAYER_STATUS_HUD + 1,
 
-	FLAME_THROWER_EQUIPPED = PLAYER + 1,
+	// SCREEN TEXTURES
+	DEATH_SCREEN = PLAYER + 1,
+	START_SCREEN = DEATH_SCREEN + 1,
+
+	// Map icon textures
+	CLEARED_ROOM = START_SCREEN + 1,
+	CURRENT_ROOM = CLEARED_ROOM + 1,
+	UNVISITED_ROOM = CURRENT_ROOM + 1,
+	MAP_PLACEMENT_HELPER = UNVISITED_ROOM + 1,
+
+	// Weapon icon textures
+	FLAME_THROWER_EQUIPPED = MAP_PLACEMENT_HELPER + 1,
 	FLAME_THROWER_UNEQUIPPED = FLAME_THROWER_EQUIPPED + 1,
 	GATLING_GUN_EQUIPPED = FLAME_THROWER_UNEQUIPPED + 1,
 	GATLING_GUN_UNEQUIPPED = GATLING_GUN_EQUIPPED + 1,
@@ -361,16 +426,14 @@ enum class GEOMETRY_BUFFER_ID {
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 enum class SPRITE_SHEET_ID {
-	//BLUE_EFFECT = 0,
-	EXPLOSION = 0,
+	BLUE_EFFECT = 0,
+	EXPLOSION = BLUE_EFFECT + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
-	FIRE = ENEMY_EXPLODER + 1,
-	BULLET_IMPACT = FIRE + 1,
 	//GREEN_EFFECT = EXPLOSION + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
-	//RED_EFFECT = PURPLE_EFFECT + 1,
-	//YELLOW_EFFECT = RED_EFFECT + 1,
-	SPRITE_SHEET_COUNT = BULLET_IMPACT + 1
+	RED_EFFECT = ENEMY_EXPLODER + 1,
+	YELLOW_EFFECT = RED_EFFECT + 1,
+	SPRITE_SHEET_COUNT = YELLOW_EFFECT + 1
 };
 const int sheet_count = (int)SPRITE_SHEET_ID::SPRITE_SHEET_COUNT;
 

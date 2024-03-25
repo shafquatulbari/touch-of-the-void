@@ -32,6 +32,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 	if (p.is_firing && !p.is_reloading && p.ammo_count > 0) {
 		p.fire_length_ms += elapsed_ms;
 		if (p.fire_rate_timer_ms <= 0) {
+			createMuzzleFlash(renderer, player);
 			p.fire_rate_timer_ms = weapon_stats[p.weapon_type].fire_rate;
 			switch (p.weapon_type)
 			{
@@ -117,6 +118,22 @@ void WeaponSystem::step_dot_timers(float elapsed_ms)
 			registry.onFireTimers.remove(entity);
 		}
 	}
+
+	for (Entity entity : registry.muzzleFlashTimers.entities) {
+		// progress timer
+		MuzzleFlashTimer& timer = registry.muzzleFlashTimers.get(entity);
+		timer.counter_ms -= elapsed_ms;
+
+		if (timer.counter_ms <= 0 || !registry.motions.has(timer.source) || !registry.motions.has(entity)) {
+			registry.muzzleFlashTimers.remove(entity);
+		}
+		else {
+			// move the flash
+			registry.motions.get(entity).position = registry.motions.get(timer.source).position + (52.f * vec2{ cos(registry.motions.get(timer.source).look_angle - M_PI/2), sin(registry.motions.get(timer.source).look_angle - M_PI/2) });
+			registry.motions.get(entity).look_angle = registry.motions.get(timer.source).look_angle - M_PI;
+		}
+		
+	}
 }
 
 void WeaponSystem::reload_weapon() 
@@ -180,10 +197,12 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 }
 
 // Handles collisions for rockets
-void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projectile)
+void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projectile, Entity player)
 {
 	Deadly& deadly = registry.deadlies.get(projectile);
 	vec2 rocket_position = registry.motions.get(projectile).position;
+	Player& p = registry.players.get(player);
+	int EXPLOSION_RADIUS = 50;
 
 	createExplosion(renderer, rocket_position, 2.0f, false); // Create a BIG explosion
 	play_sound(explosion_sound);
@@ -198,6 +217,32 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 			if (distance <= EXPLOSION_BB_HEIGHT) {
 				registry.healths.get(e).current_health -= deadly.damage;
 			}
+		}
+	}
+
+
+
+	//// Check distance to player and apply damage if within explosion radius
+	vec2 playerPosition = registry.motions.get(player).position;
+	float distanceToPlayer = glm::distance(rocket_position, playerPosition);
+	if (distanceToPlayer <= EXPLOSION_RADIUS) {
+		// Check if the player has a shield
+		if (registry.shields.has(player)) {
+			// If the player has a shield, deduct damage from the shield first
+			if (registry.shields.get(player).current_shield > 0) {
+				registry.shields.get(player).current_shield -= 30;
+			}
+			else if (registry.shields.get(player).current_shield <= 0) {
+				// If the shield is depleted, deduct the remaining damage from the player's health
+				//registry.healths.get(player).current_health += registry.shields.get(player).current_shield;
+				//registry.shields.get(player).current_shield = 0;
+				registry.healths.get(player).current_health -= 10;
+				if (registry.healths.get(player).current_health <= 0) {
+					registry.healths.get(player).current_health = 1;
+				}
+
+			}
+
 		}
 	}
 }

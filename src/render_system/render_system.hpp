@@ -22,10 +22,11 @@ class RenderSystem {
 	std::array<ivec2, texture_count> texture_dimensions;
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
+		ivec2(20,16),
 		ivec2(12,1),
 		ivec2(6,1),
-		ivec2(4,1),
-		ivec2(4,1),
+		ivec2(20,16),
+		ivec2(20,16)
 	};
 	std::array<ivec2, sheet_count> sheet_dimensions;
 
@@ -37,20 +38,21 @@ class RenderSystem {
 		// ex std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::CHICKEN, mesh_path("chicken.obj"))
 		
 		// player.obj contains points to a convex hull
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::PLAYER_CH, mesh_path("player_ch.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET_CH, mesh_path("bullet_ch.obj")),
-		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH, mesh_path("enemy_spitter_ch.obj"))
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::PLAYER_CH, mesh_path("player.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::BULLET_CH, mesh_path("bullet.obj")),
+		std::pair<GEOMETRY_BUFFER_ID, std::string>(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH, mesh_path("enemy_spitter.obj"))
 	};
 
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, texture_count> texture_paths = {
 		// TODO: specify textures of other assets here like so:
 
-
 		textures_path("bullet_16x16.png"),
 
 		// ENEMIES TEXTURES
 		textures_path("enemy_spitter_64x64.png"),
+		textures_path("enemy_turret_base_64x64.png"),
+		textures_path("enemy_turret_gun_64x64.png"),
 
 		// ICON TEXTURES
 		textures_path("icon_infinity_122x54.png"),
@@ -76,6 +78,16 @@ class RenderSystem {
 		// PLAYER TEXTURES
 		textures_path("player_status_hud_1920x1024.png"),
 		textures_path("player_64x64.png"),
+
+		// SCREEN TEXTURES
+		textures_path("screen_death_1920x1024.png"),
+		textures_path("screen_start_1920x1024.png"),
+
+		// MAP TEXTURES
+		textures_path("map_icon_cleared_36x36.png"),
+		textures_path("map_icon_current_36x36.png"),
+		textures_path("map_icon_unvisited_36x36.png"),
+		textures_path("placement_helper_map.png"),
 
 		// WEAPON TEXTURES
 		textures_path("weapon_icon_flame_thrower_equipped_192x192.png"),
@@ -109,15 +121,13 @@ class RenderSystem {
 	std::array<GLuint, sheet_count> sheets;
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
-		//sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("explosion_192x192.png"),
 		sheets_path("exploding_skull_64x64.png"),
-		sheets_path("fire_32x32.png"),
-		sheets_path("bullet_impact_32x32.png"),
 		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
-		//sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
-		//sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")
+		sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")
 	};
 
 	std::array<GLuint, geometry_count> vertex_buffers;
@@ -171,6 +181,7 @@ private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen(const mat3& projection);
+	void drawLine(Line& line);
 
 	// Window handle
 	GLFWwindow* window;
