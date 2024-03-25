@@ -236,7 +236,7 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 				// If the shield is depleted, deduct the remaining damage from the player's health
 				//registry.healths.get(player).current_health += registry.shields.get(player).current_shield;
 				//registry.shields.get(player).current_shield = 0;
-				registry.healths.get(player).current_health -= 20;
+				registry.healths.get(player).current_health -= 10;
 
 			}
 
