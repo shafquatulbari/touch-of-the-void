@@ -68,8 +68,13 @@ GLFWwindow* WorldSystem::create_window() {
 	#endif
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
+
+	//	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
+
 	// Create the main window (for rendering, keyboard, and mouse input)
+
 	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
+
 	if (window == nullptr) {
 		fprintf(stderr, "Failed to glfwCreateWindow");
 		return nullptr;
@@ -676,10 +681,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
 			debugging.show_fps = !debugging.show_fps;
 		}
-
-		if (action == GLFW_RELEASE && key == GLFW_KEY_P) {
-			fullscreen = !fullscreen;
-		}
+		//full screen mode
 
 		// Player keyboard controls
 		if (!registry.deathTimers.has(player)) {
