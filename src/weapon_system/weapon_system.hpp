@@ -28,6 +28,6 @@ public:
 	void step_dot_timers(float elapsed_ms);
 	void reload_weapon();
 	void cycle_weapon(int direction, Player& player);
-	void handle_rocket_collision(RenderSystem* renderer, Entity projectile);
+	void handle_rocket_collision(RenderSystem* renderer, Entity projectile, Entity player);
 	void handle_flamethrower_collision(RenderSystem* renderer, Entity projectile, Entity enemy);
 };

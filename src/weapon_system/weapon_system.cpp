@@ -197,10 +197,12 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 }
 
 // Handles collisions for rockets
-void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projectile)
+void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projectile, Entity player)
 {
 	Deadly& deadly = registry.deadlies.get(projectile);
 	vec2 rocket_position = registry.motions.get(projectile).position;
+	Player& p = registry.players.get(player);
+	int EXPLOSION_RADIUS = 50;
 
 	createExplosion(renderer, rocket_position, 2.0f, false); // Create a BIG explosion
 	play_sound(explosion_sound);
@@ -215,6 +217,32 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 			if (distance <= EXPLOSION_BB_HEIGHT) {
 				registry.healths.get(e).current_health -= deadly.damage;
 			}
+		}
+	}
+
+
+
+	//// Check distance to player and apply damage if within explosion radius
+	vec2 playerPosition = registry.motions.get(player).position;
+	float distanceToPlayer = glm::distance(rocket_position, playerPosition);
+	if (distanceToPlayer <= EXPLOSION_RADIUS) {
+		// Check if the player has a shield
+		if (registry.shields.has(player)) {
+			// If the player has a shield, deduct damage from the shield first
+			if (registry.shields.get(player).current_shield > 0) {
+				registry.shields.get(player).current_shield -= 30;
+			}
+			else if (registry.shields.get(player).current_shield <= 0) {
+				// If the shield is depleted, deduct the remaining damage from the player's health
+				//registry.healths.get(player).current_health += registry.shields.get(player).current_shield;
+				//registry.shields.get(player).current_shield = 0;
+				registry.healths.get(player).current_health -= 10;
+				if (registry.healths.get(player).current_health <= 0) {
+					registry.healths.get(player).current_health = 1;
+				}
+
+			}
+
 		}
 	}
 }

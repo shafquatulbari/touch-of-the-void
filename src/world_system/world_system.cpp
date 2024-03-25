@@ -13,12 +13,13 @@
 
 // Game configuration
 // TODO: set hard coded game configuration values here
+bool fullscreen;
 
 // Create the world
 WorldSystem::WorldSystem()
 {
 	// TODO: world initialization here
-	
+	fullscreen = 0;
 	// Seeding rng with random device
 	rng = std::default_random_engine(std::random_device()());
 }
@@ -67,8 +68,14 @@ GLFWwindow* WorldSystem::create_window() {
 	#endif
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
-	// Create the main window (for rendering, keyboard, and mouse input)
-	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
+
+	// Create the main window (for rendering, keyboard, and mouse input) FULLSCREEN
+	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
+
+	//main window.  bordered screen
+	//window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
+
+
 	if (window == nullptr) {
 		fprintf(stderr, "Failed to glfwCreateWindow");
 		return nullptr;
@@ -333,12 +340,12 @@ void WorldSystem::restart_game() {
 
 		createStartScreen(renderer);
 		//// Tutorial Text
-		createText(renderer, "CONTROLS", { 38.0f, 644.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "WASD to move", { 30.0f, 724.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Mouse to aim", { 30.0f, 764.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Right-Click to shoot", { 30.0f, 804.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "R to reload", { 30.0f, 844.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Q/E to change weapons", { 30.0f, 884.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "CONTROLS", { 30.0f, 674.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "WASD to move", { 30.0f, 714.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Mouse to aim", { 30.0f, 754.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Right-Click to shoot", { 30.0f, 794.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "R to reload", { 30.0f, 834.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Q/E to change weapons", { 30.0f, 874.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
 		break;
 
@@ -541,7 +548,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					switch (projectile.weapon_type) 
 					{
 					case WeaponType::ROCKET_LAUNCHER:
-						weapons->handle_rocket_collision(renderer, entity);
+						weapons->handle_rocket_collision(renderer, entity, player);
 						break;
 
 					case WeaponType::FLAMETHROWER:
@@ -614,7 +621,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				// Check if the projectile comes from the player
 				if (registry.players.has(projectileSource)) {
 					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
-						weapons->handle_rocket_collision(renderer, entity);
+						weapons->handle_rocket_collision(renderer, entity, player);
 					}
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
@@ -689,6 +696,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			play_sound(game_start_sound);
 			restart_game();
 		}
+				// Exit the game on escape
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+			// TODO: Change to different screen or close depending on the game state
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
 		break;
 
 	case GAME_STATE::GAME:
@@ -710,6 +722,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (action == GLFW_RELEASE && key == GLFW_KEY_F) {
 			debugging.show_fps = !debugging.show_fps;
 		}
+		//full screen mode
 
 		// Player keyboard controls
 		if (!registry.deathTimers.has(player)) {
@@ -766,6 +779,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			game_state = GAME_STATE::GAME;
 			play_sound(game_start_sound);
 			restart_game();
+		}
+
+		// Exit the game on escape
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+			// TODO: Change to different screen or close depending on the game state
+			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		break;
 
