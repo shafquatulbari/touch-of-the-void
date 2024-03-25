@@ -34,7 +34,7 @@ public:
 
 
 	// Check for collisions
-	void handle_collisions();
+	void handle_collisions(float elapsed_ms);
 
 	void bounce_back(Entity player, Entity obstacle);
 
@@ -65,8 +65,12 @@ private:
 	UISystem* ui;
 	WeaponSystem* weapons;
 	Entity player;
+
+	std::vector<Entity> p_mesh_lines; // for debug
+
 	// the current level 
 	Entity level; 
+  
 	enum class GAME_STATE {
 		START_MENU,
 		GAME,

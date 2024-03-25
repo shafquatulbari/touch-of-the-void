@@ -180,14 +180,21 @@ void RenderSystem::initializeGlEffects()
 template <class T>
 void RenderSystem::bindVBOandIBO(GEOMETRY_BUFFER_ID gid, std::vector<T> vertices, std::vector<uint16_t> indices)
 {
+	GLenum usage;
+	if (gid == GEOMETRY_BUFFER_ID::DEBUG_LINE) {
+		usage = GL_DYNAMIC_DRAW;
+	} else {
+		usage = GL_STATIC_DRAW;
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(uint)gid]);
 	glBufferData(GL_ARRAY_BUFFER,
-		sizeof(vertices[0]) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		sizeof(vertices[0]) * vertices.size(), vertices.data(), usage);
 	gl_has_errors();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(uint)gid]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indices[0]) * indices.size(), indices.data(), GL_STATIC_DRAW);
+		sizeof(indices[0]) * indices.size(), indices.data(), usage);
 	gl_has_errors();
 }
 
@@ -242,14 +249,14 @@ void RenderSystem::initializeGlGeometryBuffers()
 	std::vector<uint16_t> line_indices;
 
 	constexpr float depth = 0.5f;
-	constexpr vec3 red = { 0.8,0.1,0.1 };
+	constexpr vec3 white = { 1.f, 1.f, 1.f };
 
 	// Corner points
 	line_vertices = {
-		{{-0.5,-0.5, depth}, red},
-		{{-0.5, 0.5, depth}, red},
-		{{ 0.5, 0.5, depth}, red},
-		{{ 0.5,-0.5, depth}, red},
+		{{-0.5,-0.5, depth}, white},
+		{{-0.5, 0.5, depth}, white},
+		{{ 0.5, 0.5, depth}, white},
+		{{ 0.5,-0.5, depth}, white},
 	};
 
 	// Two triangles
@@ -259,7 +266,6 @@ void RenderSystem::initializeGlGeometryBuffers()
 	meshes[geom_index].vertices = line_vertices;
 	meshes[geom_index].vertex_indices = line_indices;
 	bindVBOandIBO(GEOMETRY_BUFFER_ID::DEBUG_LINE, line_vertices, line_indices);
-
 
 	///////////////////////////////////////////////////////
 	// Initialize screen triangle (yes, triangle, not quad; its more efficient).

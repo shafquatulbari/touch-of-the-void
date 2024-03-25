@@ -2,7 +2,7 @@
 #include "physics_system/physics_system.hpp"
 #include "world_init/world_init.hpp"
 
-// TODO: Improve bounding box collision detection into a more accurate one
+// TODO: Improve bounding box collision detection into a more accurate 
 
 // Returns the local bounding coordinates scaled by the current size of the entity
 vec2 get_bounding_box(const Motion &motion)
@@ -15,27 +15,178 @@ vec2 get_bounding_box(const Motion &motion)
 }
 
 
+// Line-to-Line collision detection, source: https://www.jeffreythompson.org/collision-detection/line-line.php
+bool collide_line_line(vec3 l1_start, vec3 l1_end, vec3 l2_start, vec3 l2_end) {
+	float uA = (
+		(l2_end.x - l2_start.x) * (l1_start.y - l2_start.y) - (l2_end.y - l2_start.y) * (l1_start.x - l2_start.x)) / 
+		((l2_end.y - l2_start.y) * (l1_end.x - l1_start.x) - (l2_end.x - l2_start.x) * (l1_end.y - l1_start.y));
+	float uB = (
+		(l1_end.x - l1_start.x) * (l1_start.y - l2_start.y) - (l1_end.y - l1_start.y) * (l1_start.x - l2_start.x)) / 
+		((l2_end.y - l2_start.y) * (l1_end.x - l1_start.x) - (l2_end.x - l2_start.x) * (l1_end.y - l1_start.y));
+	return uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1;
+}
+
+
+// Source: https://www.jeffreythompson.org/collision-detection/poly-poly.php
+bool collide_triangle_line(vec3 triangle[], vec3 line[]) {
+	// Detect whether a triangle collides with a line
+	for (int i = 0; i < 3; i++) {
+		vec3& p1 = triangle[i];
+		vec3& p2 = triangle[(i+1) % 3];
+
+		if (collide_line_line(p1, p2, line[0], line[1])) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool collide_triangle_triangle(vec3 triangle_1[], vec3 triangle_2[]) {
+	for (int i = 0; i < 3; i++) {
+		vec3 p1 = triangle_1[i];
+		vec3 p2 = triangle_1[(i+1) % 3];
+
+		vec3 line[] = { p1, p2 };
+		if (collide_triangle_line(triangle_2, line)) {
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+/**
+* Pre-condition: 
+* - e1 have a Mesh component
+* - both e1 and e2 have Motion components
+*/
+bool mesh_to_box_collision_check(Entity e1, Entity e2) {
+	Mesh& e1_mesh = *registry.meshPtrs.get(e1);
+
+	Motion& e1_motion = registry.motions.get(e1);
+	Motion& e2_motion = registry.motions.get(e2);
+
+	Transform t1, t2;
+	//t1.translate(e1_motion.position);
+	t1.rotate(e1_motion.look_angle);
+	t1.scale(e1_motion.scale);
+
+	// Initialize box mesh
+	vec3 e2_vertices[] = {
+		{e2_motion.position.x - e2_motion.scale.x / 2, e2_motion.position.y - e2_motion.scale.y / 2, 0.f }, // top-left
+		{e2_motion.position.x + e2_motion.scale.x / 2, e2_motion.position.y - e2_motion.scale.y / 2, 0.f }, // top-right
+		{e2_motion.position.x + e2_motion.scale.x / 2, e2_motion.position.y + e2_motion.scale.y / 2, 0.f }, // bottom-right
+		{e2_motion.position.x - e2_motion.scale.x / 2, e2_motion.position.y + e2_motion.scale.y / 2, 0.f }, // bottom-left
+	};
+
+	int e2_indices[] = {0, 1, 2, 2, 0, 3};
+	
+	// Transform mesh coordinates into game space
+	std::vector<vec3> transformed_vertices;
+	for (int i = 0; i < e1_mesh.vertices.size(); i++) {
+		transformed_vertices.push_back(t1.mat * e1_mesh.vertices[i].position + vec3({ e1_motion.position.x, e1_motion.position.y, 0.f }));
+	}
+
+	for (int i = 0; i < e1_mesh.vertex_indices.size() / 3; i++) {
+		vec3 e1_tri[] = {
+			transformed_vertices[e1_mesh.vertex_indices[i * 3]],
+			transformed_vertices[e1_mesh.vertex_indices[(i * 3 + 1) % transformed_vertices.size()]],
+			transformed_vertices[e1_mesh.vertex_indices[(i * 3 + 2) % transformed_vertices.size()]]
+		};
+
+		for (int j = 0; j < 2; j++) {
+			vec3 e2_tri[] = {
+				e2_vertices[e2_indices[j * 3]],
+				e2_vertices[e2_indices[j * 3 + 1]],
+				e2_vertices[e2_indices[j * 3 + 2]],
+			};
+
+			if (collide_triangle_triangle(e1_tri, e2_tri)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
+* Pre-condition: 
+* - both e1 and e2 have Mesh components
+* - both e1 and e2 have Motion components 
+*/
+bool mesh_to_mesh_collision_check(Entity e1, Entity e2) {
+	Mesh& e1_mesh = *registry.meshPtrs.get(e1);
+	Mesh& e2_mesh = *registry.meshPtrs.get(e2);
+	
+	Motion& e1_motion = registry.motions.get(e1);
+	Motion& e2_motion = registry.motions.get(e2);
+
+	Transform t1, t2;
+	t1.rotate(e1_motion.look_angle);
+	t1.scale(e1_motion.scale);
+
+	t2.rotate(e2_motion.look_angle);
+	t2.scale(e2_motion.scale);
+	
+	// Transform vertices into game space coordinates
+	std::vector<vec3> e1_trans_vertices;
+	for (int i = 0; i < e1_mesh.vertices.size(); i++) {
+		e1_trans_vertices.push_back(t1.mat * e1_mesh.vertices[i].position + vec3({e1_motion.position.x, e1_motion.position.y, 0.f}));
+	}
+
+	std::vector<vec3> e2_trans_vertices;
+	for (int i = 0; i < e2_mesh.vertices.size(); i++) {
+		e2_trans_vertices.push_back(t1.mat * e2_mesh.vertices[i].position + vec3({ e2_motion.position.x, e2_motion.position.y, 0.f }));
+	}
+
+	for (int i = 0; i < e1_mesh.vertex_indices.size() / 3; i++) {
+		vec3 e1_tri[] = {
+			e1_trans_vertices[e1_mesh.vertex_indices[i * 3]],
+			e1_trans_vertices[e1_mesh.vertex_indices[(i * 3 + 1) % e1_trans_vertices.size()]],
+			e1_trans_vertices[e1_mesh.vertex_indices[(i * 3 + 2) % e1_trans_vertices.size()]]
+		};
+
+		for (int j = 0; j < e2_mesh.vertex_indices.size() / 3; j++ ) {
+
+			vec3 e2_tri[] = {
+				e2_trans_vertices[e2_mesh.vertex_indices[j * 3]],
+				e2_trans_vertices[e2_mesh.vertex_indices[(j * 3 + 1) % e2_trans_vertices.size()]],
+				e2_trans_vertices[e2_mesh.vertex_indices[(j * 3 + 2) % e2_trans_vertices.size()]]
+			};
+
+			if (collide_triangle_triangle(e1_tri, e2_tri)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // Material for the SAT collision detection is sourced from the following blog post
 // https://code.tutsplus.com/collision-detection-using-the-separating-axis-theorem--gamedev-169t
 
 // Narrow check
-bool sat_collision_check(Entity e1, Entity e2) {
+bool sat_collision_check(Entity e1, Entity e2, float& displacement) {
 	Motion& m1 = registry.motions.get(e1);
 	Motion& m2 = registry.motions.get(e2);
 
 	std::vector<vec2> e1_pts;
 	std::vector<vec2> e2_pts;
 
-	// Get all vertices of the convex hull for entity1
 	if (registry.meshPtrs.has(e1)) {
-		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e1)->vertices;
+		// Get all vertices of the convex hull for entity1
 		Transform t;
-		t.translate(m1.position);
 		t.rotate(m1.look_angle);
 		t.scale(m1.scale);
 
+		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e1)->vertices;
+
 		for (int i = 0; i < vertices.size(); i++) {
-			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
+			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 0.0f });
+			vert += vec3({ m1.position.x, m1.position.y, 0.f });
 			e1_pts.push_back({vert.x, vert.y});
 		}
 
@@ -50,38 +201,42 @@ bool sat_collision_check(Entity e1, Entity e2) {
 	if (registry.meshPtrs.has(e2)) {
 		std::vector<ColoredVertex>& vertices = registry.meshPtrs.get(e2)->vertices;
 		Transform t;
-		t.translate(m2.position);
 		t.rotate(m2.look_angle);
 		t.scale(m2.scale);
 
 		for (int i = 0; i < vertices.size(); i++) {
-			vec3 vert = t.mat * vec3({ vertices[i].position.x, vertices[i].position.y, 1.0f });
+			vec3 vert = t.mat * vec3({ vertices[i].position.x, -vertices[i].position.y, 0.0f });
+			vert += vec3({ m2.position.x, m2.position.y, 0.f });
 			e2_pts.push_back({ vert.x, vert.y });
 		}
 
 	} else {
 		e2_pts.push_back(vec2({ m2.position.x - m2.scale.x / 2, m2.position.y - m2.scale.y / 2 })); // top-left
-		e2_pts.push_back(vec2({ m2.position.x + m2.scale.x / 2, m2.position.y + m2.scale.y / 2 })); // top-right
+		e2_pts.push_back(vec2({ m2.position.x + m2.scale.x / 2, m2.position.y - m2.scale.y / 2 })); // top-right
 		e2_pts.push_back(vec2({ m2.position.x + m2.scale.x / 2, m2.position.y + m2.scale.y / 2 })); // bottom-right
-		e2_pts.push_back(vec2({ m2.position.x - m2.scale.x / 2, m2.position.y - m2.scale.y / 2 })); // bottom-left
+		e2_pts.push_back(vec2({ m2.position.x - m2.scale.x / 2, m2.position.y + m2.scale.y / 2 })); // bottom-left
 	}
 
 	std::vector<vec2> e1_normals;
 	std::vector<vec2> e2_normals;
 
 	// Get the left-normals of each face of the convex hull (since the vertices are in clockwise order)
-	for (int i = e1_pts.size() - 1; i >= 0; i--) {
+	for (int i = 0; i < e1_pts.size(); i++) {
 		vec2& p1 = e1_pts[i];
 		vec2& p2 = e1_pts[(i + 1) % e1_pts.size()];
 		
 		e1_normals.push_back(vec2({ -(p2.y - p1.y), p2.x - p1.x }));
 	}
 
-	for (int i = e2_pts.size() - 1; i >= 0; i--) {
+	for (int i = 0; i < e2_pts.size(); i++) {
 		vec2& p1 = e2_pts[i];
 		vec2& p2 = e2_pts[(i + 1) % e2_pts.size()];
 
 		e2_normals.push_back(vec2({ -(p2.y - p1.y), p2.x - p1.x }));
+	}
+
+	if (registry.players.has(e1) && registry.obstacles.has(e2)) {
+		int x = 1;
 	}
 
 	float min_e1;
@@ -91,28 +246,24 @@ bool sat_collision_check(Entity e1, Entity e2) {
 
 	// Check for SAT collision with normals of entity1
 	for (vec2& n : e1_normals) {
-		min_e1 = glm::dot(e1_pts[0], n);
-		max_e1 = min_e1;
-		min_e2 = glm::dot(e2_pts[0], n);
-		max_e2 = min_e2;
+		min_e1 = INFINITY;
+		max_e1 = -INFINITY;
+		min_e2 = INFINITY;
+		max_e2 = -INFINITY;
 
-		for (int i = 1; i < e1_pts.size(); i++) {
-			float dot_prod = glm::dot(e1_pts[i], n);
-			if (dot_prod < min_e1) {
-				min_e1 = dot_prod;
-			} else if (dot_prod > max_e1) {
-				max_e1 = dot_prod;
-			}
+		for (int i = 0; i < e1_pts.size(); i++) {
+			float dot_prod = e1_pts[i].x * n.x + e1_pts[i].y * n.y;
+			min_e1 = min(dot_prod, min_e1);
+			max_e1 = max(dot_prod, max_e1);
 		}
 
 		for (int i = 1; i < e2_pts.size(); i++) {
-			float dot_prod = glm::dot(e2_pts[i], n);
-			if (dot_prod < min_e2) {
-				min_e2 = dot_prod;
-			} else if (dot_prod > max_e2) {
-				max_e2 = dot_prod;
-			}
+			float dot_prod = e2_pts[i].x * n.x + e2_pts[i].y * n.y;
+			min_e2 = min(dot_prod, min_e2);
+			max_e2 = max(dot_prod, max_e2);
 		}
+		
+		displacement = min(displacement, min(max_e1, max_e2) - max(min_e1, min_e2));
 
 		// We can draw a line between the two entities, return no collision
 		if (min_e1 > max_e2 || min_e2 > max_e1) {
@@ -122,28 +273,24 @@ bool sat_collision_check(Entity e1, Entity e2) {
 
 	// Check for SAT collision with normals from entity2
 	for (vec2& n : e2_normals) {
-		min_e1 = glm::dot(e1_pts[0], n);
-		max_e1 = min_e1;
-		min_e2 = glm::dot(e2_pts[0], n);
-		max_e2 = min_e2;
+		min_e1 = INFINITY;
+		max_e1 = -INFINITY;
+		min_e2 = INFINITY;
+		max_e2 = -INFINITY;
 
-		for (int i = 1; i < e1_pts.size(); i++) {
-			float dot_prod = glm::dot(e1_pts[i], n);
-			if (dot_prod < min_e1) {
-				min_e1 = dot_prod;
-			} else if (dot_prod > max_e1) {
-				max_e1 = dot_prod;
-			}
+		for (int i = 0; i < e1_pts.size(); i++) {
+			float dot_prod = e1_pts[i].x * n.x + e1_pts[i].y * n.y;
+			min_e1 = min(dot_prod, min_e1);
+			max_e1 = max(dot_prod, max_e1);
 		}
 
 		for (int i = 1; i < e2_pts.size(); i++) {
-			float dot_prod = glm::dot(e2_pts[i], n);
-			if (dot_prod < min_e2) {
-				min_e2 = dot_prod;
-			} else if (dot_prod > max_e2) {
-				max_e2 = dot_prod;
-			}
+			float dot_prod = e2_pts[i].x * n.x + e2_pts[i].y * n.y;
+			min_e2 = min(dot_prod, min_e2);
+			max_e2 = max(dot_prod, max_e2);
 		}
+		
+		displacement = min(displacement, min(max_e1, max_e2) - max(min_e1, min_e2));
 
 		// We can draw a line between the two entities, return no collision
 		if (min_e1 > max_e2 || min_e2 > max_e1) {
@@ -173,7 +320,7 @@ bool sat_collision_check(Entity e1, Entity e2) {
 }
 
 // Returns whether two entities collide based on AABB collision detection
-bool collides(const Entity entity1, const Entity entity2)
+bool collides(const Entity entity1, const Entity entity2, float& displacement)
 {
 	Motion& m1 = registry.motions.get(entity1);
 	Motion& m2 = registry.motions.get(entity2);
@@ -182,7 +329,16 @@ bool collides(const Entity entity1, const Entity entity2)
 		return false;
 	}
 
-	return sat_collision_check(entity1, entity2);
+	if (registry.meshPtrs.has(entity1) && registry.meshPtrs.has(entity2)) {
+		return mesh_to_mesh_collision_check(entity1, entity2);
+	} else if (registry.meshPtrs.has(entity1) && !registry.meshPtrs.has(entity2)) {
+		return mesh_to_box_collision_check(entity1, entity2);
+	} else if (!registry.meshPtrs.has(entity1) && registry.meshPtrs.has(entity2)) {
+		return mesh_to_box_collision_check(entity2, entity1);
+	}
+
+	return true;
+	//return sat_collision_check(entity1, entity2, displacement);
 }
 
 void update_motion(Motion &motion, float step_seconds)
@@ -190,6 +346,8 @@ void update_motion(Motion &motion, float step_seconds)
 	// TODO: Update position with motion here
 	if (!motion.complex)
 	{
+		motion.previous_position = motion.position;
+
 		motion.position.x += motion.velocity.x * step_seconds;
 		motion.position.y += motion.velocity.y * step_seconds;
 
@@ -269,6 +427,8 @@ void update_motion(Motion &motion, float step_seconds)
 	}
 
 	// Update position
+	motion.previous_position = motion.position;
+
 	motion.position.x += motion.velocity.x * step_seconds;
 	motion.position.y += motion.velocity.y * step_seconds;
 
@@ -294,6 +454,8 @@ void PhysicsSystem::step(float elapsed_ms)
 	}
 
 	// Check for collisions between all moving entities
+	float displacement_scalar = INFINITY;
+
 	ComponentContainer<Motion> &motion_container = registry.motions;
 	for (uint i = 0; i < motion_container.components.size(); i++)
 	{
@@ -307,18 +469,24 @@ void PhysicsSystem::step(float elapsed_ms)
 		// note starting j at i+1 to compare all (i,j) pairs only once (and to not compare with itself)
 		for (uint j = i + 1; j < motion_container.components.size(); j++)
 		{
+			displacement_scalar = INFINITY;
 			Entity entity_j = motion_container.entities[j];	
 
 			if (registry.noCollisionChecks.has(entity_j)) {
 				continue;
 			}
 
-			if (collides(entity_i, entity_j))
+			if (collides(entity_i, entity_j, displacement_scalar))
 			{
 				// Create a collisions event
 				// We are abusing the ECS system a bit in that we potentially insert muliple collisions for the same entity
-				registry.collisions.emplace_with_duplicates(entity_i, entity_j);
-				registry.collisions.emplace_with_duplicates(entity_j, entity_i);
+				Collision& collision1 = registry.collisions.emplace_with_duplicates(entity_i, entity_j);
+				Collision& collision2 = registry.collisions.emplace_with_duplicates(entity_j, entity_i);
+
+				if (registry.players.has(entity_i) && registry.obstacles.has(entity_j)) {
+					collision1.scalar = displacement_scalar;
+					collision2.scalar = displacement_scalar;
+				}
 			}
 		}
 	}

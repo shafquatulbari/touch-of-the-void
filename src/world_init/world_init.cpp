@@ -10,7 +10,6 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 
 	Mesh& p_mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::PLAYER_CH);
 	registry.meshPtrs.emplace(entity, &p_mesh);
-	
 
 	// Setting initial motion values
 	Motion &motion = registry.motions.emplace(entity);
@@ -40,7 +39,6 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND});
-
 	
 	return entity;
 }
@@ -66,8 +64,8 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	deadly.damage = 10.0f;
 
-	Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
-	registry.meshPtrs.emplace(entity, &mesh);
+	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	//registry.meshPtrs.emplace(entity, &mesh);
 
 	registry.obstacles.emplace(entity);
 	//registry.obstacles.emplace(entity);
@@ -556,6 +554,11 @@ void createWalls(RenderSystem* render, Room& room)
 	auto bottomLeftWall = Entity();
 	auto bottomRightWall = Entity();
 
+	registry.noCollisionChecks.emplace(topLeftWall);
+	registry.noCollisionChecks.emplace(topRightWall);
+	registry.noCollisionChecks.emplace(bottomLeftWall);
+	registry.noCollisionChecks.emplace(bottomRightWall);
+
 	// top left wall
 	Motion& topLeft_motion = registry.motions.emplace(topLeftWall);
 	topLeft_motion.position = vec2({ x_min, y_min });
@@ -682,7 +685,9 @@ void render_room(RenderSystem* render, Level& level)
 	createWalls(render, room_to_render);
 }
 
-Entity createLine(vec2 position, vec2 scale)
+
+
+Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 {
 	Entity entity = Entity();
 
@@ -692,19 +697,21 @@ Entity createLine(vec2 position, vec2 scale)
 		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		 EFFECT_ASSET_ID::LINE,
 		 GEOMETRY_BUFFER_ID::DEBUG_LINE,
-		RENDER_LAYER::UI});
+		RENDER_LAYER::FOREGROUND });
 
 	// Create motion
 	Motion& motion = registry.motions.emplace(entity);
-	motion.look_angle = 0.f;
 	motion.velocity = { 0, 0 };
 	motion.position = position;
+	motion.look_angle = angle;
 	motion.scale = scale;
 
+	registry.colors.emplace(entity) = {1.f, 0.f, 0.f};
+
+	registry.noCollisionChecks.emplace(entity);
 	registry.debugComponents.emplace(entity);
 	return entity;
 }
-
 
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)
 {
@@ -730,6 +737,8 @@ Entity createStatusHud(RenderSystem* render)
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = vec2{ window_width_px / 2, window_height_px / 2 };
 	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.noCollisionChecks.emplace(entity);
 
 	registry.renderRequests.insert(
 		entity,
