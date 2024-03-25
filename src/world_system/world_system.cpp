@@ -512,7 +512,7 @@ void WorldSystem::handle_collisions() {
 					switch (projectile.weapon_type) 
 					{
 					case WeaponType::ROCKET_LAUNCHER:
-						weapons->handle_rocket_collision(renderer, entity);
+						weapons->handle_rocket_collision(renderer, entity, player);
 						break;
 
 					case WeaponType::FLAMETHROWER:
@@ -585,7 +585,7 @@ void WorldSystem::handle_collisions() {
 				// Check if the projectile comes from the player
 				if (registry.players.has(projectileSource)) {
 					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
-						weapons->handle_rocket_collision(renderer, entity);
+						weapons->handle_rocket_collision(renderer, entity, player);
 					}
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
