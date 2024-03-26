@@ -41,5 +41,7 @@ public:
 
 	void handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 
+	void handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
+
 	vec2 clampPositionToBounds(const vec2& position);
 };

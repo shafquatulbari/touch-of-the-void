@@ -89,7 +89,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
 	}
-	if (aiType == AI::AIType::TURRET) {
+	else if (aiType == AI::AIType::TURRET) {
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,
@@ -113,6 +113,25 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+	}
+	else if (aiType == AI::AIType::SHOTGUN) {
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_SCARAB;
+		animation.total_frames = 8;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
+		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
@@ -363,6 +382,37 @@ Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle,
 		  EFFECT_ASSET_ID::TEXTURED,
 		  GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
+
+	return entity;
+}
+
+Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle, int i, Entity source)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = vec2({ BULLET_BB_WIDTH * 0.8, BULLET_BB_HEIGHT * 0.8 });
+	motion.velocity = vec2({ 1000.0f * cos(angle), 1000.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::SHOTGUN;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	return entity;
 }
@@ -679,7 +729,7 @@ void render_room(RenderSystem* render, Level& level)
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET };
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET, AI::AIType::SHOTGUN };
 
 	// Create each enemy with their specified type
 	for (auto& pos : room_to_render.enemy_positions) {

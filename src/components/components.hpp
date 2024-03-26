@@ -44,6 +44,7 @@ struct Room {
 	{
 		//std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
 	}
+
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
 	// The number of enemies in the room
@@ -70,7 +71,6 @@ struct Room {
 	bool has_right_door = false;
 	bool has_top_door = false;
 	bool has_bottom_door = false;
-
 };
 
 // Player component
@@ -153,7 +153,7 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED, TURRET};
+	enum class AIType {MELEE, RANGED, TURRET, SHOTGUN};
 	AIType type = AIType::MELEE;
 	enum class AIState {IDLE, ACTIVE};
 	AIState state = AIState::ACTIVE;
@@ -429,7 +429,8 @@ const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 enum class SPRITE_SHEET_ID {
 	BLUE_EFFECT = 0,
-	EXPLOSION = BLUE_EFFECT + 1,
+	ENEMY_SCARAB = BLUE_EFFECT + 1,
+	EXPLOSION = ENEMY_SCARAB + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
 	GREEN_EFFECT = ENEMY_EXPLODER + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
