@@ -668,8 +668,8 @@ void render_room(RenderSystem* render, Level& level)
 	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
 
 
-	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
-	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
 	for (auto& pos : room_to_render.obstacle_positions)
 	{

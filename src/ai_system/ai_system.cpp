@@ -562,7 +562,7 @@ bool AISystem::isPositionWithinBounds(const vec2& position) {
 // Create projectile for enemy
 void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity source) {
     // Adjust angle, position, and possibly texture for the enemy's projectiles
-    float rng = 0.5f; // Assuming no randomness for enemy shots, adjust as needed
+    float rng = 0.0f; // Assuming no randomness for enemy shots, adjust as needed
     float fire_length = 0.0f; // Not used for enemies in this context
-    createEnemyProjectile(renderer, position, angle, source);
+    createProjectile(renderer, position, angle, rng, fire_length, source);
 }
