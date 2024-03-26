@@ -25,7 +25,7 @@ public:
 	
 	void step(float elapsed_ms);
 
-	void idleState(Entity entity, Motion& motion);
+	void idleState(Entity entity, AI& ai, Motion& motion);
 
 	void activeState(Entity entity, Motion& motion, float elapsed_ms);
 
@@ -40,6 +40,8 @@ public:
 	vec2 limit(vec2 v, float max);
 
 	void handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
+
+	void handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 
 	vec2 clampPositionToBounds(const vec2& position);
 };

@@ -23,8 +23,10 @@ class RenderSystem {
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
 		ivec2(20,16),
+		ivec2(8,1),
 		ivec2(12,1),
 		ivec2(6,1),
+		ivec2(20,16),
 		ivec2(20,16),
 		ivec2(20,16)
 	};
@@ -60,13 +62,13 @@ class RenderSystem {
 		// LEVEL 1 TEXTURES
 		textures_path("lvl1_background_960x960.png"),
 		textures_path("lvl1_doors_192x56.png"),
-		textures_path("lvl1_full_top_wall_closed_door_832x64.png"),
+		textures_path("lvl1_full_top_wall_closed_door_960x64.png"),
 		textures_path("lvl1_full_right_wall_closed_door_832x64.png"),
-		textures_path("lvl1_full_bottom_wall_closed_door_832x64.png"),
+		textures_path("lvl1_full_bottom_wall_closed_door_960x64.png"),
 		textures_path("lvl1_full_left_wall_closed_door_832x64.png"),
-		textures_path("lvl1_full_top_wall_open_door_832x64.png"),
+		textures_path("lvl1_full_top_wall_open_door_960x64.png"),
 		textures_path("lvl1_full_right_wall_open_door_832x64.png"),
-		textures_path("lvl1_full_bottom_wall_open_door_832x64.png"),
+		textures_path("lvl1_full_bottom_wall_open_door_960x64.png"),
 		textures_path("lvl1_full_left_wall_open_door_832x64.png"),
 		textures_path("lvl1_full_wall_no_door_832x64.png"),
 		textures_path("lvl1_obstacle_64x64.png"),
@@ -122,9 +124,10 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
 		sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("enemy_fire_scarab_64x64.png"),
 		sheets_path("explosion_192x192.png"),
 		sheets_path("exploding_skull_64x64.png"),
-		//sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")
