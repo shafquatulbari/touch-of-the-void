@@ -18,6 +18,8 @@ struct Level {
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
 	int num_rooms_until_boss = 4;
+	// number of rooms the player has cleared
+	int num_rooms_cleared = 0;
 };
 
 

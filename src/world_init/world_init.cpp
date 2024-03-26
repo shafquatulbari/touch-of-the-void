@@ -4,6 +4,7 @@
 #include <world_system/world_system.hpp>
 #include <glm/gtc/random.hpp>
 
+const int NUM_ROOMS_UNTIL_BOSS = 4;
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
 	auto entity = Entity();
@@ -102,6 +103,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 		base_motion.position = position;
 		base_motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
 		registry.obstacles.emplace(base_entity);
+		registry.noCollisionChecks.emplace(base_entity);
 		registry.renderRequests.insert(
 			base_entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_BASE,
@@ -648,6 +650,7 @@ void render_room(RenderSystem* render, Level& level)
 		{
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
+			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
 		} else
 		{
 			world_generator.generateNewRoom(current_room, level, false);

@@ -20,10 +20,15 @@ void WorldGenerator::populateRoom(Room& room)
 	std::uniform_real_distribution<float> position_uniform_dist(2,12);
 
 	// randomize number of enemies/obstacles per room
-	std::uniform_real_distribution<float> num_positions_uniform_dist(3, 6);
+	std::uniform_real_distribution<float> num_positions_uniform_dist(3, 5);
 	room.obstacle_count = num_positions_uniform_dist(rng);
 	room.enemy_count = num_positions_uniform_dist(rng);
-	
+
+
+	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
+	Level& level = registry.levels.get(registry.levels.entities[0]);
+	room.obstacle_count += level.num_rooms_cleared;
+	room.enemy_count += level.num_rooms_cleared;
 
 	int cur_obstacles_count = 0;
 
@@ -96,7 +101,8 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(left_room_coords) > 0 && registry.rooms.get(level.rooms[left_room_coords]).is_visited)
 	{
-		current_room_pointer->has_left_door = true;
+		/*current_room_pointer->has_left_door = true;*/
+		// remove for M3
 	}
 	else {
 			auto left_room_entity = Entity();
@@ -109,7 +115,8 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(right_room_coords) > 0 && registry.rooms.get(level.rooms[right_room_coords]).is_visited)
 	{
-		current_room_pointer->has_right_door = true;
+		/*current_room_pointer->has_right_door = true;*/
+		// remove for M3
 	}
 	else {
 			// generate a new room
@@ -125,7 +132,8 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(top_room_coords) > 0 && registry.rooms.get(level.rooms[top_room_coords]).is_visited)
 	{
-		current_room_pointer->has_top_door = true;
+		/*current_room_pointer->has_top_door = true;*/
+		// remove for M3
 	}
 	else {
 			// generate a new room
@@ -139,8 +147,9 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(bottom_room_coords) > 0 && registry.rooms.get(level.rooms[bottom_room_coords]).is_visited)
 	{
-		//std::cout << "Found bottom room" << std::endl;
-		current_room_pointer->has_bottom_door = true;
+		
+		/*current_room_pointer->has_bottom_door = true;*/
+		// remove for M3
 	}
 	else {
 		// generate a new room
@@ -175,11 +184,14 @@ void WorldGenerator::populateBossRoom(Room& room)
 	std::uniform_real_distribution<float> position_uniform_dist(2, 12);
 
 	// randomize number of enemies/obstacles per room
-	std::uniform_real_distribution<float> num_positions_uniform_dist(10, 15);
+	std::uniform_real_distribution<float> num_positions_uniform_dist(7, 9);
 	room.obstacle_count = num_positions_uniform_dist(rng);
 	room.enemy_count = num_positions_uniform_dist(rng);
 	
-
+	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
+	Level& level = registry.levels.get(registry.levels.entities[0]);
+	room.obstacle_count += level.num_rooms_cleared;
+	room.enemy_count += level.num_rooms_cleared;
 
 	while (room.obstacle_positions.size() < room.obstacle_count) {
 		int rand_x = std::rint(position_uniform_dist(rng));

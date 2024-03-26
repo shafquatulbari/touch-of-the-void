@@ -654,6 +654,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			if (current_room.enemy_count == 0)
 			{
 				registry.levels.get(level).num_rooms_until_boss--;
+				registry.levels.get(level).num_rooms_cleared++;
 				current_room.has_bottom_door = true;
 				current_room.has_top_door = true;
 				current_room.has_left_door = true;
