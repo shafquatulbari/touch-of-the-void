@@ -326,14 +326,12 @@ void AISystem::step(float elapsed_ms)
             Motion& motion = registry.motions.get(entity);
             // State machine for AI behavior
             switch (ai.state) {
-                printf("State machine\n");
             case AI::AIState::IDLE:
-                printf("Idle state\n");
-                idleState(entity, motion);
+                idleState(entity, ai, motion);
                 break;
             case AI::AIState::ACTIVE:
-                //printf("Active state\n");
                 activeState(entity, motion, elapsed_ms);
+                ai.state = AI::AIState::IDLE;
                 break;
             default:
                 printf("Default state\n");
@@ -344,21 +342,28 @@ void AISystem::step(float elapsed_ms)
         }       
 }
 
-void AISystem:: idleState(Entity entity, Motion& motion) {
-	// No movement in idle state
-	motion.velocity = vec2(0.0f, 0.0f);
+void AISystem:: idleState(Entity entity, AI& ai, Motion& motion) {
+	if (ai.counter == ai.frequency) {
+		ai.counter = 0;
+		ai.state = AI::AIState::ACTIVE;
+	}
+	else {
+		ai.counter++;
+	}
+
+    // any other idle state logic here
 }
 
 void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
     vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
 
-    // Check for line of sight for all types of AI
-    if (lineOfSightClear(motion.position, playerPosition)) {
-    // Rotate towards player if in line of sight
-       vec2 direction = normalize(playerPosition - motion.position);
-       float angle = atan2(direction.y, direction.x);
-       motion.look_angle = angle; 
-	}
+ //   // Check for line of sight for all types of AI
+ //   if (lineOfSightClear(motion.position, playerPosition)) {
+ //   // Rotate towards player if in line of sight
+ //      vec2 direction = normalize(playerPosition - motion.position);
+ //      float angle = atan2(direction.y, direction.x);
+ //      motion.look_angle = angle; 
+	//}
     AI& ai = registry.ais.get(entity);
 
     switch (ai.type) {
@@ -369,9 +374,7 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         handleMeleeAI(entity, motion, ai, elapsed_ms, playerPosition);
         break;
     case AI::AIType::TURRET:
-        if (lineOfSightClear(motion.position, playerPosition)) {
-            handleTurretAI(entity, motion, ai, elapsed_ms, playerPosition);
-        }
+        handleTurretAI(entity, motion, ai, elapsed_ms, playerPosition);
         break;
     default:
         break;
@@ -396,6 +399,11 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
 void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
     // Check for line of sight
     if (lineOfSightClear(motion.position, playerPosition)) {
+        // Rotate towards player if in line of sight
+        vec2 direction = normalize(playerPosition - motion.position);
+        float angle = atan2(direction.y, direction.x);
+        motion.look_angle = angle;
+
         // Generate path using A* if the line of sight is clear
         std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
         // Ensure there is a path and it has more than one point (start point is always included)
@@ -403,7 +411,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
             // Consider the next step in the path
             vec2 nextStep = path[1]; // Assuming path[0] is the current position
             vec2 direction = normalize(nextStep - motion.position);
-            float speed = 10.0f; // Tune this value as needed
+            float speed = 80.0f; // Tune this value as needed
 
             // Update velocity towards the next step in the path
             motion.velocity = direction * speed;
@@ -419,7 +427,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
     }
     else {
         // If line of sight is not clear, stop the entity or handle accordingly
-        motion.velocity = vec2(0.0f, 0.0f);
+        // motion.velocity = vec2(0.0f, 0.0f);
     }
 }
 
@@ -467,7 +475,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         }
     }
 
-    // Sample avoidance logic: Check for nearby obstacles and adjust direction
+    // Simple avoidance logic: Check for nearby obstacles and adjust direction
     for (const auto& obstaclePos : room.obstacle_positions) {
         //convert the obstacle position to the world position
         vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
@@ -506,15 +514,18 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     }
 
     // Shooting logic
-    if (distanceToPlayer <= shootingRange) {
-        ai.shootingCooldown -= elapsed_ms / 1000.0f; // Convert milliseconds to seconds
+    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+        vec2 direction = normalize(playerPosition - motion.position);
+        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+
+        ai.shootingCooldown -= elapsed_ms / 100.0f; // Convert milliseconds to seconds
         if (ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
-            createProjectileForEnemy(motion.position, shootingAngle, entity);
-            ai.shootingCooldown = 2.5f; // Reset cooldown
+            createEnemySniperProjectile(renderer, motion.position, shootingAngle, entity);
+            ai.shootingCooldown = 1.5f; // Reset cooldown
         }
-    }
+	}
 }
 
 void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
@@ -525,12 +536,12 @@ void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elaps
         motion.look_angle = atan2(direction.y, direction.x) + M_PI / 2;
 
         // Shooting logic, no range for these long ranged turrets
-        ai.shootingCooldown -= elapsed_ms / 1000.0f; // Cooldown reduction
+        ai.shootingCooldown -= elapsed_ms / 100.f; // Cooldown reduction
         if (ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
-            createProjectileForEnemy(motion.position, shootingAngle, entity);
-            ai.shootingCooldown = 2.5f; // Reset cooldown
+            createEnemyProjectile(renderer, motion.position, shootingAngle, entity);
+            ai.shootingCooldown = .25f; // Reset cooldown
         }
     }
 }
@@ -551,7 +562,7 @@ bool AISystem::isPositionWithinBounds(const vec2& position) {
 // Create projectile for enemy
 void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity source) {
     // Adjust angle, position, and possibly texture for the enemy's projectiles
-    float rng = 0.0f; // Assuming no randomness for enemy shots, adjust as needed
+    float rng = 0.5f; // Assuming no randomness for enemy shots, adjust as needed
     float fire_length = 0.0f; // Not used for enemies in this context
-    createProjectile(renderer, position, angle, rng, fire_length, source);
+    createEnemyProjectile(renderer, position, angle, source);
 }

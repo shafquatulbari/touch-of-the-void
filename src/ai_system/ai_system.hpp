@@ -25,7 +25,7 @@ public:
 	
 	void step(float elapsed_ms);
 
-	void idleState(Entity entity, Motion& motion);
+	void idleState(Entity entity, AI& ai, Motion& motion);
 
 	void activeState(Entity entity, Motion& motion, float elapsed_ms);
 
