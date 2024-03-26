@@ -417,7 +417,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
 
     vec2 avoidanceForce(0.0f);
     float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 50.0f; // radius within which to avoid projectiles
+    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
 
     Level& level = registry.levels.get(registry.levels.entities[0]);
     Room& room = registry.rooms.get(level.rooms[level.current_room]);
@@ -528,7 +528,7 @@ void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elap
 
     vec2 avoidanceForce(0.0f);
     float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 50.0f; // radius within which to avoid projectiles
+    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
 
     Level& level = registry.levels.get(registry.levels.entities[0]);
     Room& room = registry.rooms.get(level.rooms[level.current_room]);
