@@ -355,11 +355,10 @@ void WorldSystem::restart_game() {
 		std::fstream high_score_file("../../../data/highscore.txt");
 		if (high_score_file.is_open())
 		{
-			std::cout << "opened file" << std::endl;
 			while (std::getline(high_score_file, line))
 			{
 				high_score = std::stoi(line);
-				//high_score_file.close();
+				high_score_file.close();
 			}
 		}
 		else
