@@ -86,6 +86,7 @@ private:
 	// Entity ammo_text;
 	Entity score_text;
 	int score;
+	int high_score;
 	float multiplier; // Min 0.0, Max 9.9
 	int delta_score; // Score gained in the current period TBD what a period is
 

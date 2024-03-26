@@ -349,9 +349,22 @@ void WorldSystem::restart_game() {
 
 		break;
 
-	case GAME_STATE::GAME:
+	case GAME_STATE::GAME: {
 		play_music(game_music);
-
+		std::string line;
+		std::fstream high_score_file("../../../data/highscore.txt");
+		if (high_score_file.is_open())
+		{
+			while (std::getline(high_score_file, line))
+			{
+				high_score = std::stoi(line);
+				high_score_file.close();
+			}
+		}
+		else
+		{
+			std::cout << "could not open high score file " << std::endl;
+		}
 		// Create a new player
 		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
@@ -360,16 +373,29 @@ void WorldSystem::restart_game() {
 		level = createLevel(renderer);
 
 		//// Create HUD
-		score = 100;
+		score = 0;
 		multiplier = 1.0;
 		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, registry.levels.get(level));
-		break;
 
-	case GAME_STATE::GAME_OVER:
+		break;
+	}
+
+	case GAME_STATE::GAME_OVER: {
+		high_score = std::max(high_score, score);
 		/*createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
 		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
 		createDeathScreen(renderer);
+		createText(renderer, "Score " + std::to_string(score), { 960.0f, 864.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		createText(renderer, "High Score " + std::to_string(high_score), { 960.0f, 904.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		std::fstream new_highscore_file("../../../data/highscore.txt");
+		if (new_highscore_file.is_open())
+		{
+			new_highscore_file << std::to_string(high_score);
+			new_highscore_file.close();
+		}
 		break;
+	}
+		
 
 	default:
 		break;
