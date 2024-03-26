@@ -30,8 +30,11 @@ const float FIRE_BB_HEIGHT = 32.0f;
 const float BULLET_IMPACT_BB_WIDTH = 32.0f;
 const float BULLET_IMPACT_BB_HEIGHT = 32.0f;
 
-const float WALL_BB_WIDTH = 832.0f;
-const float WALL_BB_HEIGHT = 64.0F;
+const float VERTICAL_WALL_BB_WIDTH = 832.0f;
+const float VERTICAL_WALL_BB_HEIGHT = 64.0F;
+
+const float HORIZONTAL_WALL_BB_WIDTH = 960.0f;
+const float HORIZONTAL_WALL_BB_HEIGHT = 64.0f;
 
 const float WEAPON_EQUIPPED_ICON_BB_WIDTH = 192.0f;
 const float WEAPON_EQUIPPED_ICON_BB_HEIGHT = 192.0f;
@@ -52,8 +55,12 @@ Entity createObstacle(RenderSystem* renderer, vec2 position);
 Entity createBackground(RenderSystem* renderer);
 // a single projectile
 Entity createProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
+// a single enemy projectile
+Entity createEnemyProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
 // a single sinper projectile
 Entity createSniperProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
+// a single enemy sniper projectile
+Entity createEnemySniperProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
 // a single shotgun projectile
 Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
 // a single rocket projectile

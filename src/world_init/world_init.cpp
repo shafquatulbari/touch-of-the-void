@@ -54,6 +54,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	AI& ai = registry.ais.emplace(entity);
 	ai.type = aiType; // based on passed parameter
 	ai.state = AI::AIState::ACTIVE;
+	ai.frequency = 5;
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
@@ -71,7 +72,6 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	registry.obstacles.emplace(entity);
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
-
 		Animation& animation = registry.animations.emplace(entity);
 		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
 		animation.total_frames = 6;
@@ -90,7 +90,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
 	}
-	if (aiType == AI::AIType::TURRET) {
+	else if (aiType == AI::AIType::TURRET) {
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,
@@ -115,6 +115,25 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_SPITTER,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+	}
+	else if (aiType == AI::AIType::SHOTGUN) {
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_SCARAB;
+		animation.total_frames = 8;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
+		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
@@ -207,6 +226,40 @@ Entity createProjectile(RenderSystem* render, vec2 position, float angle, float 
 	return entity;
 }
 
+Entity createEnemyProjectile(RenderSystem* render, vec2 position, float angle, Entity source)
+{
+	auto entity = Entity();
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle + M_PI / 4;
+	motion.scale = vec2({ BULLET_BB_WIDTH, BULLET_BB_HEIGHT });
+	motion.velocity = vec2({ 250.0f * cos(angle), 250.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::GATLING_GUN;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 100.f;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
 Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
 {
 	auto entity = Entity();
@@ -253,6 +306,48 @@ Entity createSniperProjectile(RenderSystem* render, vec2 position, float angle, 
 	return entity;
 }
 
+Entity createEnemySniperProjectile(RenderSystem* render, vec2 position, float angle, Entity source)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle + M_PI;
+	motion.scale = vec2({ 48.f, 48.f });
+	motion.velocity = vec2({ 500.0f * cos(angle), 500.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::SNIPER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 5}, {12, 5}, {13, 5}, {14, 5} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
 Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
 {
 	auto entity = Entity();
@@ -289,6 +384,37 @@ Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle,
 		  EFFECT_ASSET_ID::TEXTURED,
 		  GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
+
+	return entity;
+}
+
+Entity createShotgunProjectile(RenderSystem* render, vec2 position, float angle, int i, Entity source)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = vec2({ BULLET_BB_WIDTH * 0.8, BULLET_BB_HEIGHT * 0.8 });
+	motion.velocity = vec2({ 1000.0f * cos(angle), 1000.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::SHOTGUN;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::BULLET,
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	return entity;
 }
@@ -453,7 +579,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// top wall
 	Motion& top_motion = registry.motions.emplace(topWall);
 	top_motion.position = vec2({ x_mid, y_min });
-	top_motion.scale = vec2({ WALL_BB_WIDTH, WALL_BB_HEIGHT });
+	top_motion.scale = vec2({ HORIZONTAL_WALL_BB_WIDTH, HORIZONTAL_WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(topWall);
 	registry.obstacles.get(topWall).is_wall = true;
@@ -478,7 +604,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
 	bottom_motion.position = vec2({ x_mid, y_max });
-	bottom_motion.scale = vec2({ WALL_BB_WIDTH, WALL_BB_HEIGHT });
+	bottom_motion.scale = vec2({ HORIZONTAL_WALL_BB_WIDTH, HORIZONTAL_WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomWall);
 	registry.renderRequests.insert(
@@ -503,7 +629,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
 	left_motion.position = vec2({ x_min, y_mid });
-	left_motion.scale = vec2({ WALL_BB_HEIGHT , WALL_BB_WIDTH });
+	left_motion.scale = vec2({ VERTICAL_WALL_BB_HEIGHT , VERTICAL_WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(leftWall);
 	registry.obstacles.get(leftWall).is_wall = true;
@@ -528,7 +654,7 @@ void createWalls(RenderSystem* render, Room& room)
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
 	right_motion.position = vec2({ x_max, y_mid });
-	right_motion.scale = vec2({ WALL_BB_HEIGHT, WALL_BB_WIDTH });
+	right_motion.scale = vec2({ VERTICAL_WALL_BB_HEIGHT, VERTICAL_WALL_BB_WIDTH });
 
 	registry.obstacles.emplace(rightWall);
 	registry.obstacles.get(rightWall).is_wall = true;
@@ -550,75 +676,6 @@ void createWalls(RenderSystem* render, Room& room)
 		right_door_obstacle.is_passable = true;
 		right_door_obstacle.is_right_door = true;
 	}
-	// corners
-	auto topLeftWall = Entity();
-	auto topRightWall = Entity();
-	auto bottomLeftWall = Entity();
-	auto bottomRightWall = Entity();
-
-	registry.noCollisionChecks.emplace(topLeftWall);
-	registry.noCollisionChecks.emplace(topRightWall);
-	registry.noCollisionChecks.emplace(bottomLeftWall);
-	registry.noCollisionChecks.emplace(bottomRightWall);
-
-	// top left wall
-	Motion& topLeft_motion = registry.motions.emplace(topLeftWall);
-	topLeft_motion.position = vec2({ x_min, y_min });
-	topLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
-
-	registry.obstacles.emplace(topLeftWall);
-	registry.obstacles.get(topLeftWall).is_wall = true;
-
-	registry.renderRequests.insert(
-		topLeftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
-					EFFECT_ASSET_ID::TEXTURED,
-					GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::MIDDLEGROUND });
-
-	// top right wall
-	Motion& topRight_motion = registry.motions.emplace(topRightWall);
-	topRight_motion.position = vec2({ x_max, y_min });
-	topRight_motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
-
-	registry.obstacles.emplace(topRightWall);
-	registry.renderRequests.insert(
-		topRightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_WALL_TOP_CORNER,
-							EFFECT_ASSET_ID::TEXTURED,
-							GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::MIDDLEGROUND });
-
-	// bottom left wall
-	Motion& bottomLeft_motion = registry.motions.emplace(bottomLeftWall);
-	bottomLeft_motion.position = vec2({ x_min, y_max });
-	bottomLeft_motion.scale = vec2({ -OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
-
-	registry.obstacles.emplace(bottomLeftWall);
-	registry.obstacles.get(bottomLeftWall).is_wall = true;
-
-	registry.renderRequests.insert(
-		bottomLeftWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
-							EFFECT_ASSET_ID::TEXTURED,
-							GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::MIDDLEGROUND });
-
-	// bottom right wall
-	Motion& bottomRight_motion = registry.motions.emplace(bottomRightWall);
-	bottomRight_motion.position = vec2({ x_max, y_max });
-	bottomRight_motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
-
-	registry.obstacles.emplace(bottomRightWall);
-	registry.obstacles.get(bottomRightWall).is_wall = true;
-
-	registry.renderRequests.insert(
-		bottomRightWall,
-		{ TEXTURE_ASSET_ID::LEVEL1_WALL_BOTTOM_CORNER,
-									EFFECT_ASSET_ID::TEXTURED,
-									GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::MIDDLEGROUND });
-
 }
 
 void clearExistingWalls()
@@ -664,8 +721,8 @@ void render_room(RenderSystem* render, Level& level)
 	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
 
 
-	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 16;
-	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 16;
+	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
+	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
 	for (auto& pos : room_to_render.obstacle_positions)
 	{
@@ -675,7 +732,7 @@ void render_room(RenderSystem* render, Level& level)
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET };
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET, AI::AIType::SHOTGUN };
 
 	// Create each enemy with their specified type
 	for (auto& pos : room_to_render.enemy_positions) {

@@ -90,6 +90,7 @@ bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
    return true;
 }
 */
+
 // http://www.cse.yorku.ca/~amana/research/grid.pdf
  // Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
  // This is a simple implementation of the Bresenham's line algorithm
@@ -326,39 +327,35 @@ void AISystem::step(float elapsed_ms)
             Motion& motion = registry.motions.get(entity);
             // State machine for AI behavior
             switch (ai.state) {
-                printf("State machine\n");
             case AI::AIState::IDLE:
-                printf("Idle state\n");
-                idleState(entity, motion);
+                idleState(entity, ai, motion);
                 break;
             case AI::AIState::ACTIVE:
-                //printf("Active state\n");
                 activeState(entity, motion, elapsed_ms);
+                ai.state = AI::AIState::IDLE;
                 break;
             default:
                 printf("Default state\n");
                 break;
             }
-            motion.position += motion.velocity * elapsed_ms / 1000.0f;
-            
+            motion.position += motion.velocity * elapsed_ms / 1000.0f; // TODO: figure out whether we need to do this here, or if it can be done in the physics system
         }       
 }
 
-void AISystem:: idleState(Entity entity, Motion& motion) {
-	// No movement in idle state
-	motion.velocity = vec2(0.0f, 0.0f);
+void AISystem:: idleState(Entity entity, AI& ai, Motion& motion) {
+	if (ai.counter == ai.frequency) {
+		ai.counter = 0;
+		ai.state = AI::AIState::ACTIVE;
+	}
+	else {
+		ai.counter++;
+	}
+
+    // any other idle state logic here
 }
 
 void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
     vec2 playerPosition = registry.motions.get(registry.players.entities[0]).position;
-
-    // Check for line of sight for all types of AI
-    if (lineOfSightClear(motion.position, playerPosition)) {
-    // Rotate towards player if in line of sight
-       vec2 direction = normalize(playerPosition - motion.position);
-       float angle = atan2(direction.y, direction.x);
-       motion.look_angle = angle; 
-	}
     AI& ai = registry.ais.get(entity);
 
     switch (ai.type) {
@@ -369,33 +366,24 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         handleMeleeAI(entity, motion, ai, elapsed_ms, playerPosition);
         break;
     case AI::AIType::TURRET:
-        if (lineOfSightClear(motion.position, playerPosition)) {
-            handleTurretAI(entity, motion, ai, elapsed_ms, playerPosition);
-        }
+        handleTurretAI(entity, motion, ai, elapsed_ms, playerPosition);
         break;
+    case AI::AIType::SHOTGUN:
+        handleShotgunAI(entity, motion, ai, elapsed_ms, playerPosition);
+		break;
     default:
         break;
     }
-
-    // Ensure velocity is clamped to avoid exceeding max speed after applying avoidance
-    float maxSpeed = 50.0f; // Adjust as needed
-    if (glm::length(motion.velocity) > maxSpeed) {
-        motion.velocity = normalize(motion.velocity) * maxSpeed;
-    }
-
-    // Calculate the next position based on current velocity
-    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
-
-    // Clamp the next position to ensure it's within bounds
-    vec2 clampedPosition = clampPositionToBounds(nextPosition);
-
-    // Update the entity's position to the clamped position
-    motion.position = clampedPosition;
 }
 
 void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
     // Check for line of sight
     if (lineOfSightClear(motion.position, playerPosition)) {
+        // Rotate towards player if in line of sight
+        vec2 direction = normalize(playerPosition - motion.position);
+        float angle = atan2(direction.y, direction.x);
+        motion.look_angle = angle;
+
         // Generate path using A* if the line of sight is clear
         std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
         // Ensure there is a path and it has more than one point (start point is always included)
@@ -403,7 +391,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
             // Consider the next step in the path
             vec2 nextStep = path[1]; // Assuming path[0] is the current position
             vec2 direction = normalize(nextStep - motion.position);
-            float speed = 10.0f; // Tune this value as needed
+            float speed = 80.0f; // Tune this value as needed
 
             // Update velocity towards the next step in the path
             motion.velocity = direction * speed;
@@ -419,7 +407,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
     }
     else {
         // If line of sight is not clear, stop the entity or handle accordingly
-        motion.velocity = vec2(0.0f, 0.0f);
+        // motion.velocity = vec2(0.0f, 0.0f);
     }
 }
 
@@ -429,7 +417,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
 
     vec2 avoidanceForce(0.0f);
     float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 50.0f; // radius within which to avoid projectiles
+    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
 
     Level& level = registry.levels.get(registry.levels.entities[0]);
     Room& room = registry.rooms.get(level.rooms[level.current_room]);
@@ -467,7 +455,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         }
     }
 
-    // Sample avoidance logic: Check for nearby obstacles and adjust direction
+    // Simple avoidance logic: Check for nearby obstacles and adjust direction
     for (const auto& obstaclePos : room.obstacle_positions) {
         //convert the obstacle position to the world position
         vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
@@ -506,15 +494,145 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     }
 
     // Shooting logic
-    if (distanceToPlayer <= shootingRange) {
-        ai.shootingCooldown -= elapsed_ms / 1000.0f; // Convert milliseconds to seconds
+    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+        vec2 direction = normalize(playerPosition - motion.position);
+        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+
+        ai.shootingCooldown -= elapsed_ms / 100.0f; // Convert milliseconds to seconds
         if (ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
-            createProjectileForEnemy(motion.position, shootingAngle, entity);
+            createEnemySniperProjectile(renderer, motion.position, shootingAngle, entity);
+            ai.shootingCooldown = 1.5f; // Reset cooldown
+        }
+	}
+
+    // Ensure velocity is clamped to avoid exceeding max speed after applying avoidance
+    if (glm::length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    // Calculate the next position based on current velocity
+    // vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // Clamp the next position to ensure it's within bounds
+    vec2 clampedPosition = clampPositionToBounds(nextPosition);
+
+    // Update the entity's position to the clamped position
+    motion.position = clampedPosition;
+}
+
+void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float shootingRange = 250.0f; // Distance to shoot at the player
+    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
+
+    vec2 avoidanceForce(0.0f);
+    float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
+    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
+
+    Level& level = registry.levels.get(registry.levels.entities[0]);
+    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+
+    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+
+    // Calculate distance to the player
+    float distanceToPlayer = length(playerPosition - motion.position);
+
+    float maxSpeed = 100.0f; // Adjust as needed
+
+    // Movement logic considering player's distance and projectiles
+    if (distanceToPlayer > playerAvoidanceDistance) {
+        // Move normally if within shooting range but outside avoidance distance
+        motion.velocity = flockMove;
+    }
+    else if (distanceToPlayer <= playerAvoidanceDistance) {
+        // Move away from the player if too close
+        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
+        motion.velocity = flockMove + awayFromPlayer;
+    }
+
+    // Calculate the next position based on current velocity
+    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // kept value 100, 64 is too small and enemies get stuck
+    // Check if the next position is within bounds
+    if (!isPositionWithinBounds(nextPosition)) {
+        // Adjust velocity to bounce off the wall
+        if (nextPosition.x <= xMin + 100.0f || nextPosition.x >= xMax - 100.0f) {
+            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
+        }
+        if (nextPosition.y <= yMin + 100.0f || nextPosition.y >= yMax - 100.0f) {
+            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
+        }
+    }
+
+    // Simple avoidance logic: Check for nearby obstacles and adjust direction
+    for (const auto& obstaclePos : room.obstacle_positions) {
+        //convert the obstacle position to the world position
+        vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
+        vec2 directionToObstacle = world_obstacle_pos - motion.position;
+        float distanceToObstacle = length(directionToObstacle);
+        if (distanceToObstacle < obstacleAvoidanceRadius) {
+            avoidanceForce += normalize(motion.position - world_obstacle_pos);
+        }
+    }
+    // Avoidance behavior for projectiles
+    for (auto& projectileEntity : registry.projectiles.entities) {
+        // check if player projectile 
+        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
+            Motion& projectileMotion = registry.motions.get(projectileEntity);
+            vec2 directionToProjectile = projectileMotion.position - motion.position;
+            float distanceToProjectile = length(directionToProjectile);
+
+            if (distanceToProjectile < projectileAvoidanceRadius) {
+                avoidanceForce -= (directionToProjectile / distanceToProjectile);
+            }
+        }
+        else {
+            break; // No need to check further projectiles if not player's
+        }
+
+    }
+
+    // Apply avoidance force to the current motion
+    if (glm::length(avoidanceForce) > 0) {
+        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
+    }
+
+    // Clamp velocity to max speed
+    if (length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    // Shooting logic
+    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+        vec2 direction = normalize(playerPosition - motion.position);
+        motion.look_angle = atan2(direction.y, direction.x) - M_PI/2;
+
+        ai.shootingCooldown -= elapsed_ms / 100.0f; // Convert milliseconds to seconds
+        if (ai.shootingCooldown <= 0) {
+            vec2 shootingDirection = normalize(playerPosition - motion.position);
+            float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
+            for (int i = 0; i < 10; i++) {
+                createShotgunProjectile(renderer, motion.position, shootingAngle, 0.0, 0.0, i, entity);
+            }
             ai.shootingCooldown = 2.5f; // Reset cooldown
         }
     }
+
+    // Ensure velocity is clamped to avoid exceeding max speed after applying avoidance
+    if (glm::length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    // Calculate the next position based on current velocity
+    // vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // Clamp the next position to ensure it's within bounds
+    vec2 clampedPosition = clampPositionToBounds(nextPosition);
+
+    // Update the entity's position to the clamped position
+    motion.position = clampedPosition;
 }
 
 void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
@@ -525,12 +643,12 @@ void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elaps
         motion.look_angle = atan2(direction.y, direction.x) + M_PI / 2;
 
         // Shooting logic, no range for these long ranged turrets
-        ai.shootingCooldown -= elapsed_ms / 1000.0f; // Cooldown reduction
+        ai.shootingCooldown -= elapsed_ms / 100.f; // Cooldown reduction
         if (ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
-            createProjectileForEnemy(motion.position, shootingAngle, entity);
-            ai.shootingCooldown = 2.5f; // Reset cooldown
+            createEnemyProjectile(renderer, motion.position, shootingAngle, entity);
+            ai.shootingCooldown = .25f; // Reset cooldown
         }
     }
 }

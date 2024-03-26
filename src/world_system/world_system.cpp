@@ -623,6 +623,8 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
 						weapons->handle_rocket_collision(renderer, entity, player);
 					}
+				}
+				if (projectile.source != entity_other && !registry.noCollisionChecks.has(entity_other)) {
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
 				}
