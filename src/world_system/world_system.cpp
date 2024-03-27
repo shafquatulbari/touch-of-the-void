@@ -613,7 +613,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
 
-			// Collision logic for player projectiles hitting obstacles
+			// Collision logic for projectiles hitting obstacles
 			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
 				Entity projectileSource = projectile.source;
@@ -624,7 +624,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 						weapons->handle_rocket_collision(renderer, entity, player);
 					}
 				}
-				if (projectile.source != entity_other && !registry.noCollisionChecks.has(entity_other)) {
+				else if (projectile.source != entity_other && !registry.noCollisionChecks.has(entity_other)) {
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
 				}

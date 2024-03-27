@@ -130,18 +130,22 @@ bool mesh_to_mesh_collision_check(Entity e1, Entity e2) {
 	t2.rotate(e2_motion.look_angle);
 	t2.scale(e2_motion.scale);
 	
-	// Transform vertices into game space coordinates
+	// Transform the vertices of the mesh of entity_1 onto the game space
 	std::vector<vec3> e1_trans_vertices;
-	for (int i = 0; i < e1_mesh.vertices.size(); i++) {
+	for (int i = 0; i < e1_mesh.vertices.size(); i++) 
+	{
 		e1_trans_vertices.push_back(t1.mat * e1_mesh.vertices[i].position + vec3({e1_motion.position.x, e1_motion.position.y, 0.f}));
 	}
 
+	// Transform the vertices of the mesh of entity_2 onto the game space
 	std::vector<vec3> e2_trans_vertices;
-	for (int i = 0; i < e2_mesh.vertices.size(); i++) {
+	for (int i = 0; i < e2_mesh.vertices.size(); i++) 
+	{
 		e2_trans_vertices.push_back(t1.mat * e2_mesh.vertices[i].position + vec3({ e2_motion.position.x, e2_motion.position.y, 0.f }));
 	}
 
-	for (int i = 0; i < e1_mesh.vertex_indices.size() / 3; i++) {
+	for (int i = 0; i < e1_mesh.vertex_indices.size() / 3; i++) 
+	{
 		vec3 e1_tri[] = {
 			e1_trans_vertices[e1_mesh.vertex_indices[i * 3]],
 			e1_trans_vertices[e1_mesh.vertex_indices[(i * 3 + 1) % e1_trans_vertices.size()]],
