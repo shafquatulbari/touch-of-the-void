@@ -905,13 +905,19 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 }
 
 void WorldSystem::on_scroll(double x_offset, double y_offset) {
-	if (y_offset == scroll_pos + 1) {
-		weapons->cycle_weapon(1, registry.players.get(player));
-	} else {
-		weapons->cycle_weapon(-1, registry.players.get(player));
-	}
+	switch (game_state) {
+		case GAME_STATE::GAME:
+			if (y_offset == scroll_pos + 1) {
+				weapons->cycle_weapon(1, registry.players.get(player));
+			} else {
+				weapons->cycle_weapon(-1, registry.players.get(player));
+			}
 
-	scroll_pos = y_offset;
+			scroll_pos = y_offset;
+			break;
+		default:
+			break;
+	}
 }
 
 void WorldSystem::on_mouse_click(int button, int action, int mods) 
