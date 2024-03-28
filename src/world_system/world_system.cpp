@@ -87,9 +87,11 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwSetWindowUserPointer(window, this);
 	auto key_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2, int _3) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_key(_0, _1, _2, _3); };
 	auto cursor_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_move({ _0, _1 }); };
+	auto scroll_pos_redirect = [](GLFWwindow* wnd, double _0, double _1) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_scroll( _0, _1 ); };
 	auto mouse_button_redirect = [](GLFWwindow* wnd, int _0, int _1, int _2) { ((WorldSystem*)glfwGetWindowUserPointer(wnd))->on_mouse_click(_0, _1, _2); };
 	glfwSetKeyCallback(window, key_redirect);
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
+	glfwSetScrollCallback(window, scroll_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_button_redirect);
 	
 	//////////////////////////////////////
@@ -639,7 +641,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
 
-			// Collision logic for player projectiles hitting obstacles
+			// Collision logic for projectiles hitting obstacles
 			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
 				Entity projectileSource = projectile.source;
@@ -649,6 +651,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
 						weapons->handle_rocket_collision(renderer, entity, player);
 					}
+
 				}
 				if (projectile.source != entity_other && !registry.noCollisionChecks.has(entity_other)) {
 					// Remove the projectile, it hit an obstacle
@@ -898,6 +901,22 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	default:
 		break;
 
+	}
+}
+
+void WorldSystem::on_scroll(double x_offset, double y_offset) {
+	switch (game_state) {
+		case GAME_STATE::GAME:
+			if (y_offset == scroll_pos + 1) {
+				weapons->cycle_weapon(1, registry.players.get(player));
+			} else {
+				weapons->cycle_weapon(-1, registry.players.get(player));
+			}
+
+			scroll_pos = y_offset;
+			break;
+		default:
+			break;
 	}
 }
 
