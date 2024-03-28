@@ -69,7 +69,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
 	//registry.meshPtrs.emplace(entity, &mesh);
 
-	registry.obstacles.emplace(entity);
+	registry.obstacles.emplace(entity);	
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 		Animation& animation = registry.animations.emplace(entity);

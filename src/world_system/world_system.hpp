@@ -43,6 +43,7 @@ public:
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
+	void on_scroll(double x_offset, double y_offset);
 	void on_mouse_move(vec2 pos);
 	void on_mouse_click(int button, int action, int mod);
 
@@ -89,6 +90,8 @@ private:
 	int high_score;
 	float multiplier; // Min 0.0, Max 9.9
 	int delta_score; // Score gained in the current period TBD what a period is
+
+	int scroll_pos = 0;
 
 	// C++ random number generator
 	std::default_random_engine rng;
