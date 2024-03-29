@@ -905,8 +905,6 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 }
 
 void WorldSystem::on_scroll(double x_offset, double y_offset) {
-	std::cout << y_offset << '\n';
-	
 	switch (game_state) {
 		case GAME_STATE::GAME:
 			if (y_offset > 0) {
