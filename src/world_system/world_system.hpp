@@ -91,8 +91,6 @@ private:
 	float multiplier; // Min 0.0, Max 9.9
 	int delta_score; // Score gained in the current period TBD what a period is
 
-	int scroll_pos = 0;
-
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
