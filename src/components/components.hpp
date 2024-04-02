@@ -78,6 +78,15 @@ struct Room {
 // Player component
 struct Player
 {
+	// Store the total ammo count for each weapon
+	std::unordered_map<WeaponType, int> total_ammo_count = {
+		{WeaponType::GATLING_GUN, INT_MAX},
+		{WeaponType::SNIPER, 20},
+		{WeaponType::SHOTGUN, 60},
+		{WeaponType::ROCKET_LAUNCHER, 5},
+		{WeaponType::FLAMETHROWER, 400}
+	};
+
 	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
 		{WeaponType::GATLING_GUN, 100},
