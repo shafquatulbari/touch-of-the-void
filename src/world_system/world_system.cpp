@@ -233,6 +233,41 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
 
+	//// Update player rotation
+	//if ((p_m.is_moving_right && p_m.is_moving_left) || (!p_m.is_moving_right && !p_m.is_moving_left)) {
+	//	// not rotating, so gradually return to 0
+	//	if (p.rotation_factor != 0) {
+	//		if (p.rotation_factor > 60) {
+	//			p.rotation_factor++;
+	//		}
+	//		else {
+	//			p.rotation_factor--;
+	//		}
+	//	}
+	//} else if (p_m.is_moving_right) {
+	//	// rotating right
+	//	p.rotation_factor++;
+	//}
+	//else if (p_m.is_moving_left) {
+	//	// rotating left
+	//	p.rotation_factor--;
+	//}
+
+	//// If the rotation factor is out of bounds, wrap it around
+	//if (p.rotation_factor < 0) {
+	//	p.rotation_factor = 120;
+	//} 
+	//if (p.rotation_factor > 120) {
+	//	p.rotation_factor = 0;
+	//}
+
+	vec2 direction = p_m.velocity;
+	float movement_angle = atan2(direction.y, direction.x);
+	float look_angle = p_m.look_angle - M_PI/2;
+
+	std::cout << "movement angle: " << movement_angle << std::endl;
+	std::cout << "look angle: " << look_angle << std::endl;
+
 	// Update HUD
 	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, debugging.show_fps, registry.levels.get(level));
 	// Update Weapon System
@@ -425,6 +460,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	render_room(renderer, level_struct);
 
 	// Move the player to position
+	assert(registry.motions.has(player) && "Player should have a motion");
 	registry.motions.get(player).position = player_pos;
 }
 // Remove entities between rooms
@@ -433,7 +469,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	for (Entity e : registry.motions.entities)
 	{
 		// remove all enemies, obstacles, animations
-		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e))
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || (registry.animations.has(e) && !registry.players.has(e)))
 		{
 			registry.remove_all_components_of(e);
 		}

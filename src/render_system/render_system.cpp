@@ -59,35 +59,35 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		glEnableVertexAttribArray(in_texcoord_loc);
 		glVertexAttribPointer(
 			in_texcoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(TexturedVertex),
-			(void*)sizeof(
-				vec3)); // note the stride to skip the preceeding vertex position
+				(void*)sizeof(
+					vec3)); // note the stride to skip the preceeding vertex position
 
-		// Enabling and binding texture to slot 0
-		glActiveTexture(GL_TEXTURE0);
-		gl_has_errors();
+					// Enabling and binding texture to slot 0
+					glActiveTexture(GL_TEXTURE0);
+					gl_has_errors();
 
-		if (registry.animations.has(entity)) {
-			Animation& animation = registry.animations.get(entity);
-			// Get the current frame
-			int current_frame = animation.current_frame;
-			// Get the texture id of the current frame
-			SPRITE_SHEET_ID sheet_id = animation.sheet_id;
-			std::pair<int, int> spriteLocation = animation.sprites[current_frame];
-			std::map<std::pair<int, int>, Sprite>& spriteSheet = m_ftSpriteSheets[(int)sheet_id];
-			Sprite& sprite = spriteSheet[spriteLocation];
+					if (registry.animations.has(entity)) {
+						Animation& animation = registry.animations.get(entity);
+						// Get the current frame
+						int current_frame = animation.current_frame;
+						// Get the texture id of the current frame
+						SPRITE_SHEET_ID sheet_id = animation.sheet_id;
+						std::pair<int, int> spriteLocation = animation.sprites[current_frame];
+						std::map<std::pair<int, int>, Sprite>& spriteSheet = m_ftSpriteSheets[(int)sheet_id];
+						Sprite& sprite = spriteSheet[spriteLocation];
 
-			glBindTexture(GL_TEXTURE_2D, sprite.TextureID);
+						glBindTexture(GL_TEXTURE_2D, sprite.TextureID);
 
-			gl_has_errors();
-		}
-		else {
-			assert(registry.renderRequests.has(entity));
-			GLuint texture_id =
-				texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
+						gl_has_errors();
+					}
+					else {
+						assert(registry.renderRequests.has(entity));
+						GLuint texture_id =
+							texture_gl_handles[(GLuint)registry.renderRequests.get(entity).used_texture];
 
-			glBindTexture(GL_TEXTURE_2D, texture_id);
-			gl_has_errors();
-		}
+						glBindTexture(GL_TEXTURE_2D, texture_id);
+						gl_has_errors();
+					}
 
 	}
 	else if (render_request.used_effect == EFFECT_ASSET_ID::LINE)
@@ -125,7 +125,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 	// Getting uniform locations for glUniform* calls
 	GLint color_uloc = glGetUniformLocation(program, "fcolor");
-	
+
 	vec3 color;
 	if (render_request.used_effect == EFFECT_ASSET_ID::LINE)
 		color = registry.colors.get(entity);
@@ -158,7 +158,50 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 
 	if (registry.animations.has(entity)) {
 		Animation& animation = registry.animations.get(entity);
-		int current_frame = animation.current_frame;
+		int current_frame;
+		if (registry.players.has(entity)) {
+			Player& player = registry.players.get(entity);
+			// 12 is the number of frames in the player sprite sheet
+			if (0 <= player.rotation_factor && player.rotation_factor < 10) {
+				current_frame = 0;
+			}
+			else if (10 <= player.rotation_factor && player.rotation_factor < 20) {
+				current_frame = 1;
+			}
+			else if (20 <= player.rotation_factor && player.rotation_factor < 30) {
+				current_frame = 2;
+			}
+			else if (30 <= player.rotation_factor && player.rotation_factor < 40) {
+				current_frame = 3;
+			}
+			else if (40 <= player.rotation_factor && player.rotation_factor < 50) {
+				current_frame = 4;
+			}
+			else if (50 <= player.rotation_factor && player.rotation_factor < 60) {
+				current_frame = 5;
+			}
+			else if (60 <= player.rotation_factor && player.rotation_factor < 70) {
+				current_frame = 6;
+			}
+			else if (70 <= player.rotation_factor && player.rotation_factor < 80) {
+				current_frame = 7;
+			}
+			else if (80 <= player.rotation_factor && player.rotation_factor < 90) {
+				current_frame = 8;
+			}
+			else if (90 <= player.rotation_factor && player.rotation_factor < 100) {
+				current_frame = 9;
+			}
+			else if (100 <= player.rotation_factor && player.rotation_factor < 110) {
+				current_frame = 10;
+			}
+			else if (110 <= player.rotation_factor && player.rotation_factor <= 120) {
+				current_frame = 11;
+			}
+		}
+		else {
+			current_frame = animation.current_frame;
+		}
 
 		SPRITE_SHEET_ID sheet_id = animation.sheet_id;
 		std::pair<int, int> spriteLocation = animation.sprites[current_frame];

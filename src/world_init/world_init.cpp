@@ -32,11 +32,17 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	health.current_health = 32.0f;
 	health.max_health = 32.0f;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::PLAYER;
+	animation.total_frames = 12;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };
+
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
 			entity,
-			{TEXTURE_ASSET_ID::PLAYER,
+			{TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND});

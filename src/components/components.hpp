@@ -99,6 +99,8 @@ struct Player
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
 
+	float rotation_factor = 0.0f; // used to choose frame of sprite to display
+
 
 	// Constructor to set the initial values
 	Player() : 
@@ -319,6 +321,14 @@ struct Sprite {
 	vec2 maxTexCoords;
 };
 
+struct HealthRegenPowerup {
+	float regen_rate = 0.0f;
+	float regen_delay = 0.0f;
+	float regen_counter_ms = 0.0f;
+};
+
+
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -435,8 +445,9 @@ enum class SPRITE_SHEET_ID {
 	EXPLOSION = ENEMY_SCARAB + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
 	GREEN_EFFECT = ENEMY_EXPLODER + 1,
+	PLAYER = GREEN_EFFECT + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
-	RED_EFFECT = GREEN_EFFECT + 1,
+	RED_EFFECT = PLAYER + 1,
 	YELLOW_EFFECT = RED_EFFECT + 1,
 	SPRITE_SHEET_COUNT = YELLOW_EFFECT + 1
 };
@@ -457,7 +468,6 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 	RENDER_LAYER used_render_layer = RENDER_LAYER::RENDER_LAYER_COUNT;
 };
-
 
 // A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
 struct Animation {

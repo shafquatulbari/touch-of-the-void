@@ -76,9 +76,15 @@ public:
 
 	// A wrapper to return the component of an entity
 	Component& get(Entity e) {
-		assert(has(e) && "Entity not contained in ECS registry");
-		return components[map_entity_componentID[e]];
-	}
+		if (has(e)) {
+			return components[map_entity_componentID[e]];
+		}
+		else {
+			std::cout << "Tried getting entity from registry: " << typeid(Component).name() << std::endl;
+			assert(has(e) && "Entity not contained in ECS registry");
+			return components[0]; // return a dummy object
+		}
+	};
 
 
 	// Check if entity has a component of type 'Component'
