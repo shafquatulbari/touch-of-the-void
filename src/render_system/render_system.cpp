@@ -183,49 +183,6 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 	gl_has_errors();
 }
 
-void RenderSystem::drawLine(Line& line) {
-	// Initialize program
-	GLuint program = effects[(GLuint)EFFECT_ASSET_ID::LINE];
-	glUseProgram(program);
-	gl_has_errors();
-
-	// Bind vertex and index buffers
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers[(GLuint)GEOMETRY_BUFFER_ID::DEBUG_LINE]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffers[(GLuint)GEOMETRY_BUFFER_ID::DEBUG_LINE]);
-	gl_has_errors();
-
-	// Get uniform locations
-	GLint in_position_loc = glGetAttribLocation(program, "in_position");
-	GLint in_color_loc = glGetAttribLocation(program, "in_color");
-	gl_has_errors();
-	
-	glVertexAttribPointer(in_position_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)0);
-	glEnableVertexAttribArray(in_position_loc);
-	glVertexAttribPointer(in_color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(ColoredVertex), (void*)sizeof(vec3));
-	glEnableVertexAttribArray(in_color_loc);
-	gl_has_errors();
-
-	// Set uniform transform and projection variables
-	GLint transform_loc = glGetUniformLocation(program, "transform");
-	GLint proj_loc = glGetUniformLocation(program, "projection");
-	glUniformMatrix3fv(transform_loc, 1, GL_FALSE, glm::value_ptr(line.trans));
-	glUniformMatrix3fv(proj_loc, 1, GL_FALSE, glm::value_ptr(createProjectionMatrix()));
-	gl_has_errors();
-
-	 std::vector<ColoredVertex> vertices = { line.from, line.to };
-
-	// Put line vertex data into the VBO
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices.data());
-
-	glLineWidth(line.width);
-	//glEnable(GL_LINE_SMOOTH);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
-	glDrawElements(GL_LINES, 2, GL_UNSIGNED_INT, nullptr);
-	
-	glDisable(GL_LINE_SMOOTH);
-}
-
 // draw the intermediate texture to the screen, with some distortion to simulate
 // wind
 void RenderSystem::drawToScreen(const mat3& projection)

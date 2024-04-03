@@ -288,14 +288,6 @@ struct Mesh
 
 enum class TextAlignment { LEFT, RIGHT, CENTER };
 
-struct Line 
-{
-	float width;
-	ColoredVertex from;
-	ColoredVertex to;
-	mat3 trans;
-};
-
 struct Text
 {
 	std::string content;
