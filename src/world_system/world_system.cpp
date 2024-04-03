@@ -558,6 +558,11 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			}
 		}
 
+		//if obstacle and enemies collide, enemy moves in random direction
+		else if (registry.obstacles.has(entity) && registry.ais.has(entity_other)) {
+			Motion& obs_motion = registry.motions.get(entity_other);
+			obs_motion.velocity = obs_motion.velocity * -1.0f;
+		}
 		// PROJECTILE COLLISONS
 		if (registry.projectiles.has(entity)) 
 		{
