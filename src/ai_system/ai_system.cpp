@@ -25,6 +25,7 @@ const float xMin = 480.0f;
 const float yMin = 32.0f;
 const float xMax = 1440.0f;
 const float yMax = 992.0f;
+const float halfCellSize = cellSize / 2.0f;
 
 struct Vec2Hash {
     std::size_t operator()(const vec2& v) const {
@@ -32,64 +33,11 @@ struct Vec2Hash {
     }
 };
 
-// kept value 100, 64 is too small and enemies get stuck
 vec2 AISystem::clampPositionToBounds(const vec2& position) {
-    float clampedX = std::max(xMin + 100 , std::min(position.x, xMax - 100));
-    float clampedY = std::max(yMin + 100, std::min(position.y, yMax - 100));
+    float clampedX = std::max(xMin + (cellSize + halfCellSize), std::min(position.x, xMax - (cellSize + halfCellSize)));
+    float clampedY = std::max(yMin + (cellSize + halfCellSize), std::min(position.y, yMax - (cellSize + halfCellSize)));
     return vec2(clampedX, clampedY);
 }
-
-/*
-bool AISystem::lineOfSightClear(const vec2& start, const vec2& end) {
-    
-    int x = static_cast<int>(start.x - xMin);
-    int cellX = static_cast<int>(floor((x / cellSize)));
-    int y = static_cast<int>(start.y - yMin);
-    int cellY = static_cast<int>(floor((y/ cellSize)));
-    assert(xMin <= x <= xMax && yMin <= y <= yMax);
-    assert(0 <= cellX <= numCells - 1 && 0 <= cellY <= numCells - 1);
-
-    int endX = static_cast<int>(end.x - xMin);
-    int endCellX = static_cast<int>(floor((endX / cellSize)));
-    int endY = static_cast<int>(end.y - yMin);
-    int endCellY = static_cast<int>(floor((endY / cellSize)));
-    assert(xMin <= endX <= xMax && yMin <= endY <= yMax);
-    assert(0 <= endCellX <= numCells - 1 && 0 <= endCellY <= numCells - 1);
-
-    vec2 direction = end - start;
-    int stepX = (direction.x > 0) ? 1 : -1;
-    int stepY = (direction.y > 0) ? 1 : -1;
-
-    float deltaT_X = fabs(cellSize / direction[0]);
-    float deltaT_Y = fabs(cellSize / direction[1]);
-
-    float remainingT_X = deltaT_X * (1 - fmod(start.x, cellSize));
-    float remainingT_Y = deltaT_Y * (1 - fmod(start.y, cellSize));
-
-   for (int i = 0; i < maxIterations; i++) {
-		if (remainingT_X < remainingT_Y) {
-            cellX += stepX;
-			remainingT_X += deltaT_X;
-		}
-		else {
-            cellY += stepY;
-			remainingT_Y += deltaT_Y;
-		}
-
-        cellX = std::max(0, std::min(cellX, numCells - 1));
-        cellY = std::max(0, std::min(cellY, numCells - 1));
-
-        if (isObstacleAtPosition(vec2(cellX, cellY))) {
-            return false;
-        }
-
-        if (cellX == endCellX && cellY == endCellY) {
-            break;
-		}
-	}
-   return true;
-}
-*/
 
 // http://www.cse.yorku.ca/~amana/research/grid.pdf
  // Amanatides, J., & Woo, A. (1987). A fast voxel traversal algorithm for ray tracing. Eurographics, 87(3), 3-10.
@@ -318,40 +266,42 @@ vec2 AISystem::limit(vec2 v, float max) {
 
 void AISystem::step(float elapsed_ms)
 {
-	auto& ai_registry = registry.ais;
+    auto& ai_registry = registry.ais;
     for (uint i = 0; i < ai_registry.size(); i++)
-	{
+    {
         AI& ai = ai_registry.components[i];
-		Entity entity = ai_registry.entities[i];
-        
-            Motion& motion = registry.motions.get(entity);
-            // State machine for AI behavior
-            /*switch (ai.state) {
-            case AI::AIState::IDLE:
-                idleState(entity, ai, motion);
-                break;
-            case AI::AIState::ACTIVE:*/
-                activeState(entity, motion, elapsed_ms);
-                /*ai.state = AI::AIState::IDLE;
-                break;
-            default:
-                printf("Default state\n");
-                break;
-            }*/
-            motion.position += motion.velocity * elapsed_ms / 1000.0f; // TODO: figure out whether we need to do this here, or if it can be done in the physics system
-        }       
+        Entity entity = ai_registry.entities[i];
+        Motion& motion = registry.motions.get(entity);
+
+        // Check AI state and perform actions accordingly
+        switch (ai.state) {
+        case AI::AIState::IDLE:
+            idleState(entity, ai, motion, elapsed_ms); // Now passing elapsed_ms
+            break;
+        case AI::AIState::ACTIVE:
+            activeState(entity, motion, elapsed_ms);
+            break;
+        default:
+            printf("Unknown state\n");
+            break;
+        }
+
+        // Always update position based on velocity, regardless of state
+        motion.position += motion.velocity * elapsed_ms / 1000.0f;
+    }
 }
 
-void AISystem:: idleState(Entity entity, AI& ai, Motion& motion) {
-	/*if (ai.counter == ai.frequency) {
-		ai.counter = 0;
-		ai.state = AI::AIState::ACTIVE;
-	}
-	else {
-		ai.counter++;
-	}*/
+void AISystem::idleState(Entity entity, AI& ai, Motion& motion, float elapsed_ms) {
+    // Example condition to switch to active state based on a simple timer
+    ai.counter += elapsed_ms;
+    if (ai.counter >= ai.frequency) {
+        ai.counter = 0;
+        ai.state = AI::AIState::ACTIVE;
+    }
 
-    // any other idle state logic here
+    // Optionally, apply some basic motion or behavior even in idle state
+    // For example, slowing down or stopping:
+    motion.velocity *= 0.95f; // Slow down effect
 }
 
 void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
@@ -462,10 +412,10 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     // Check if the next position is within bounds
     if (!isPositionWithinBounds(nextPosition)) {
         // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + 100.0f || nextPosition.x >= xMax - 100.0f) {
+        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
             motion.velocity.x *= -1; // Invert X component if hitting left or right wall
         }
-        if (nextPosition.y <= yMin + 100.0f || nextPosition.y >= yMax - 100.0f) {
+        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
             motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
         }
     }
@@ -473,7 +423,7 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
     // Simple avoidance logic: Check for nearby obstacles and adjust direction
     for (const auto& obstaclePos : room.obstacle_positions) {
         //convert the obstacle position to the world position
-        vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
+        vec2 world_obstacle_pos = vec2(obstaclePos.x * cellSize + xMin, obstaclePos.y * cellSize + yMin);
         vec2 directionToObstacle = world_obstacle_pos - motion.position;
         float distanceToObstacle = length(directionToObstacle);
         if (distanceToObstacle < obstacleAvoidanceRadius) {
@@ -559,10 +509,10 @@ void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elap
     // Check if the next position is within bounds
     if (!isPositionWithinBounds(nextPosition)) {
         // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + 100.0f || nextPosition.x >= xMax - 100.0f) {
+        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
             motion.velocity.x *= -1; // Invert X component if hitting left or right wall
         }
-        if (nextPosition.y <= yMin + 100.0f || nextPosition.y >= yMax - 100.0f) {
+        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
             motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
         }
     }
@@ -570,7 +520,7 @@ void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elap
     // Simple avoidance logic: Check for nearby obstacles and adjust direction
     for (const auto& obstaclePos : room.obstacle_positions) {
         //convert the obstacle position to the world position
-        vec2 world_obstacle_pos = vec2(obstaclePos.x * 64.0f + 480.0f, obstaclePos.y * 64.0f + 32.0f);
+        vec2 world_obstacle_pos = vec2(obstaclePos.x * cellSize + xMin, obstaclePos.y * cellSize + yMin);
         vec2 directionToObstacle = world_obstacle_pos - motion.position;
         float distanceToObstacle = length(directionToObstacle);
         if (distanceToObstacle < obstacleAvoidanceRadius) {
@@ -643,10 +593,10 @@ void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elaps
 bool AISystem::isPositionWithinBounds(const vec2& position) {
     // kept value 100, 64 is too small and enemies get stuck
     // Using the game world boundaries 
-    float leftBound = xMin + 100.0f;
-    float rightBound = xMax - 100.0f;
-    float topBound = yMin + 100.0f;
-    float bottomBound = yMax - 100.0f;
+    float leftBound = xMin + (cellSize + halfCellSize);
+    float rightBound = xMax - (cellSize + halfCellSize);
+    float topBound = yMin + (cellSize + halfCellSize);
+    float bottomBound = yMax - (cellSize + halfCellSize);
 
     // Check if the position is within bounds
     return position.x >= leftBound && position.x <= rightBound &&
