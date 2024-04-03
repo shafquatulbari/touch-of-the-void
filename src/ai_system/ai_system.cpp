@@ -726,7 +726,7 @@ void AISystem::handleFlameAI(Entity entity, Motion& motion, AI& ai, float elapse
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
             createEnemyFlamethrowerProjectile(renderer, motion.position, shootingAngle, entity);
-            ai.shootingCooldown = 0.5f; // Reset cooldown
+            ai.shootingCooldown = 0.05f; // Reset cooldown
         }
     }
 }

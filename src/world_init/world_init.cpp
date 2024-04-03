@@ -623,7 +623,7 @@ Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, fl
 	deadly.damage = weapon_stats[projectile.weapon_type].damage;
 
 	Animation& animation = registry.animations.emplace(entity);
-	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
+	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
 	animation.total_frames = 4;
 	animation.current_frame = 0;
 	animation.sprites = { {6, 9}, {7, 9}, {8, 9}, {9, 9} };
