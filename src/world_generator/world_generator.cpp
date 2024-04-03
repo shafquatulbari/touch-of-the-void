@@ -167,9 +167,6 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 	} else {
 		populateRoom(current_room);
 	}
-	
-
-
 }
 
 
