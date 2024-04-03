@@ -867,8 +867,6 @@ void render_room(RenderSystem* render, Level& level)
 	createWalls(render, room_to_render);
 }
 
-
-
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 {
 	Entity entity = Entity();
