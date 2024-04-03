@@ -320,7 +320,10 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         break;
     case AI::AIType::SHOTGUN:
         handleShotgunAI(entity, motion, ai, elapsed_ms, playerPosition);
-		break;
+    case AI::AIType::ROCKET:
+		handleRocketAI(entity, motion, ai, elapsed_ms, playerPosition);
+    case AI::AIType::FLAMETHROWER:
+		handleFlameAI(entity, motion, ai, elapsed_ms, playerPosition);
     default:
         break;
     }
@@ -548,6 +551,182 @@ void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elap
                 createShotgunProjectile(renderer, motion.position, shootingAngle, 0.0, 0.0, i, entity);
             }
             ai.shootingCooldown = 1.5f; // Reset cooldown
+        }
+    }
+}
+
+void AISystem::handleRocketAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float shootingRange = 250.0f; // Distance to shoot at the player
+    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
+
+    vec2 avoidanceForce(0.0f);
+    float obstacleAvoidanceRadius = 100.0f; // radius within which to avoid obstacles
+    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
+
+    Level& level = registry.levels.get(registry.levels.entities[0]);
+    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+
+    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+
+    // Calculate distance to the player
+    float distanceToPlayer = length(playerPosition - motion.position);
+
+    float maxSpeed = 100.0f; // Adjust as needed
+
+    // Movement logic considering player's distance and projectiles
+    if (distanceToPlayer > playerAvoidanceDistance) {
+        // Move normally if within shooting range but outside avoidance distance
+        motion.velocity = flockMove;
+    }
+    else if (distanceToPlayer <= playerAvoidanceDistance) {
+        // Move away from the player if too close
+        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
+        motion.velocity = flockMove + awayFromPlayer;
+    }
+
+    // Calculate the next position based on current velocity
+    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // kept value 100, 64 is too small and enemies get stuck
+    // Check if the next position is within bounds
+    if (!isPositionWithinBounds(nextPosition)) {
+        // Adjust velocity to bounce off the wall
+        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
+            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
+        }
+        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
+            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
+        }
+    }
+
+    // Avoidance behavior for projectiles
+    for (auto& projectileEntity : registry.projectiles.entities) {
+        // check if player projectile 
+        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
+            Motion& projectileMotion = registry.motions.get(projectileEntity);
+            vec2 directionToProjectile = projectileMotion.position - motion.position;
+            float distanceToProjectile = length(directionToProjectile);
+
+            if (distanceToProjectile < projectileAvoidanceRadius) {
+                avoidanceForce -= (directionToProjectile / distanceToProjectile);
+            }
+        }
+        else {
+            break; // No need to check further projectiles if not player's
+        }
+
+    }
+
+    // Apply avoidance force to the current motion
+    if (glm::length(avoidanceForce) > 0) {
+        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
+    }
+
+    // Clamp velocity to max speed
+    if (length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    // Shooting logic
+    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+        vec2 direction = normalize(playerPosition - motion.position);
+        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+
+        ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
+        if (ai.shootingCooldown <= 0) {
+            vec2 shootingDirection = normalize(playerPosition - motion.position);
+            float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
+            for (int i = 0; i < 5; i++) {
+                createEnemyRocketProjectile(renderer, motion.position, shootingAngle, entity);
+            }
+            ai.shootingCooldown = 1.5f; // Reset cooldown
+        }
+    }
+}
+
+void AISystem::handleFlameAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float shootingRange = 250.0f; // Distance to shoot at the player
+    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
+
+    vec2 avoidanceForce(0.0f);
+    float obstacleAvoidanceRadius = 100.0f; // radius within which to avoid obstacles
+    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
+
+    Level& level = registry.levels.get(registry.levels.entities[0]);
+    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+
+    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+
+    // Calculate distance to the player
+    float distanceToPlayer = length(playerPosition - motion.position);
+
+    float maxSpeed = 100.0f; // Adjust as needed
+
+    // Movement logic considering player's distance and projectiles
+    if (distanceToPlayer > playerAvoidanceDistance) {
+        // Move normally if within shooting range but outside avoidance distance
+        motion.velocity = flockMove;
+    }
+    else if (distanceToPlayer <= playerAvoidanceDistance) {
+        // Move away from the player if too close
+        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
+        motion.velocity = flockMove + awayFromPlayer;
+    }
+
+    // Calculate the next position based on current velocity
+    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
+
+    // kept value 100, 64 is too small and enemies get stuck
+    // Check if the next position is within bounds
+    if (!isPositionWithinBounds(nextPosition)) {
+        // Adjust velocity to bounce off the wall
+        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
+            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
+        }
+        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
+            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
+        }
+    }
+
+    // Avoidance behavior for projectiles
+    for (auto& projectileEntity : registry.projectiles.entities) {
+        // check if player projectile 
+        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
+            Motion& projectileMotion = registry.motions.get(projectileEntity);
+            vec2 directionToProjectile = projectileMotion.position - motion.position;
+            float distanceToProjectile = length(directionToProjectile);
+
+            if (distanceToProjectile < projectileAvoidanceRadius) {
+                avoidanceForce -= (directionToProjectile / distanceToProjectile);
+            }
+        }
+        else {
+            break; // No need to check further projectiles if not player's
+        }
+
+    }
+
+    // Apply avoidance force to the current motion
+    if (glm::length(avoidanceForce) > 0) {
+        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
+    }
+
+    // Clamp velocity to max speed
+    if (length(motion.velocity) > maxSpeed) {
+        motion.velocity = normalize(motion.velocity) * maxSpeed;
+    }
+
+    // Shooting logic
+    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+        vec2 direction = normalize(playerPosition - motion.position);
+        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+
+        ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
+        if (ai.shootingCooldown <= 0) {
+            vec2 shootingDirection = normalize(playerPosition - motion.position);
+            float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
+            createEnemyFlamethrowerProjectile(renderer, motion.position, shootingAngle, entity);
+            ai.shootingCooldown = 0.5f; // Reset cooldown
         }
     }
 }
