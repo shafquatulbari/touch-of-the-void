@@ -420,16 +420,6 @@ void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elaps
         }
     }
 
-    // Simple avoidance logic: Check for nearby obstacles and adjust direction
-    for (const auto& obstaclePos : room.obstacle_positions) {
-        //convert the obstacle position to the world position
-        vec2 world_obstacle_pos = vec2(obstaclePos.x * cellSize + xMin, obstaclePos.y * cellSize + yMin);
-        vec2 directionToObstacle = world_obstacle_pos - motion.position;
-        float distanceToObstacle = length(directionToObstacle);
-        if (distanceToObstacle < obstacleAvoidanceRadius) {
-			avoidanceForce += normalize(motion.position - world_obstacle_pos);
-		}
-	}
     // Avoidance behavior for projectiles
     for (auto& projectileEntity : registry.projectiles.entities) {
         // check if player projectile 
@@ -517,16 +507,6 @@ void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elap
         }
     }
 
-    // Simple avoidance logic: Check for nearby obstacles and adjust direction
-    for (const auto& obstaclePos : room.obstacle_positions) {
-        //convert the obstacle position to the world position
-        vec2 world_obstacle_pos = vec2(obstaclePos.x * cellSize + xMin, obstaclePos.y * cellSize + yMin);
-        vec2 directionToObstacle = world_obstacle_pos - motion.position;
-        float distanceToObstacle = length(directionToObstacle);
-        if (distanceToObstacle < obstacleAvoidanceRadius) {
-            avoidanceForce += normalize(motion.position - world_obstacle_pos);
-        }
-    }
     // Avoidance behavior for projectiles
     for (auto& projectileEntity : registry.projectiles.entities) {
         // check if player projectile 
