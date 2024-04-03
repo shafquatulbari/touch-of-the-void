@@ -84,7 +84,8 @@ struct Player
 		{WeaponType::SNIPER, 20},
 		{WeaponType::SHOTGUN, 60},
 		{WeaponType::ROCKET_LAUNCHER, 5},
-		{WeaponType::FLAMETHROWER, 400}
+		{WeaponType::FLAMETHROWER, 400},
+		{WeaponType::ENERGY_HALO, 8},
 	};
 
 	// Store the current ammo count for each weapon
@@ -93,7 +94,8 @@ struct Player
 		{WeaponType::SNIPER, 1},
 		{WeaponType::SHOTGUN, 6},
 		{WeaponType::ROCKET_LAUNCHER, 1},
-		{WeaponType::FLAMETHROWER, 200}
+		{WeaponType::FLAMETHROWER, 200},
+		{WeaponType::ENERGY_HALO, 2},
 	};
 
 	bool is_firing = false; // player is currently firing projectiles
@@ -407,8 +409,10 @@ enum class TEXTURE_ASSET_ID {
 	SHOTGUN_UNEQUIPPED = SHOTGUN_EQUIPPED + 1,
 	SNIPER_EQUIPPED = SHOTGUN_UNEQUIPPED + 1,
 	SNIPER_UNEQUIPPED = SNIPER_EQUIPPED + 1,
+	ENERGY_HALO_EQUIPPED = SNIPER_UNEQUIPPED + 1,
+	ENERGY_HALO_UNEQUIPPED = ENERGY_HALO_EQUIPPED + 1,
 
-	TEXTURE_COUNT = SNIPER_UNEQUIPPED + 1
+	TEXTURE_COUNT = ENERGY_HALO_UNEQUIPPED + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 

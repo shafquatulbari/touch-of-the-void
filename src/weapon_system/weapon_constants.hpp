@@ -9,6 +9,7 @@ enum class WeaponType {
 	SHOTGUN,
 	ROCKET_LAUNCHER,
 	FLAMETHROWER,
+	ENERGY_HALO,
 	TOTAL_WEAPON_TYPES // Keep this as the last element
 };
 
