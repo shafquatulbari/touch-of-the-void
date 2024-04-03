@@ -70,10 +70,10 @@ GLFWwindow* WorldSystem::create_window() {
 
 
 	// Create the main window (for rendering, keyboard, and mouse input) FULLSCREEN
-	// window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
+	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
 
 	//main window.  bordered screen
-	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
+	//window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
 
 
 	if (window == nullptr) {
