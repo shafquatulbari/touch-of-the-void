@@ -450,7 +450,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 		float scalar = collisionsRegistry.components[i].scalar;
-		
+	
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
 			
 			for (Entity e : p_mesh_lines) {
@@ -579,7 +579,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			Entity projectileSource = projectile.source;
 
 			// Collision logic for player projectiles hitting enemies
-			if (registry.players.has(projectileSource) && registry.ais.has(entity_other)) {
+			if (registry.players.has(projectileSource) && (registry.ais.has(entity_other) || registry.bosses.has(entity_other))) {
 				// Apply damage to the enemy
 				if (registry.healths.has(entity_other)) {
 					Deadly& deadly = registry.deadlies.get(entity);
@@ -671,7 +671,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
 				}
-			}
+			}		
 		}
 	}
 
@@ -695,6 +695,41 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
+
+			if (current_room.enemy_count == 0)
+			{
+				registry.levels.get(level).num_rooms_until_boss--;
+				registry.levels.get(level).num_rooms_cleared++;
+				current_room.has_bottom_door = true;
+				current_room.has_top_door = true;
+				current_room.has_left_door = true;
+				current_room.has_right_door = true;
+
+				// tear down existing walls
+				clearExistingWalls();
+				// re-render walls with doors
+				createWalls(renderer, current_room);
+			}
+			// UX Effects
+			createExplosion(renderer, e_pos, 1.0f, false);
+			play_sound(explosion_sound);
+		}
+	}
+	//check for dead boss
+
+	for (Entity e : registry.bosses.entities) {
+		vec2 e_pos = registry.motions.get(e).position;
+		Health& e_health = registry.healths.get(e);
+
+		if (e_health.current_health <= 0) {
+			registry.remove_all_components_of(e);
+			Level& current_level = registry.levels.get(level);
+			Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
+			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
+			current_room.enemy_count--;
+			// remove the first element in enemy set 
+			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+			score += 1000;
 
 			if (current_room.enemy_count == 0)
 			{

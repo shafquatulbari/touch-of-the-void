@@ -36,6 +36,7 @@ public:
 	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
 	ComponentContainer<DamagedTimer> damagedTimers;
 	ComponentContainer<Level> levels;
+	ComponentContainer<BossAI>bosses;
 
 
 	// constructor that adds all containers for looping over them
@@ -66,6 +67,7 @@ public:
 		registry_list.push_back(&onFireTimers);
 		registry_list.push_back(&damagedTimers);
 		registry_list.push_back(&levels);
+		registry_list.push_back(&bosses);
 	}
 
 	void clear_all_components() {

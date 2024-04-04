@@ -12,6 +12,9 @@ const float PLAYER_BB_HEIGHT = 64.0f;
 const float ENEMY_BB_WIDTH = 64.0f;
 const float ENEMY_BB_HEIGHT = 64.0f;
 
+const float BOSS_BB_WIDTH = 128.0f;
+const float BOSS_BB_HEIGHT = 128.0f;
+
 const float OBSTACLE_BB_WIDTH = 64.0f;
 const float OBSTACLE_BB_HEIGHT = 64.0f;
 
@@ -103,3 +106,5 @@ void createWalls(RenderSystem* render, Room& room);
 Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
 
 Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
+
+Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state);

@@ -17,7 +17,7 @@ struct Level {
 	// the current room the player is in
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
-	int num_rooms_until_boss = 4;
+	int num_rooms_until_boss = 1;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 };
@@ -49,6 +49,7 @@ struct Room {
 
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
+	bool is_boss_room = false; // if the room contains a boss
 	// The number of enemies in the room
 	int enemy_count = 0;
 
@@ -173,6 +174,12 @@ struct AI
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
 	int frequency = 0; // frequency of think cycles
 	int counter = 0; // counter for think cycles
+};
+
+struct BossAI
+{
+	enum class BossState {DEFENSIVE, OFFENSIVE};
+	BossState state = BossState::DEFENSIVE;
 };
 
 // Harmful collision component

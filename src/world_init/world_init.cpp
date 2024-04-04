@@ -181,6 +181,73 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	return entity;
 }
 
+Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state)
+{
+	// Reserve en entity
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	BossAI& boss = registry.bosses.emplace(entity);
+	boss.state = BossAI::BossState::DEFENSIVE;
+	motion.position = position;
+	motion.complex = false;
+	motion.scale = vec2({ BOSS_BB_WIDTH, BOSS_BB_HEIGHT });
+
+	Health& health = registry.healths.emplace(entity);
+	health.current_health = health_points;
+	health.max_health = health_points;
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 10.0f;
+
+	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	//registry.meshPtrs.emplace(entity, &mesh);
+
+	registry.obstacles.emplace(entity);
+	//registry.obstacles.emplace(entity);
+	if (state == BossAI::BossState::DEFENSIVE) {
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_SCARAB;
+		animation.total_frames = 8;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
+		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+	}
+	else if (state == BossAI::BossState::OFFENSIVE) {
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.total_frames = 6;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+	}
+	
+	return entity;
+}
+
 Entity createObstacle(RenderSystem *renderer, vec2 position)
 {
 	auto entity = Entity();
@@ -525,7 +592,7 @@ Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float an
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
-	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+	deadly.damage = 50.f; // tune this for damage
 
 	Animation& animation = registry.animations.emplace(entity);
 	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
@@ -620,7 +687,7 @@ Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, fl
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	projectile.weapon_type = WeaponType::FLAMETHROWER;
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
-	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+	deadly.damage = 0.5f; // tune this for damage
 
 	Animation& animation = registry.animations.emplace(entity);
 	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
@@ -842,7 +909,6 @@ void render_room(RenderSystem* render, Level& level)
 	// in case current room was not visited, re-retrieve current room 
 	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
 
-
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
@@ -850,7 +916,12 @@ void render_room(RenderSystem* render, Level& level)
 	{
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createObstacle(render, vec2(x, y));
+		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
+			//do nothing, no obstacles
+		}
+		else {
+			createObstacle(render, vec2(x, y));
+		}
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
@@ -861,7 +932,12 @@ void render_room(RenderSystem* render, Level& level)
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
+			createBoss(render, vec2(x, y), 2000.0f, BossAI::BossState::DEFENSIVE);
+		}
+		else {
+			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+		}
 	}
 
 	createWalls(render, room_to_render);

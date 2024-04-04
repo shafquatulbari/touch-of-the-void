@@ -12,6 +12,7 @@
 #include "ai_system/ai_system.hpp"
 #include "ui_system/ui_system.hpp"
 #include "weapon_system/weapon_system.hpp"
+#include <boss/boss.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
 
@@ -25,6 +26,7 @@ int main()
 	WeaponSystem weapons;
 	PhysicsSystem physics;
 	AISystem ai(&renderer);
+	Boss boss(&renderer);
 
 	// Initializing window
 	GLFWwindow* window = world.create_window();
@@ -57,7 +59,7 @@ int main()
 		ai.step(elapsed_ms);
 		physics.step(elapsed_ms);
 		world.handle_collisions(elapsed_ms);
-
+		boss.step(elapsed_ms);
 		renderer.draw();
 
 	}
