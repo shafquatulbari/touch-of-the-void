@@ -180,6 +180,8 @@ struct BossAI
 {
 	enum class BossState {DEFENSIVE, OFFENSIVE};
 	BossState state = BossState::DEFENSIVE;
+	float shootTimer = 0.0f; // Timer to control shooting rate
+	float shootCooldown = 1.0f; // Cooldown in seconds between shots
 };
 
 // Harmful collision component

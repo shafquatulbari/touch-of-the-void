@@ -1214,3 +1214,64 @@ Entity createLevel(RenderSystem* render)
 	render_room(render, level);
 	return entity;
 }
+
+Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
+{
+	auto entity = Entity();
+
+	// Actual firing angle is randomly perturbed based on accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	float perturbedAngle = angle + (rng - 0.5f) * accuracy;
+
+	float coneWidth = 0.5f;
+
+	// Calculate the angle for each shotgun projectile in a cone
+	float coneAngle = perturbedAngle - coneWidth / 2 + i * coneWidth / 10;
+
+	// Setting initial motion values
+	/*
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = vec2({ 64.f , 64.f });
+	motion.velocity = vec2({ 400.0f * cos(angle), 400.0f * sin(angle) });
+	*/
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 1}, {12, 1}, {13, 1}, {14, 1} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = coneAngle;
+	motion.scale = vec2({ 90.0f, 90.0f });
+	motion.velocity = vec2({ 250.0f * cos(coneAngle), 250.0f * sin(coneAngle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
