@@ -564,7 +564,6 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
-	//motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
 	motion.scale = vec2({ 32.f * glm::linearRand(0.8f, 1.2f), 32.f * glm::linearRand(0.8f, 1.2f) });
 	motion.velocity = vec2({ 600.0f * cos(angle), 600.0f * sin(angle) });
 
@@ -595,8 +594,53 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
 
-	/*registry.colors.emplace(entity);
-	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);*/
+	return entity;
+}
+
+Entity createEnergyHaloProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
+{
+	auto entity = Entity();
+
+	float angle_increment = (2 * M_PI) / 16; // ADJUST BASED ON HOW MANY PROJECTILES
+	float shoot_angle = angle_increment * i;
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = shoot_angle;
+	motion.scale = vec2({ 64.f , 64.f });
+	motion.velocity = vec2({ 0.f, 0.f });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::ENERGY_HALO;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 8}, {12, 8}, {13, 8}, {14, 8} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
 
 	return entity;
 }

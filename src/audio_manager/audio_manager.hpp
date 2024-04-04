@@ -28,6 +28,7 @@ extern Mix_Chunk* sniper_sound;
 extern Mix_Chunk* shotgun_sound;
 extern Mix_Chunk* rocket_launcher_sound;
 extern Mix_Chunk* flamethrower_sound;
+extern Mix_Chunk* energy_halo_sound;
 extern Mix_Chunk* reload_start_sound;
 extern Mix_Chunk* reload_end_sound;
 extern Mix_Chunk* no_ammo_sound;

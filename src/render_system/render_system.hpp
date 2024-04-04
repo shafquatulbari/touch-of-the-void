@@ -102,6 +102,8 @@ class RenderSystem {
 		textures_path("weapon_icon_shotgun_blast_unequipped_128x128.png"),
 		textures_path("weapon_icon_sniper_rifle_equipped_192x192.png"),
 		textures_path("weapon_icon_sniper_rifle_unequipped_128x128.png"),
+		textures_path("weapon_icon_energy_halo_equipped_192x192.png"),
+		textures_path("weapon_icon_energy_halo_unequipped_128x128.png"),
 	};
 
 	std::array<GLuint, effect_count> effects;
