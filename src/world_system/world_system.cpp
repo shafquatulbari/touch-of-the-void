@@ -558,10 +558,19 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			}
 		}
 
-		//if obstacle and enemies collide, enemy moves in random direction
+		//if obstacle and enemies collide, enemy moves perpendicularly to the obstacle
 		else if (registry.obstacles.has(entity) && registry.ais.has(entity_other)) {
 			Motion& obs_motion = registry.motions.get(entity_other);
-			obs_motion.velocity = obs_motion.velocity * -1.0f;
+			if (registry.ais.has(entity)) {
+				AI& ai = registry.ais.get(entity_other);
+				AI& ai2 = registry.ais.get(entity);
+				if (ai.type == ai2.type) {
+					//if same type of enemies dont do anything on collision, do nothing
+				} 
+			}
+			else if (!registry.ais.has(entity)) {
+				obs_motion.velocity = { - 2* obs_motion.velocity.x, -2 * obs_motion.velocity.y };
+			}
 		}
 		// PROJECTILE COLLISONS
 		if (registry.projectiles.has(entity)) 
