@@ -45,6 +45,8 @@ const float WEAPON_UNEQUIPPED_ICON_BB_HEIGHT = 128.0f;
 const float ICON_INFINITY_BB_WIDTH = 122.0f;
 const float ICON_INFINITY_BB_HEIGHT = 54.0f;
 
+const int NUM_ROOMS_UNTIL_BOSS = 4;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy

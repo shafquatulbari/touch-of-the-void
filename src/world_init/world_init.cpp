@@ -1,10 +1,13 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
 #include "world_generator/world_generator.hpp"
-#include <world_system/world_system.hpp>
+#include "world_system/world_system.hpp"
+
+#include <cmath>
+#include <random>
 #include <glm/gtc/random.hpp>
 
-const int NUM_ROOMS_UNTIL_BOSS = 4;
+
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
 	auto entity = Entity();
@@ -824,17 +827,28 @@ void render_room(RenderSystem* render, Level& level)
 		// set the room to visited
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
+		
+		std::knuth_b rnd_engine;
+		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 5.f)) );
 
-		if (level.num_rooms_until_boss <= 0)
-		{
-			world_generator.generateNewRoom(current_room, level, true);
+		if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
+			// Generate a shop room
+			current_room.room_type = ROOM_TYPE::SHOP_ROOM;
+			world_generator.generateNewRoom(current_room, level);
+			level.num_shop_spawned++;
+			level.num_shop_spawn_counter = 0;
+			std::cout << "shop room generated" << '\n';
+		} else if (level.num_rooms_until_boss <= 0) {
+			// Generate a boss room
+			current_room.room_type = ROOM_TYPE::BOSS_ROOM;
+			world_generator.generateNewRoom(current_room, level);
 			std::cout << "boss room generated, back to rendering" << std::endl;
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
-		} else
-		{
-			world_generator.generateNewRoom(current_room, level, false);
+		} else {
+			// Generate a normal room
+			current_room.room_type = ROOM_TYPE::NORMAL_ROOM;
+			world_generator.generateNewRoom(current_room, level);
 		}
-		
 	} else {
 		std::cout << "revisiting room!" << std::endl;
 	}
