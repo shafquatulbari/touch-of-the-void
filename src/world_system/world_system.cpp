@@ -4,6 +4,7 @@
 #include "physics_system/physics_system.hpp"
 #include "ui_system/ui_system.hpp"
 #include "weapon_system/weapon_system.hpp"
+#include "components/components.hpp"
 
 // stlib
 #include <cassert>
@@ -233,40 +234,58 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
 
-	//// Update player rotation
-	//if ((p_m.is_moving_right && p_m.is_moving_left) || (!p_m.is_moving_right && !p_m.is_moving_left)) {
-	//	// not rotating, so gradually return to 0
-	//	if (p.rotation_factor != 0) {
-	//		if (p.rotation_factor > 60) {
-	//			p.rotation_factor++;
-	//		}
-	//		else {
-	//			p.rotation_factor--;
-	//		}
-	//	}
-	//} else if (p_m.is_moving_right) {
-	//	// rotating right
-	//	p.rotation_factor++;
-	//}
-	//else if (p_m.is_moving_left) {
-	//	// rotating left
-	//	p.rotation_factor--;
-	//}
+	// update player rotation animation
+	if (p_m.velocity.x == 0 && p_m.velocity.y == 0) {
+		// not rotating, so gradually return to 0
+		if (p.rotation_factor != 0) {
+			if (p.rotation_factor > 60) {
+				p.rotation_factor++;
+			}
+			else {
+				p.rotation_factor--;
+			}
+		}
+	} else {
+		vec2 direction = p_m.velocity;
+		float movement_angle = atan2(direction.y, direction.x);
+		float look_angle = (p_m.look_angle - (M_PI / 2)) * -1;
+		float updated_movement_angle = movement_angle + look_angle;
+		// if updated_movement_angle is over PI, wrap it around to -PI
+		if (updated_movement_angle > M_PI) {
+			updated_movement_angle -= 2 * M_PI;
+		}
+		else if (updated_movement_angle < -M_PI) {
+			updated_movement_angle += 2 * M_PI;
+		}
 
-	//// If the rotation factor is out of bounds, wrap it around
-	//if (p.rotation_factor < 0) {
-	//	p.rotation_factor = 120;
-	//} 
-	//if (p.rotation_factor > 120) {
-	//	p.rotation_factor = 0;
-	//}
+		if ((M_PI / 4) <= updated_movement_angle && updated_movement_angle <= (3 * (M_PI / 4))) {
+			// rotating right
+			p.rotation_factor++;
+		}
+		else if ((-3 * (M_PI / 4)) <= updated_movement_angle && updated_movement_angle <= -(M_PI / 4)) {
+			// rotating left
+			p.rotation_factor--;
+		}
+		else {
+			// not rotating, so gradually return to 0
+			if (p.rotation_factor != 0) {
+				if (p.rotation_factor > 60) {
+					p.rotation_factor++;
+				}
+				else {
+					p.rotation_factor--;
+				}
+			}
+		}
+	}
 
-	vec2 direction = p_m.velocity;
-	float movement_angle = atan2(direction.y, direction.x);
-	float look_angle = p_m.look_angle - M_PI/2;
-
-	std::cout << "movement angle: " << movement_angle << std::endl;
-	std::cout << "look angle: " << look_angle << std::endl;
+	// If the rotation factor is out of bounds, wrap it around
+	if (p.rotation_factor < 0) {
+		p.rotation_factor = 120;
+	} 
+	if (p.rotation_factor > 120) {
+		p.rotation_factor = 0;
+	}
 
 	// Update HUD
 	ui->update(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, debugging.show_fps, registry.levels.get(level));
