@@ -4,6 +4,8 @@
 
 #include "common/common.hpp"
 #include "weapon_system/weapon_constants.hpp"
+#include "world_system/world_system.hpp"
+
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
@@ -20,9 +22,12 @@ struct Level {
 	int num_rooms_until_boss = 4;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
+	
+	// number of rooms cleared since last shop is spawned
+	int num_shop_spawn_counter = 0;
+	// number of shop levels spawned in
+	int num_shop_spawned = 0;
 };
-
-
 
 struct vec2comp {
 	bool operator() (vec2 lhs, vec2 rhs) const
@@ -33,6 +38,14 @@ struct vec2comp {
 	}
 };
 
+
+// Room type
+enum class ROOM_TYPE {
+	UNDEFINED_ROOM = 0,
+	NORMAL_ROOM = UNDEFINED_ROOM + 1,
+	BOSS_ROOM = NORMAL_ROOM + 1,
+	SHOP_ROOM = BOSS_ROOM + 1
+};
 
 // All data relevant to the contents of a game room
 struct Room {
@@ -46,6 +59,8 @@ struct Room {
 	{
 		//std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
 	}
+
+	ROOM_TYPE room_type = ROOM_TYPE::UNDEFINED_ROOM;
 
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
@@ -164,9 +179,9 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED, TURRET, SHOTGUN, ROCKET, FLAMETHROWER};
+	enum class AIType { MELEE, RANGED, TURRET, SHOTGUN, ROCKET, FLAMETHROWER };
 	AIType type = AIType::MELEE;
-	enum class AIState {IDLE, ACTIVE};
+	enum class AIState { IDLE, ACTIVE };
 	AIState state = AIState::ACTIVE;
 	float safe_distance = 150.0f; // the distance that the AI will start behaving from the player
 	float attack_distance = 100.0f; // the distance that the AI will start attacking the player
@@ -311,6 +326,11 @@ struct Character {
 	glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
 	unsigned int Advance;    // Offset to advance to next glyph
 	char character;
+};
+
+struct Button {
+	Entity text_entity;											// Text entity associated with the button
+	std::function<void(WorldSystem& world_system)> callback;	// The callback function associated with the button
 };
 
 // A structure to store the data concerning a single sprite sheet texture
