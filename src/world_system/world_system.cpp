@@ -757,7 +757,11 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// Exit the game on escape
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
 			// TODO: Change to different screen or close depending on the game state
-			glfwSetWindowShouldClose(window, GL_TRUE);
+			//glfwSetWindowShouldClose(window, GL_TRUE);
+			is_paused = true;
+			game_state = GAME_STATE::PAUSE_MENU;
+			registry.screenStates.components[0].darken_screen_factor = 0.25f;
+			break;
 		}
 
 		// Resetting game
@@ -821,6 +825,19 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				}
 			}
 		}
+		break;
+
+	case GAME_STATE::PAUSE_MENU:
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
+			registry.screenStates.components[0].darken_screen_factor = 0.f;
+			game_state = GAME_STATE::GAME;
+			is_paused = false;
+		}
+		
+		if (action == GLFW_RELEASE && key == GLFW_KEY_BACKSPACE) {
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+		
 		break;
 
 	case GAME_STATE::GAME_OVER:
@@ -905,6 +922,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	case GAME_STATE::START_MENU:
 		for (Entity& e : registry.buttons.entities) {
 			Motion& motion = registry.motions.get(e);
+			Button& button = registry.buttons.get(e);
+
 			if (
 				mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
 				mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
@@ -915,6 +934,9 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 				is_hovering = true;
 				hovered_entity = e;
 
+				Text& button_text = registry.texts.get(button.text_entity);
+				button_text.color = { 0.f, 1.f, 0.f };
+
 				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
 				break;
 			}
@@ -922,6 +944,13 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 		if (!has_state_change) {
 			is_hovering = false;
+			
+			if (registry.buttons.has(hovered_entity)) {
+				Button& current_button = registry.buttons.get(hovered_entity);
+				Text& current_button_text = registry.texts.get(current_button.text_entity);
+				current_button_text.color = { 1.f, 0.f, 0.f };
+			}
+
 			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 		}
 		
@@ -973,7 +1002,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 	case GAME_STATE::START_MENU:
 		if (is_hovering) {
 			Button& button = registry.buttons.get(hovered_entity);
-			button.callback();
+			button.on_click();
 			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 		}
 		

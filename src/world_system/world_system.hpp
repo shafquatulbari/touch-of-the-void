@@ -40,6 +40,9 @@ public:
 
 	// Should the game be over ?
 	bool is_over()const;
+
+	// is the game paused
+	bool is_paused = false;
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -75,6 +78,8 @@ private:
 	enum class GAME_STATE {
 		START_MENU,
 		GAME,
+		SHOP_MENU,
+		PAUSE_MENU,
 		GAME_OVER,
 		TOTAL_GAME_STATES // Keep this as the last element
 	};
