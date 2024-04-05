@@ -4,7 +4,6 @@
 
 #include "common/common.hpp"
 #include "weapon_system/weapon_constants.hpp"
-#include "world_system/world_system.hpp"
 
 #include <vector>
 #include <unordered_map>
@@ -329,8 +328,8 @@ struct Character {
 };
 
 struct Button {
-	Entity text_entity;											// Text entity associated with the button
-	std::function<void(WorldSystem& world_system)> callback;	// The callback function associated with the button
+	Entity text_entity;					// Text entity associated with the button
+	std::function<void(void)> callback;	// The callback function associated with the button
 };
 
 // A structure to store the data concerning a single sprite sheet texture
