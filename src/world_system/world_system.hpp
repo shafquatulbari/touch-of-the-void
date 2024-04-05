@@ -81,6 +81,10 @@ private:
 
 	GAME_STATE game_state = GAME_STATE::START_MENU;
 	
+	// Detecting hover event on UI elements
+	Entity hovered_entity;
+	bool is_hovering = false;
+
 	// HUD
 	// Entity player_hp_text;
 	// Entity weapon_text;

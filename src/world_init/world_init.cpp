@@ -829,7 +829,7 @@ void render_room(RenderSystem* render, Level& level)
 		WorldGenerator world_generator;
 		
 		std::knuth_b rnd_engine;
-		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 5.f)) );
+		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 2.f)) );
 
 		if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
 			// Generate a shop room

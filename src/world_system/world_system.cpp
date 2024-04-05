@@ -3,6 +3,7 @@
 #include "world_init/world_init.hpp"
 #include "physics_system/physics_system.hpp"
 #include "ui_system/ui_system.hpp"
+#include "ui_init/ui_init.hpp"
 #include "weapon_system/weapon_system.hpp"
 
 // stlib
@@ -349,6 +350,16 @@ void WorldSystem::restart_game() {
 		createText(renderer, "R to reload", { 30.0f, 834.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "Q/E to change weapons", { 30.0f, 874.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
+		createButton(renderer,
+			{ 622 + 337.5f, 410 + 56.f }, { 675, 112 }, { 1.f, 0.f, 0.f }, 
+			"Press ENTER to start", 1.f, TextAlignment::CENTER,
+			[this]() {
+				game_state = GAME_STATE::GAME;
+				play_sound(game_start_sound);
+				restart_game();
+			}
+		);
+
 		break;
 
 	case GAME_STATE::GAME: {
@@ -689,8 +700,10 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 			if (current_room.enemy_count == 0)
 			{
-				registry.levels.get(level).num_rooms_until_boss--;
-				registry.levels.get(level).num_rooms_cleared++;
+				current_level.num_rooms_until_boss--;
+				current_level.num_rooms_cleared++;
+				current_level.num_shop_spawn_counter++;
+
 				current_room.has_bottom_door = true;
 				current_room.has_top_door = true;
 				current_room.has_left_door = true;
@@ -885,12 +898,34 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 
 {
+	bool has_state_change = false;
+
 	switch (game_state) 
 	{
-
 	case GAME_STATE::START_MENU:
+		for (Entity& e : registry.buttons.entities) {
+			Motion& motion = registry.motions.get(e);
+			if (
+				mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
+				mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
+				mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
+				mouse_position.y >= motion.position.y - motion.scale.y / 2
+			) {
+				has_state_change = true;
+				is_hovering = true;
+				hovered_entity = e;
+
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
+				break;
+			}
+		}
+
+		if (!has_state_change) {
+			is_hovering = false;
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+		}
+		
 		break;
-	
 	case GAME_STATE::GAME:
 		if (registry.deathTimers.has(player)) {
 			return;
@@ -936,6 +971,12 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 	{
 
 	case GAME_STATE::START_MENU:
+		if (is_hovering) {
+			Button& button = registry.buttons.get(hovered_entity);
+			button.callback();
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+		}
+		
 		break;
 
 	case GAME_STATE::GAME:

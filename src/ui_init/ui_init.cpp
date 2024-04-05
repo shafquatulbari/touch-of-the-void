@@ -1,3 +1,5 @@
+#include <functional>
+
 #include "world_system//world_system.hpp"
 #include "world_init/world_init.hpp"
 
@@ -7,8 +9,9 @@ Entity createButton(
 	vec2 size,
 	vec3 color,
 	std::string text_content,
+	float font_size,
 	TextAlignment alignment,
-	std::function<void(WorldSystem& world_system)> callback
+	std::function<void(void)> callback
 ) {
 	auto entity = Entity();
 
@@ -21,10 +24,11 @@ Entity createButton(
 	motion.scale = size;
 
 	// create the button's text
-	vec2 text_pos = { size.x + 0.2 * size.y, position.y - 0.2 * size.y }; // Position text with a padding 20% of the button's height
-	float text_scale = size.y - 0.2 * size.y;
+	//vec2 text_pos = { size.x + 0.2 * size.y, position.y - 0.2 * size.y }; // Position text with a padding 20% of the button's height
+	vec2 text_pos = { position.x, position.y };
+	float text_scale = font_size;
 	
-	Entity& text_e = createText(renderer, text_content, text_pos, text_scale, color, alignment);
+	Entity text_e = createText(renderer, text_content, text_pos, text_scale, color, alignment);
 	
 	// Bind button to callback and Text entity
 	button.text_entity = text_e;
