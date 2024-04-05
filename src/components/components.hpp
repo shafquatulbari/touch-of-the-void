@@ -328,8 +328,10 @@ struct Character {
 };
 
 struct Button {
-	Entity text_entity;					// Text entity associated with the button
-	std::function<void(void)> callback;	// The callback function associated with the button
+	Entity text_entity;						// Text entity associated with the button				
+	std::function<void(void)> on_click;		// The callback function associated with the button
+	std::function<void(void)> on_mouse_in;	// The callback function for when the mouse enters the button's area
+	std::function<void(void)> on_mouse_out; // The callback function for when the mouse exits the button's area
 };
 
 // A structure to store the data concerning a single sprite sheet texture
@@ -467,7 +469,8 @@ enum class RENDER_LAYER {
 	MIDDLEGROUND = BACKGROUND + 1,
 	FOREGROUND = MIDDLEGROUND + 1,
 	UI = FOREGROUND + 1,
-	RENDER_LAYER_COUNT = UI + 1
+	GAME_MENU = UI + 1,
+	RENDER_LAYER_COUNT = GAME_MENU + 1
 };
 const int render_layer_count = (int)RENDER_LAYER::RENDER_LAYER_COUNT;
 

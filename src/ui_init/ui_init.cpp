@@ -11,7 +11,7 @@ Entity createButton(
 	std::string text_content,
 	float font_size,
 	TextAlignment alignment,
-	std::function<void(void)> callback
+	std::function<void(void)> on_click
 ) {
 	auto entity = Entity();
 
@@ -32,7 +32,7 @@ Entity createButton(
 	
 	// Bind button to callback and Text entity
 	button.text_entity = text_e;
-	button.callback = callback;
+	button.on_click = on_click;
 
 	registry.noCollisionChecks.emplace(entity);
 

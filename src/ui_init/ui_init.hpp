@@ -16,7 +16,7 @@ Entity createButton(
 	std::string text_content,
 	float font_size,
 	TextAlignment alignment,
-	std::function<void(void)> callback
+	std::function<void(void)> on_click
 );
 
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment);
