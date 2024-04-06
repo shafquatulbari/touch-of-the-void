@@ -220,6 +220,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		return true;
 		break;
 
+	case GAME_STATE::GAME_WIN:
+		return true;
+		break;
 	default:
 		return true;
 		break;
@@ -397,7 +400,13 @@ void WorldSystem::restart_game() {
 		}
 		break;
 	}
+	
+	case GAME_STATE::GAME_WIN: {
 		
+		createStartScreen(renderer);
+		createText(renderer, "Congrats! You escaped!", { 960.0f, 664.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		break;
+	}
 
 	default:
 		break;
@@ -773,10 +782,11 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		if (boss_health.current_health <= 0 ) {
 			registry.remove_all_components_of(boss_e);
 			score += 1000;
-
 			// UX Effects
 			createExplosion(renderer, boss_pos, 1.0f, false);
 			play_sound(explosion_sound);
+			game_state = GAME_STATE::GAME_WIN;
+			restart_game();
 		}
 	}
 
@@ -897,11 +907,27 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		break;
+	
+	case GAME_STATE::GAME_WIN:
+		// Enter key to start the game
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ENTER) {
+			game_state = GAME_STATE::GAME;
+			play_sound(game_start_sound);
+			restart_game();
+		}
+
+		// Exit the game on escape
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+			// TODO: Change to different screen or close depending on the game state
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+		break;
 
 	default:
 		break;
 
 	}
+
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {
@@ -975,7 +1001,10 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	
 	case GAME_STATE::GAME_OVER:
 		break;
-	
+
+	case GAME_STATE::GAME_WIN:
+		break;
+
 	default:
 		break;
 
@@ -1028,6 +1057,9 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	case GAME_STATE::GAME_OVER:
+		break;
+
+	case GAME_STATE::GAME_WIN:
 		break;
 
 	default:

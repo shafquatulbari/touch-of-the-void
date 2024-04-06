@@ -98,11 +98,12 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         boss.enemyCreationTimer = 0.0f; // Reset enemy creation timer for the next offensive state
         boss.state = BossAI::BossState::DEFENSIVE; // Switch to defensive state
     }
-
+    /*
     auto enemyType = enemy_types[rand() % enemy_types.size()]; // Random type from predefined vector
     if (boss.enemyCreationTimer >= boss.enemyCreationCooldown) {
         boss.enemyCreationTimer = 0.0f; // Reset timer for next enemy creation
         createEnemy(renderer, vec2(x, y), 500.0f, enemyType, true);
         boss.aliveEnemyCount++;
     }
+    */
 }
