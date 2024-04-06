@@ -174,6 +174,7 @@ struct AI
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
 	int frequency = 0; // frequency of think cycles
 	int counter = 0; // counter for think cycles
+	bool in_boss_room = false; // if the AI is in a boss room
 };
 
 struct BossAI
@@ -182,6 +183,9 @@ struct BossAI
 	BossState state = BossState::DEFENSIVE;
 	float shootTimer = 0.0f; // Timer to control shooting rate
 	float shootCooldown = 1.0f; // Cooldown in seconds between shots
+	float stateTimer = 0.0f; // Timer to track time in the current state
+	float stateDuration = 10.0f; // Duration to spend in each state before switching
+	int aliveEnemyCount = 0; // New member to track the number of alive enemies
 };
 
 // Harmful collision component

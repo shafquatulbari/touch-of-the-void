@@ -572,6 +572,37 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				obs_motion.velocity = { - 2* obs_motion.velocity.x, -2 * obs_motion.velocity.y };
 			}
 		}
+		//Player projectile to boss
+		if (registry.projectiles.has(entity)) {
+			Projectile& projectile = registry.projectiles.get(entity);
+			Entity projectileSource = projectile.source;
+
+			// Collision logic for player projectiles hitting enemies
+			if (registry.players.has(projectileSource) && (registry.bosses.has(entity_other))) {
+				// Apply damage to the enemy
+				if (registry.healths.has(entity_other)) {
+					Deadly& deadly = registry.deadlies.get(entity);
+					Health& enemyHealth = registry.healths.get(entity_other);
+					enemyHealth.current_health -= deadly.damage;
+					play_sound(enemy_hit_sound);
+
+					switch (projectile.weapon_type)
+					{
+					case WeaponType::ROCKET_LAUNCHER:
+						weapons->handle_rocket_collision(renderer, entity, player);
+						break;
+
+					case WeaponType::FLAMETHROWER:
+						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
+						break;
+
+					default:
+						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+					}
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+			}
+		}
 		// PROJECTILE COLLISONS
 		if (registry.projectiles.has(entity)) 
 		{
@@ -579,7 +610,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			Entity projectileSource = projectile.source;
 
 			// Collision logic for player projectiles hitting enemies
-			if (registry.players.has(projectileSource) && (registry.ais.has(entity_other) || registry.bosses.has(entity_other))) {
+			if (registry.players.has(projectileSource) && (registry.ais.has(entity_other))) {
 				// Apply damage to the enemy
 				if (registry.healths.has(entity_other)) {
 					Deadly& deadly = registry.deadlies.get(entity);
@@ -680,13 +711,12 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		vec2 e_pos = registry.motions.get(e).position;
 		Health& e_health = registry.healths.get(e);
 
-		if (e_health.current_health <= 0) {
+		if (e_health.current_health <= 0 && registry.ais.get(e).in_boss_room == false) {
 
 			// remove the fire effect if an enemy dies
 			if (registry.onFireTimers.has(e)) {
 				registry.remove_all_components_of(registry.onFireTimers.get(e).fire);
 			}
-
 			registry.remove_all_components_of(e);
 			Level& current_level = registry.levels.get(level);
 			Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
@@ -695,7 +725,6 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
-
 			if (current_room.enemy_count == 0)
 			{
 				registry.levels.get(level).num_rooms_until_boss--;
@@ -716,37 +745,34 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		}
 	}
 	//check for dead boss
+	if (registry.bosses.entities.size() > 0) {
+		Entity boss_e = registry.bosses.entities[0];
+		vec2 boss_pos = registry.motions.get(boss_e).position;
+		Health& boss_health = registry.healths.get(boss_e);
+		for (Entity e : registry.ais.entities) {
+			vec2 e_pos = registry.motions.get(e).position;
+			Health& e_health = registry.healths.get(e);
 
-	for (Entity e : registry.bosses.entities) {
-		vec2 e_pos = registry.motions.get(e).position;
-		Health& e_health = registry.healths.get(e);
+			if (e_health.current_health <= 0 && registry.ais.get(e).in_boss_room == true) {
 
-		if (e_health.current_health <= 0) {
-			registry.remove_all_components_of(e);
-			Level& current_level = registry.levels.get(level);
-			Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
-			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
-			current_room.enemy_count--;
-			// remove the first element in enemy set 
-			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+				// remove the fire effect if an enemy diesa
+				if (registry.onFireTimers.has(e)) {
+					registry.remove_all_components_of(registry.onFireTimers.get(e).fire);
+				}
+				registry.remove_all_components_of(e);
+				score++;
+			
+				// UX Effects
+				createExplosion(renderer, e_pos, 1.0f, false);
+				play_sound(explosion_sound);
+			}
+		}
+		if (boss_health.current_health <= 0 ) {
+			registry.remove_all_components_of(boss_e);
 			score += 1000;
 
-			if (current_room.enemy_count == 0)
-			{
-				registry.levels.get(level).num_rooms_until_boss--;
-				registry.levels.get(level).num_rooms_cleared++;
-				current_room.has_bottom_door = true;
-				current_room.has_top_door = true;
-				current_room.has_left_door = true;
-				current_room.has_right_door = true;
-
-				// tear down existing walls
-				clearExistingWalls();
-				// re-render walls with doors
-				createWalls(renderer, current_room);
-			}
 			// UX Effects
-			createExplosion(renderer, e_pos, 1.0f, false);
+			createExplosion(renderer, boss_pos, 1.0f, false);
 			play_sound(explosion_sound);
 		}
 	}

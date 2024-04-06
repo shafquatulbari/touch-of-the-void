@@ -44,7 +44,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType, float in_boss_room)
 {
 	// Reserve en entity
 	auto entity = Entity();
@@ -58,6 +58,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
+	ai.in_boss_room = in_boss_room;
 
 	Health& health = registry.healths.emplace(entity);
 	health.current_health = health_points;
@@ -189,7 +190,7 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	BossAI& boss = registry.bosses.emplace(entity);
-	boss.state = BossAI::BossState::DEFENSIVE;
+	boss.state = BossAI::BossState::OFFENSIVE;
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ BOSS_BB_WIDTH, BOSS_BB_HEIGHT });
@@ -936,7 +937,7 @@ void render_room(RenderSystem* render, Level& level)
 			createBoss(render, vec2(x, y), 2000.0f, BossAI::BossState::DEFENSIVE);
 		}
 		else {
-			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], false);
 		}
 	}
 

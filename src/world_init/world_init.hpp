@@ -51,7 +51,7 @@ const float ICON_INFINITY_BB_HEIGHT = 54.0f;
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points, AI::AIType aiType);
+Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points, AI::AIType aiType, float in_boss_room);
 // the obstacle
 Entity createObstacle(RenderSystem* renderer, vec2 position);
 // the background
