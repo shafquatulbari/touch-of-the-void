@@ -79,6 +79,9 @@ void Boss::handleDefensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         boss.stateTimer = 0.0f;
         boss.enemyCreationTimer = 0.0f;
         boss.aliveEnemyCount = 0; // Make sure to reset this count when switching to Offensive
+        if (registry.healths.get(entity).current_health <= (registry.healths.get(entity).max_health * 0.4f)) {
+            boss.state = BossAI::BossState::GUIDED_MISSILE;
+        }
     }
 }
 
@@ -99,6 +102,10 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
 
     // Check if it's time to switch state
     if (boss.stateTimer >= boss.stateDuration && boss.aliveEnemyCount == 0) {
+        // if boss is at 80% health, switch to another state
+        if (registry.healths.get(entity).current_health <= (registry.healths.get(entity).max_health * 0.4f)) {
+			boss.state = BossAI::BossState::GUIDED_MISSILE;
+		}
         boss.state = BossAI::BossState::DEFENSIVE; // Switch to defensive state only if all enemies are dead
         // Reset timers and counts for the next state transition
         boss.stateTimer = 0.0f;
@@ -114,7 +121,6 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         boss.aliveEnemyCount++;
         boss.totalSpawnedEnemies++;
     }
-
 }
 
 void Boss::handleGuidedMissile(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms) {
