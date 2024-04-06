@@ -82,33 +82,29 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
     // Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
     std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE };
     //enemy positions is a set of vec2
-    vec2 pos = { 7.0f, 3.0f }; 
+    vec2 pos = { 7.0f, 3.0f };
     float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
     float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
     float x = x_origin + pos.x * game_window_block_size;
     float y = y_origin + pos.y * game_window_block_size;
     // Adjust state duration for offensive state
-    boss.stateDuration = 15.0f;
+    boss.stateDuration = 10.0f;
+    boss.enemyCreationTimer += elapsed_ms / 1000.0f;
+    boss.stateTimer += elapsed_ms / 1000.0f; // Convert milliseconds to seconds
 
-    // Generate enemies only when entering the state
-    if (boss.stateTimer == 0.0f) {
-        int num_enemies = rand() % 3 + 4; // Generate between 4 to 6 enemies
-        boss.aliveEnemyCount = num_enemies;
-        for (int i = 0; i < 3; i++) {
-            // Generate enemies at random positions around the boss
-            // Placeholder for enemy generation code
-            // Adjust the `createEnemy` function call as needed based on your game's logic
-            createEnemy(renderer, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], true);
-        }
-    }
-
-    // Check if it's time to switch state and if all enemies are defeated
+    // Check if it's time to switch state
     if (boss.stateTimer >= boss.stateDuration && boss.aliveEnemyCount == 0) {
         boss.stateTimer = 0.0f; // Reset the state timer
+        boss.enemyCreationTimer = 0.0f; // Reset enemy creation timer for the next offensive state
         boss.state = BossAI::BossState::DEFENSIVE; // Switch to defensive state
     }
-    else {
-        boss.stateTimer += elapsed_ms / 1000.0f; // Update the state timer only if not switching
+
+    // Create an enemy every second, up to a maximum number of enemies
+    int num_enemies = rand() % 3 + 4; // Generate between 4 to 6 enemies
+    auto enemyType = enemy_types[rand() % enemy_types.size()]; // Random type from predefined vector
+    if (boss.enemyCreationTimer >= boss.enemyCreationCooldown) {
+        boss.enemyCreationTimer = 0.0f; // Reset timer for next enemy creation
+        createEnemy(renderer, vec2(x, y), 500.0f, enemyType, true);
+        boss.aliveEnemyCount++;
     }
-    
 }

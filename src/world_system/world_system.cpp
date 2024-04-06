@@ -754,7 +754,8 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			Health& e_health = registry.healths.get(e);
 
 			if (e_health.current_health <= 0 && registry.ais.get(e).in_boss_room == true) {
-
+				BossAI& boss = registry.bosses.get(boss_e);
+				boss.aliveEnemyCount = std::max(0, boss.aliveEnemyCount - 1); // Decrement and ensure it doesn't go below 0
 				// remove the fire effect if an enemy diesa
 				if (registry.onFireTimers.has(e)) {
 					registry.remove_all_components_of(registry.onFireTimers.get(e).fire);
