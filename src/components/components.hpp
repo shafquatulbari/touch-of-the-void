@@ -8,6 +8,27 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
+enum class PowerupType {
+	MAX_HEALTH,
+	HEALTH_REGEN,
+	MAX_SHIELD,
+	INSTANT_AMMO_RELOAD,
+	DAMAGE_BOOST,
+	DEFENSE_BOOST,
+	SPEED_BOOST,
+	MULTIPLIER_BOOST,
+	ACCURACY_BOOST,
+	MAX_AMMO,
+	TIME_SLOW,
+	INSTANT_KILL,
+	MORE_ENEMIES,
+	MORE_OBSTACLES,
+	MORE_POWERUPS,
+	BLEED,
+	BIGGER_BULLETS,
+	BOOST,
+	SHUFFLER
+};
 
 struct Level {
 	// the current level of the game
@@ -21,8 +42,6 @@ struct Level {
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 };
-
-
 
 struct vec2comp {
 	bool operator() (vec2 lhs, vec2 rhs) const
@@ -101,6 +120,8 @@ struct Player
 
 	float rotation_factor = 0.0f; // used to choose frame of sprite to display
 
+	std::vector<PowerupType> powerups;
+	int powerups_collected = 0;
 
 	// Constructor to set the initial values
 	Player() : 
@@ -179,6 +200,7 @@ struct Health
 {
 	float current_health = 100.0f; // health points of an entity
 	float max_health = 100.0f; // maximum health points of an entity
+	float regen_rate = 0.0f; // rate at which the health regenerates
 };
 
 // Shield component 
@@ -265,6 +287,12 @@ struct RoomTransitionTimer
 	float counter_ms = 0;
 };
 
+struct EarnedGoldTimer {
+	float counter_ms = 0;
+	float duration_ms = 1000;
+	float gold_earned = 0;
+};
+
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & chicken.vs.glsl)
 struct ColoredVertex
 {
@@ -321,12 +349,90 @@ struct Sprite {
 	vec2 maxTexCoords;
 };
 
+// Empty shell for powerup pickup
+struct PowerupRandom {
+};
+
+struct MaxHealthPowerup {
+	float health_increase = 0.0f;
+};
+
 struct HealthRegenPowerup {
 	float regen_rate = 0.0f;
 	float regen_delay = 0.0f;
 	float regen_counter_ms = 0.0f;
 };
 
+struct MaxShieldPowerup {
+	float shield_increase = 0.0f;
+};
+
+struct InstantAmmoReloadPowerup {
+};
+
+struct DamageBoostPowerup {
+	float damage_boost = 0.0f;
+	float duration = 0.0f;
+	float counter_ms = 0.0f;
+};
+
+struct DefenseBoostPowerup {
+	float defense_boost = 0.0f;
+	float duration = 0.0f;
+	float counter_ms = 0.0f;
+};
+
+struct SpeedBoostPowerup {
+	float speed_boost = 0.0f;
+	float duration = 0.0f;
+	float counter_ms = 0.0f;
+};
+
+struct MultiplierBoostPowerup {
+};
+
+struct AccuracyBoostPowerup {
+};
+
+struct MaxAmmoPowerup {
+	float ammo_increase = 0.0f;
+};
+
+struct TimeSlowPowerup {
+	float slow_factor = 0.0f;
+	float duration = 0.0f;
+	float counter_ms = 0.0f;
+};
+
+struct InstantKillPowerup {
+};
+
+struct MoreEnemiesPowerup {
+};
+
+struct MoreObstaclesPowerup {
+};
+
+struct MorePowerupsPowerup {
+};
+
+struct BleedPowerup {
+	float bleed_rate = 0.0f;
+	float bleed_delay = 0.0f;
+	float bleed_counter_ms = 0.0f;
+};
+
+struct BiggerBulletsPowerup {
+};
+
+struct BoostPowerup {
+	float boost = 0.0f;
+	float duration = 0.0f;
+	float counter_ms = 0.0f;
+};
+
+struct ShufflerPowerup {
+};
 
 
 /**
@@ -446,8 +552,9 @@ enum class SPRITE_SHEET_ID {
 	ENEMY_EXPLODER = EXPLOSION + 1,
 	GREEN_EFFECT = ENEMY_EXPLODER + 1,
 	PLAYER = GREEN_EFFECT + 1,
+	POWERUP = PLAYER + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
-	RED_EFFECT = PLAYER + 1,
+	RED_EFFECT = POWERUP + 1,
 	YELLOW_EFFECT = RED_EFFECT + 1,
 	SPRITE_SHEET_COUNT = YELLOW_EFFECT + 1
 };

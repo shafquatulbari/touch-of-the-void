@@ -99,3 +99,5 @@ Entity createLevel(RenderSystem* render);
 void clearExistingWalls();
 // create walls
 void createWalls(RenderSystem* render, Room& room);
+// create a powerup
+Entity createPowerup(RenderSystem* render, vec2 position);

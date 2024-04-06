@@ -252,10 +252,10 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		float updated_movement_angle = movement_angle + look_angle;
 		// if updated_movement_angle is over PI, wrap it around to -PI
 		if (updated_movement_angle > M_PI) {
-			updated_movement_angle -= 2 * M_PI;
+			updated_movement_angle -= 2.f * M_PI;
 		}
 		else if (updated_movement_angle < -M_PI) {
-			updated_movement_angle += 2 * M_PI;
+			updated_movement_angle += 2.f * M_PI;
 		}
 
 		if ((M_PI / 4) <= updated_movement_angle && updated_movement_angle <= (3 * (M_PI / 4))) {
@@ -322,6 +322,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		return true;
 	}
 
+	// heal player health over time
+	if (registry.healths.has(player) && !registry.damagedTimers.has(player)) {
+		Health& playerHealth = registry.healths.get(player);
+		if (playerHealth.current_health < playerHealth.max_health) {
+			playerHealth.current_health += playerHealth.regen_rate * elapsed_ms_since_last_update * 0.01f;
+			playerHealth.current_health = std::min(playerHealth.current_health, playerHealth.max_health); // don't exceed max health
+		}
+	}
+
 	// heal player shield over timne
 	if (registry.shields.has(player) && !registry.damagedTimers.has(player)) {
 		Shield& playerShield = registry.shields.get(player);
@@ -330,6 +339,26 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			playerShield.current_shield = std::min(playerShield.current_shield, playerShield.max_shield); // don't exceed max shield
 		}
 
+	}
+
+	// decrement multiplier over time
+	multiplier -= 0.00005f * elapsed_ms_since_last_update;
+	multiplier = std::max(multiplier, 1.0f);
+
+	// power ups drift towards player
+	for (Entity e : registry.powerups.entities) {
+		if (!registry.motions.has(e)) {
+			continue;
+		}
+		Motion& powerup_motion = registry.motions.get(e);
+		Motion& player_motion = registry.motions.get(player);
+		vec2 direction = player_motion.position - powerup_motion.position;
+		float distance = glm::length(direction);
+		if (distance > 0.f) {
+			direction = glm::normalize(direction);
+			// velocity increases the closer the powerup is to the player
+			powerup_motion.velocity = direction * 400.f * (100.f / distance);
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
@@ -506,9 +535,9 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
 			
-			for (Entity e : p_mesh_lines) {
+			/*for (Entity e : p_mesh_lines) {
 				registry.colors.get(e) = { 0.f, 1.f, 0.f };
-			}
+			}*/
 
 			Obstacle& obstacle = registry.obstacles.get(entity_other);
 			if (obstacle.is_passable)
@@ -602,6 +631,112 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					}
 					else {
 						play_sound(player_hit_sound);
+					}
+				}
+			}
+			else if (registry.powerups.has(entity_other)) {
+				// player collided with a powerup
+				registry.remove_all_components_of(entity_other);
+				assert(registry.players.has(entity) && "Entity should be a player");
+				registry.players.get(entity).powerups_collected++;
+
+				// choose a random powerup that has not been collected yet
+				std::vector<PowerupType> powerups = { 
+					PowerupType::MAX_HEALTH, 
+					PowerupType::HEALTH_REGEN,
+					PowerupType::MAX_SHIELD,
+					//PowerupType::INSTANT_AMMO_RELOAD,
+					//PowerupType::DAMAGE_BOOST,
+					//PowerupType::DEFENSE_BOOST,
+					//PowerupType::SPEED_BOOST,
+					//PowerupType::MULTIPLIER_BOOST,
+					//PowerupType::ACCURACY_BOOST,
+					//PowerupType::MAX_AMMO,
+					//PowerupType::TIME_SLOW,
+					//PowerupType::INSTANT_KILL,
+					//PowerupType::MORE_ENEMIES,
+					//PowerupType::MORE_OBSTACLES,
+					//PowerupType::MORE_POWERUPS,
+					//PowerupType::BLEED,
+					//PowerupType::BIGGER_BULLETS,
+					//PowerupType::BOOST,
+					//PowerupType::SHUFFLER
+				};
+				std::vector<PowerupType> powerups_collected = registry.players.get(entity).powerups;
+				std::vector<PowerupType> powerups_not_collected;
+				std::cout << "Powerups collected: " << registry.players.get(entity).powerups_collected << std::endl;
+				for (PowerupType powerup : powerups) {
+					if (std::find(powerups_collected.begin(), powerups_collected.end(), powerup) == powerups_collected.end()) {
+						powerups_not_collected.push_back(powerup);
+					}
+				}
+
+				if (powerups_not_collected.size() > 0) {
+					std::uniform_int_distribution<int> powerup_dist(0, powerups_not_collected.size() - 1);
+					PowerupType powerup = powerups_not_collected[powerup_dist(rng)];
+					registry.players.get(entity).powerups.push_back(powerup);
+					switch (powerup) {
+					case PowerupType::MAX_HEALTH:
+						registry.healths.get(entity).max_health += 30;
+						registry.healths.get(entity).current_health += 30;
+						break;
+					case PowerupType::HEALTH_REGEN:
+						registry.healths.get(entity).regen_rate += 0.1f;
+						break;
+					case PowerupType::MAX_SHIELD:
+						registry.shields.get(entity).max_shield += 100;
+						registry.shields.get(entity).current_shield += 100;
+						break;
+					case PowerupType::INSTANT_AMMO_RELOAD:
+						// TODO: implement instant ammo reload
+						break;
+					case PowerupType::DAMAGE_BOOST:
+						// TODO: implement damage boost
+						break;
+					case PowerupType::DEFENSE_BOOST:
+						// TODO: implement defense boost
+						break;
+					case PowerupType::SPEED_BOOST:
+						// TODO: implement speed boost
+						break;
+					case PowerupType::MULTIPLIER_BOOST:
+						// TODO: implement multiplier boost
+						break;
+					case PowerupType::ACCURACY_BOOST:
+						// TODO: implement accuracy boost
+						break;
+					case PowerupType::MAX_AMMO:
+						// TODO: implement max ammo boost
+						break;
+					case PowerupType::TIME_SLOW:
+						// TODO: implement time slow
+						break;
+					case PowerupType::INSTANT_KILL:
+						// TODO: implement instant kill
+						break;
+					case PowerupType::MORE_ENEMIES:
+						// TODO: implement more enemies spawning
+						break;
+					case PowerupType::MORE_OBSTACLES:
+						// TODO: implement more obstacles spawning
+						break;
+					case PowerupType::MORE_POWERUPS:
+						// TODO: implement more powerups spawning
+						break;
+					case PowerupType::BLEED:
+						// TODO: implement bleed
+						break;
+					case PowerupType::BIGGER_BULLETS:
+						// TODO: implement bigger bullets
+						break;
+					case PowerupType::BOOST:
+						// TODO: implement boost
+						break;
+					case PowerupType::SHUFFLER:
+						// TODO: implement shuffler
+						break;
+					default:
+						break;
 					}
 				}
 			}
@@ -724,15 +859,26 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			if (registry.onFireTimers.has(e)) {
 				registry.remove_all_components_of(registry.onFireTimers.get(e).fire);
 			}
-
+			Motion& motion = registry.motions.get(e);
+			vec2 pos = motion.position;
 			registry.remove_all_components_of(e);
+
+			// roll 10% chance to spawn a powerup
+			std::uniform_int_distribution<int> powerup_dist(0, 9);
+			if (true) { //powerup_dist(rng) == 0) {
+				// spawn a powerup
+				// TODO: Play sound effect for powerup spawn
+				createPowerup(renderer, pos);
+			}
+
 			Level& current_level = registry.levels.get(level);
 			Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
 			// Arbitrarily remove one enemy from the internal room state when an enemy dies.
 			current_room.enemy_count--;
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
-			score++;
+			multiplier += 0.25;
+			score += 10 * multiplier;
 
 			if (current_room.enemy_count == 0)
 			{
