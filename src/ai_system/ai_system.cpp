@@ -320,10 +320,13 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         break;
     case AI::AIType::SHOTGUN:
         handleShotgunAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
     case AI::AIType::ROCKET:
 		handleRocketAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
     case AI::AIType::FLAMETHROWER:
 		handleFlameAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
     default:
         break;
     }

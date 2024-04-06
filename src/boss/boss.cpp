@@ -29,6 +29,7 @@ void Boss::step(float elapsed_ms)
 				break;
             case BossAI::BossState::OFFENSIVE:
                 handleOffensiveState(entity, boss, motion, elapsed_ms);
+                break;
             case BossAI::BossState::GUIDED_MISSILE:
                 handleGuidedMissile(entity, boss, motion, elapsed_ms);
                 break;

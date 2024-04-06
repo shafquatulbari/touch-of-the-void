@@ -614,7 +614,20 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				}
 			}
 		}
-		// PROJECTILE COLLISONS
+		// PROJECTILE TO GUIDED MISSILE COLLISION
+		if (registry.projectiles.has(entity))
+		{
+			Projectile& projectile = registry.projectiles.get(entity);
+			Entity projectileSource = projectile.source;
+			if (registry.players.has(projectileSource) && (registry.guidedMissiles.has(entity_other))) {
+				// destroy the boss projectile if the player projectile hits it, destroy player projectile too, show explosion effect and play sound
+				createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+				play_sound(explosion_sound);
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+				registry.remove_all_components_of(entity_other); // Remove projectile after collision
+			}
+		}
+		// PROJECTILE COLLISONS player to ais
 		if (registry.projectiles.has(entity)) 
 		{
 			Projectile& projectile = registry.projectiles.get(entity);

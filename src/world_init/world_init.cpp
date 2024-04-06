@@ -190,7 +190,7 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 	// Setting initial motion values
 	Motion& motion = registry.motions.emplace(entity);
 	BossAI& boss = registry.bosses.emplace(entity);
-	boss.state = BossAI::BossState::GUIDED_MISSILE;
+	boss.state = BossAI::BossState::DEFENSIVE;
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ BOSS_BB_WIDTH, BOSS_BB_HEIGHT });
