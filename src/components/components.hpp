@@ -188,6 +188,7 @@ struct BossAI
 	int aliveEnemyCount = 0; // New member to track the number of alive enemies
 	float enemyCreationTimer = 0.0f; // Timer for enemy creation in the offensive state
 	float enemyCreationCooldown = 1.5f; // Cooldown for enemy creation
+	int totalSpawnedEnemies = 0; // New member to track the number of alive enemies
 };
 
 // Harmful collision component

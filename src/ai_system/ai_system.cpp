@@ -359,7 +359,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
             // Consider the next step in the path
             vec2 nextStep = path[1]; // Assuming path[0] is the current position
             vec2 direction = normalize(nextStep - motion.position);
-            float speed = 70.0f; // Tune this value as needed
+            float speed = 40.0f; // Tune this value as needed
 
             // Update velocity towards the next step in the path
             motion.velocity = direction * speed;

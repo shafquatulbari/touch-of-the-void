@@ -69,11 +69,12 @@ void Boss::handleDefensiveState(Entity entity, BossAI& boss, Motion& motion, flo
     // Update the state timer
     boss.stateTimer += elapsed_ms / 1000.0f; // Convert milliseconds to seconds
 
-    // Check if it's time to switch state
     if (boss.stateTimer >= boss.stateDuration) {
-        boss.stateTimer = 0.0f; // Reset the state timer
-        // Switch state
-        boss.state = BossAI::BossState::OFFENSIVE;
+        boss.state = BossAI::BossState::OFFENSIVE; // Switch to offensive state
+        // Reset timers and counts for the next state transition
+        boss.stateTimer = 0.0f;
+        boss.enemyCreationTimer = 0.0f;
+        boss.aliveEnemyCount = 0; // Make sure to reset this count when switching to Offensive
     }
 }
 
@@ -94,16 +95,20 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
 
     // Check if it's time to switch state
     if (boss.stateTimer >= boss.stateDuration && boss.aliveEnemyCount == 0) {
-        boss.stateTimer = 0.0f; // Reset the state timer
-        boss.enemyCreationTimer = 0.0f; // Reset enemy creation timer for the next offensive state
-        boss.state = BossAI::BossState::DEFENSIVE; // Switch to defensive state
+        boss.state = BossAI::BossState::DEFENSIVE; // Switch to defensive state only if all enemies are dead
+        // Reset timers and counts for the next state transition
+        boss.stateTimer = 0.0f;
+        boss.enemyCreationTimer = 0.0f;
+        boss.totalSpawnedEnemies = 0;
     }
-    /*
+   
+    int maxEnemies = 5; // Maximum number of enemies that can be alive at once
     auto enemyType = enemy_types[rand() % enemy_types.size()]; // Random type from predefined vector
-    if (boss.enemyCreationTimer >= boss.enemyCreationCooldown) {
+    if (boss.enemyCreationTimer >= boss.enemyCreationCooldown && boss.totalSpawnedEnemies < maxEnemies) {
         boss.enemyCreationTimer = 0.0f; // Reset timer for next enemy creation
         createEnemy(renderer, vec2(x, y), 500.0f, enemyType, true);
         boss.aliveEnemyCount++;
+        boss.totalSpawnedEnemies++;
     }
-    */
+
 }

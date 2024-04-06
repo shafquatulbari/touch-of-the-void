@@ -226,7 +226,7 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
 	}
-	else if (state == BossAI::BossState::OFFENSIVE) {
+	if (state == BossAI::BossState::OFFENSIVE) {
 		Animation& animation = registry.animations.emplace(entity);
 		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
 		animation.total_frames = 6;
