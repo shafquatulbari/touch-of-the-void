@@ -99,8 +99,6 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         boss.state = BossAI::BossState::DEFENSIVE; // Switch to defensive state
     }
 
-    // Create an enemy every second, up to a maximum number of enemies
-    int num_enemies = rand() % 3 + 4; // Generate between 4 to 6 enemies
     auto enemyType = enemy_types[rand() % enemy_types.size()]; // Random type from predefined vector
     if (boss.enemyCreationTimer >= boss.enemyCreationCooldown) {
         boss.enemyCreationTimer = 0.0f; // Reset timer for next enemy creation

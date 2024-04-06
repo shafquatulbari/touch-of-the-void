@@ -579,28 +579,30 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 			// Collision logic for player projectiles hitting enemies
 			if (registry.players.has(projectileSource) && (registry.bosses.has(entity_other))) {
-				// Apply damage to the enemy
-				if (registry.healths.has(entity_other)) {
-					Deadly& deadly = registry.deadlies.get(entity);
-					Health& enemyHealth = registry.healths.get(entity_other);
-					enemyHealth.current_health -= deadly.damage;
-					play_sound(enemy_hit_sound);
+				if (!(registry.bosses.get(entity_other).state == BossAI::BossState::DEFENSIVE)) {
+					// Apply damage to the enemy
+					if (registry.healths.has(entity_other)) {
+						Deadly& deadly = registry.deadlies.get(entity);
+						Health& enemyHealth = registry.healths.get(entity_other);
+						enemyHealth.current_health -= deadly.damage;
+						play_sound(enemy_hit_sound);
 
-					switch (projectile.weapon_type)
-					{
-					case WeaponType::ROCKET_LAUNCHER:
-						weapons->handle_rocket_collision(renderer, entity, player);
-						break;
+						switch (projectile.weapon_type)
+						{
+						case WeaponType::ROCKET_LAUNCHER:
+							weapons->handle_rocket_collision(renderer, entity, player);
+							break;
 
-					case WeaponType::FLAMETHROWER:
-						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
-						break;
+						case WeaponType::FLAMETHROWER:
+							weapons->handle_flamethrower_collision(renderer, entity, entity_other);
+							break;
 
-					default:
-						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+						default:
+							createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+						}
 					}
+					registry.remove_all_components_of(entity); // Remove projectile after collision
 				}
-				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
 		}
 		// PROJECTILE COLLISONS

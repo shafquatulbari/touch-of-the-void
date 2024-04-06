@@ -187,7 +187,7 @@ struct BossAI
 	float stateDuration = 10.0f; // Duration to spend in each state before switching
 	int aliveEnemyCount = 0; // New member to track the number of alive enemies
 	float enemyCreationTimer = 0.0f; // Timer for enemy creation in the offensive state
-	float enemyCreationCooldown = 2.0f; // Cooldown for enemy creation
+	float enemyCreationCooldown = 1.5f; // Cooldown for enemy creation
 };
 
 // Harmful collision component
