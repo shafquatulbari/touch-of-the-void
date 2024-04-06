@@ -720,13 +720,29 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
 						weapons->handle_rocket_collision(renderer, entity, player);
 					}
-
+					if (projectile.weapon_type == WeaponType::ENERGY_HALO) {
+						// ignore collisions 
+						continue;
+					}
 				}
 				if (projectile.source != entity_other && !registry.noCollisionChecks.has(entity_other)) {
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
 				}
 			}		
+
+			// Collision logic for energy halo projectiles
+			else if (registry.projectiles.has(entity) && registry.projectiles.has(entity_other)) {
+				Projectile& projectile = registry.projectiles.get(entity);
+				Projectile& projectile_other = registry.projectiles.get(entity_other);
+
+				if (registry.players.has(projectile.source) && registry.ais.has(projectile_other.source)) {
+					if (projectile.weapon_type == WeaponType::ENERGY_HALO) {
+						registry.remove_all_components_of(entity);
+						registry.remove_all_components_of(entity_other);
+					}
+				}
+			}
 		}
 	}
 

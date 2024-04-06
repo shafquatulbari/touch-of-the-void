@@ -21,6 +21,7 @@ void Boss::step(float elapsed_ms)
         BossAI& boss = bossesRegistry.components[i];
         Entity entity = bossesRegistry.entities[i];
         Motion& motion = registry.motions.get(entity);
+        auto& renderComponent = registry.renderRequests.get(entity); // Assuming this gets the rendering component
 
         // Check AI state and perform actions accordingly
         switch (boss.state) {
