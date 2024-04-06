@@ -60,6 +60,7 @@ int main()
 		physics.step(elapsed_ms);
 		world.handle_collisions(elapsed_ms);
 		boss.step(elapsed_ms);
+		boss.updateGuidedMissiles(elapsed_ms);
 		renderer.draw();
 
 	}

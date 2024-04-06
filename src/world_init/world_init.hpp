@@ -110,3 +110,5 @@ Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, fl
 Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state);
 
 Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
+
+Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target);

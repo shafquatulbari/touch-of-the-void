@@ -29,6 +29,9 @@ void Boss::step(float elapsed_ms)
 				break;
             case BossAI::BossState::OFFENSIVE:
                 handleOffensiveState(entity, boss, motion, elapsed_ms);
+            case BossAI::BossState::GUIDED_MISSILE:
+                handleGuidedMissile(entity, boss, motion, elapsed_ms);
+                break;
         default:
             printf("Unknown state\n");
             break;
@@ -111,4 +114,47 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         boss.totalSpawnedEnemies++;
     }
 
+}
+
+void Boss::handleGuidedMissile(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms) {
+    Entity playerEntity = registry.players.entities[0]; // Assuming single player
+
+    // Logic to decide when to shoot a guided missile
+    boss.shootTimer += elapsed_ms/1000;
+    if (boss.shootTimer >= boss.shootCooldown) {
+        boss.shootTimer = 0.0f; // Reset the timer
+
+        // Position at which the missile is spawned could be directly at the boss's location or adjusted as needed
+        vec2 startPosition = motion.position;
+        createBossGuidedMissile(renderer, startPosition, entity, playerEntity);
+    }
+
+    // Example transition logic back to another state, adjust according to your game design
+    boss.stateTimer += elapsed_ms/1000;
+    if (boss.stateTimer >= boss.stateDuration) {
+        //boss.state = BossAI::BossState::DEFENSIVE; // Switch back to defensive or any other state
+        boss.stateTimer = 0.0f;
+    }
+}
+
+void Boss::updateGuidedMissiles(float elapsed_ms) {
+    for (auto& missileEntity : registry.guidedMissiles.entities) { // Assuming you have a way to track guided missile entities
+        Motion& missileMotion = registry.motions.get(missileEntity);
+        Entity targetEntity = registry.players.entities[0]; // Assuming the player is the target
+        Motion& targetMotion = registry.motions.get(targetEntity);
+
+        // Calculate the direction to the target
+        vec2 directionToTarget = normalize(targetMotion.position - missileMotion.position);
+
+        // Adjust missile velocity to gradually steer towards the target
+        float steeringStrength = 0.05f; // Control how sharply the missile can turn
+        missileMotion.velocity = lerp(missileMotion.velocity, directionToTarget * glm::length(missileMotion.velocity), steeringStrength);
+
+        // adjust the missile's rotation to face its direction of travel
+        missileMotion.look_angle = atan2(missileMotion.velocity.y, missileMotion.velocity.x);
+    }
+}
+
+vec2 Boss:: lerp(const glm::vec2& a, const glm::vec2& b, float t) {
+    return a + t * (b - a);
 }

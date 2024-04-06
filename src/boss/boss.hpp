@@ -19,4 +19,10 @@ public:
 
 	void handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms);
 
+	void handleGuidedMissile(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms);
+
+	void updateGuidedMissiles(float elapsed_ms);
+
+	vec2 lerp(const glm::vec2& a, const glm::vec2& b, float t);
+
 };

@@ -37,7 +37,7 @@ public:
 	ComponentContainer<DamagedTimer> damagedTimers;
 	ComponentContainer<Level> levels;
 	ComponentContainer<BossAI>bosses;
-
+	ComponentContainer<Projectile> guidedMissiles;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -68,6 +68,7 @@ public:
 		registry_list.push_back(&damagedTimers);
 		registry_list.push_back(&levels);
 		registry_list.push_back(&bosses);
+		registry_list.push_back(&guidedMissiles);
 	}
 
 	void clear_all_components() {
