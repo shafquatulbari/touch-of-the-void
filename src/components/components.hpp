@@ -97,13 +97,24 @@ struct Room {
 // Player component
 struct Player
 {
+	// Store the total ammo count for each weapon
+	std::unordered_map<WeaponType, int> total_ammo_count = {
+		{WeaponType::GATLING_GUN, INT_MAX},
+		{WeaponType::SNIPER, 20},
+		{WeaponType::SHOTGUN, 60},
+		{WeaponType::ROCKET_LAUNCHER, 5},
+		{WeaponType::FLAMETHROWER, 400},
+		{WeaponType::ENERGY_HALO, 8},
+	};
+
 	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
 		{WeaponType::GATLING_GUN, 100},
 		{WeaponType::SNIPER, 1},
 		{WeaponType::SHOTGUN, 6},
 		{WeaponType::ROCKET_LAUNCHER, 1},
-		{WeaponType::FLAMETHROWER, 200}
+		{WeaponType::FLAMETHROWER, 200},
+		{WeaponType::ENERGY_HALO, 2},
 	};
 
 	bool is_firing = false; // player is currently firing projectiles
@@ -182,7 +193,7 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED, TURRET, SHOTGUN};
+	enum class AIType {MELEE, RANGED, TURRET, SHOTGUN, ROCKET, FLAMETHROWER};
 	AIType type = AIType::MELEE;
 	enum class AIState {IDLE, ACTIVE};
 	AIState state = AIState::ACTIVE;
@@ -441,8 +452,10 @@ enum class TEXTURE_ASSET_ID {
 	SHOTGUN_UNEQUIPPED = SHOTGUN_EQUIPPED + 1,
 	SNIPER_EQUIPPED = SHOTGUN_UNEQUIPPED + 1,
 	SNIPER_UNEQUIPPED = SNIPER_EQUIPPED + 1,
+	ENERGY_HALO_EQUIPPED = SNIPER_UNEQUIPPED + 1,
+	ENERGY_HALO_UNEQUIPPED = ENERGY_HALO_EQUIPPED + 1,
 
-	TEXTURE_COUNT = SNIPER_UNEQUIPPED + 1
+	TEXTURE_COUNT = ENERGY_HALO_UNEQUIPPED + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -474,7 +487,13 @@ const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 enum class SPRITE_SHEET_ID {
 	BLUE_EFFECT = 0,
-	ENEMY_SCARAB = BLUE_EFFECT + 1,
+	ENEMY_BOSS_IDLE = BLUE_EFFECT + 1,
+	ENEMY_BOSS_SHIELD = ENEMY_BOSS_IDLE + 1,
+	ENEMY_BOSS_SPAWN = ENEMY_BOSS_SHIELD + 1,
+	ENEMY_DRILL = ENEMY_BOSS_SPAWN + 1,
+	ENEMY_DROID = ENEMY_DRILL + 1,
+	ENEMY_DRONE = ENEMY_DROID + 1,
+	ENEMY_SCARAB = ENEMY_DRONE + 1,
 	EXPLOSION = ENEMY_SCARAB + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
 	GREEN_EFFECT = ENEMY_EXPLODER + 1,

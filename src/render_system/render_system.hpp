@@ -23,6 +23,12 @@ class RenderSystem {
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
 		ivec2(20,16),
+		ivec2(19,1),
+		ivec2(19,1),
+		ivec2(38,1),
+		ivec2(5,1),
+		ivec2(6,1),
+		ivec2(10,1),
 		ivec2(8,1),
 		ivec2(12,1),
 		ivec2(6,1),
@@ -104,6 +110,8 @@ class RenderSystem {
 		textures_path("weapon_icon_shotgun_blast_unequipped_128x128.png"),
 		textures_path("weapon_icon_sniper_rifle_equipped_192x192.png"),
 		textures_path("weapon_icon_sniper_rifle_unequipped_128x128.png"),
+		textures_path("weapon_icon_energy_halo_equipped_192x192.png"),
+		textures_path("weapon_icon_energy_halo_unequipped_128x128.png"),
 	};
 
 	std::array<GLuint, effect_count> effects;
@@ -126,6 +134,12 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
 		sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("enemy_boss_idle_128x128.png"),
+		sheets_path("enemy_boss_shield_128x128.png"),
+		sheets_path("enemy_boss_spawning_128x128.png"),
+		sheets_path("enemy_drill_64x64.png"),
+		sheets_path("enemy_droid_64x64.png"),
+		sheets_path("enemy_drone_64x64.png"),
 		sheets_path("enemy_fire_scarab_64x64.png"),
 		sheets_path("explosion_192x192.png"),
 		sheets_path("exploding_skull_64x64.png"),

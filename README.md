@@ -19,3 +19,5 @@ Audio Asset References:
 - Menu Select: https://freesound.org/people/pumodi/sounds/150222/
 - Game Music: https://freesound.org/people/levelplane/sounds/412080/
 - Flamethrower: https://freesound.org/people/MATRIXXX_/sounds/459884/
+- No Ammo: https://freesound.org/people/PacmanGamer/sounds/165660/
+- Energy Halo: https://freesound.org/people/dpren/sounds/440147/

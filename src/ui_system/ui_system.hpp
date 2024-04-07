@@ -29,6 +29,7 @@ private:
 	Entity weapon_slot_4; // unequipped
 	Entity total_ammo_icon;
 	Entity current_ammo_icon;
+	Entity total_ammo_text;
 
 	// FPS 
 	Entity fps_text;

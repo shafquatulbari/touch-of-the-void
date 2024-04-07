@@ -6,8 +6,10 @@ Mix_Chunk* sniper_sound = nullptr;
 Mix_Chunk* shotgun_sound = nullptr;
 Mix_Chunk* rocket_launcher_sound = nullptr;
 Mix_Chunk* flamethrower_sound = nullptr;
+Mix_Chunk* energy_halo_sound = nullptr;
 Mix_Chunk* reload_start_sound = nullptr;
 Mix_Chunk* reload_end_sound = nullptr;
+Mix_Chunk* no_ammo_sound = nullptr;
 Mix_Chunk* explosion_sound = nullptr;
 Mix_Chunk* cycle_weapon_sound = nullptr;
 Mix_Chunk* player_hit_sound = nullptr;
@@ -36,8 +38,10 @@ bool init_audio() {
     shotgun_sound = Mix_LoadWAV(audio_path("shotgun.wav").c_str());
     rocket_launcher_sound = Mix_LoadWAV(audio_path("rocket_launcher_sound.wav").c_str());
     flamethrower_sound = Mix_LoadWAV(audio_path("flamethrower_sound.wav").c_str());
+    energy_halo_sound = Mix_LoadWAV(audio_path("energy_halo_sound.wav").c_str());
     reload_start_sound = Mix_LoadWAV(audio_path("reload_start_sound.wav").c_str());
     reload_end_sound = Mix_LoadWAV(audio_path("reload_end_sound.wav").c_str());
+    no_ammo_sound = Mix_LoadWAV(audio_path("no_ammo_sound.wav").c_str());
     explosion_sound = Mix_LoadWAV(audio_path("explosion.wav").c_str());
     cycle_weapon_sound = Mix_LoadWAV(audio_path("cycle_weapon_sound.wav").c_str());
     player_hit_sound = Mix_LoadWAV(audio_path("player_hit_sound.wav").c_str());
@@ -54,8 +58,10 @@ bool init_audio() {
         shotgun_sound == nullptr ||
         rocket_launcher_sound == nullptr ||
         flamethrower_sound == nullptr ||
+        energy_halo_sound == nullptr ||
         reload_start_sound == nullptr ||
         reload_end_sound == nullptr ||
+        no_ammo_sound == nullptr ||
         explosion_sound == nullptr ||
         cycle_weapon_sound == nullptr ||
         player_hit_sound == nullptr ||
@@ -99,10 +105,14 @@ void close_audio() {
         Mix_FreeChunk(rocket_launcher_sound);
     if (flamethrower_sound != nullptr)
         Mix_FreeChunk(flamethrower_sound);
+    if (energy_halo_sound != nullptr)
+        Mix_FreeChunk(energy_halo_sound);
     if (reload_start_sound != nullptr)
         Mix_FreeChunk(reload_start_sound);
     if (reload_end_sound != nullptr)
         Mix_FreeChunk(reload_end_sound);
+    if (no_ammo_sound != nullptr)
+        Mix_FreeChunk(no_ammo_sound);
     if (explosion_sound != nullptr)
         Mix_FreeChunk(explosion_sound);
     if (cycle_weapon_sound != nullptr)

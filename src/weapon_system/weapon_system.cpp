@@ -4,7 +4,8 @@
 void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player) 
 {
 	step_projectile_lifetime(elapsed_ms);
-	step_dot_timers(elapsed_ms);
+	step_projectile_movement(elapsed_ms);
+	step_weapon_timers(elapsed_ms);
 
 	Player& p = registry.players.get(player);
 	Motion& p_m = registry.motions.get(player);
@@ -13,8 +14,13 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 	if (init_reload) {
 		init_reload = false;
 		//registry.texts.get(ammo_text).content = "Ammo: Reloading...";
-		play_sound(reload_start_sound);
-		p.is_reloading = true;
+		if (p.total_ammo_count[p.weapon_type] > 0) {
+			play_sound(reload_start_sound);
+			p.is_reloading = true;
+		}
+		else {
+			play_sound(no_ammo_sound);
+		}
 	}
 	if (p.is_reloading) {
 		p.reload_timer_ms -= elapsed_ms;
@@ -23,8 +29,9 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			// Reload complete, refill ammo
 			p.is_reloading = false;
 			p.reload_timer_ms = weapon_stats[p.weapon_type].reload_time;
-			p.ammo_count = weapon_stats[p.weapon_type].magazine_size; // Refill ammo after reload
-			// registry.texts.get(ammo_text).content = "Ammo: " + std::to_string(player.ammo_count) + " / " + std::to_string(player.magazine_sizes[player.weapon_type]);
+			int ammo_to_refill = std::min(weapon_stats[p.weapon_type].magazine_size - p.ammo_count, p.total_ammo_count[p.weapon_type]);
+			p.ammo_count += ammo_to_refill; // Refill ammo after reload
+			p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
 			play_sound(reload_end_sound);
 		}
 	}
@@ -68,6 +75,13 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 				play_sound(flamethrower_sound);
 				break;
 
+			case WeaponType::ENERGY_HALO:
+				for (int i = 0; i < 16; i++) {
+					createEnergyHaloProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
+				}
+				play_sound(energy_halo_sound);
+				break;
+
 			default:
 				// Handle an unknown weapon type (should never reach here, hopefully...)
 				break;
@@ -96,7 +110,33 @@ void WeaponSystem::step_projectile_lifetime(float elapsed_ms)
 	}
 }
 
-void WeaponSystem::step_dot_timers(float elapsed_ms) 
+void WeaponSystem::step_projectile_movement(float elapsed_ms)
+{
+	for (auto e : registry.projectiles.entities) {
+		if (registry.projectiles.get(e).weapon_type == WeaponType::ENERGY_HALO) {
+			Motion& projectile_m = registry.motions.get(e);
+			Motion& player_m = registry.motions.get(registry.players.entities[0]);
+
+			// Calculate the new position of the projectile around the player
+			float radius = 100.0f; // Adjust this radius as needed
+			float angularSpeed = 0.002f; // Adjust this angular speed as needed
+			float angle = projectile_m.look_angle + angularSpeed * elapsed_ms; // Increment angle over time
+
+			// Calculate the new position relative to the player
+			float newX = player_m.position.x + radius * cos(angle);
+			float newY = player_m.position.y + radius * sin(angle);
+
+			// Update the position of the projectile
+			projectile_m.position = vec2({ newX, newY });
+
+			// Update the rotation angle of the projectile to make it rotate around the player
+			float rotationSpeed = 0.002f; // Adjust this rotation speed as needed
+			projectile_m.look_angle += rotationSpeed * elapsed_ms;
+		}
+	}
+}
+
+void WeaponSystem::step_weapon_timers(float elapsed_ms) 
 {
 	for (Entity entity : registry.onFireTimers.entities) {
 		// progress timer
@@ -189,6 +229,9 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 	case WeaponType::FLAMETHROWER:
 		weaponString = "Weapon: Flamethrower";
 		break;
+	case WeaponType::ENERGY_HALO:
+		weaponString = "Weapon: Energy Halo";
+		break;
 	default:
 		weaponString = "Unknown Weapon";
 		break;
@@ -225,9 +268,7 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 		}
 	}
 
-
-
-	//// Check distance to player and apply damage if within explosion radius
+	// Check distance to player and apply damage if within explosion radius
 	vec2 playerPosition = registry.motions.get(player).position;
 	float distanceToPlayer = glm::distance(rocket_position, playerPosition);
 	if (distanceToPlayer <= EXPLOSION_RADIUS) {

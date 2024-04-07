@@ -75,7 +75,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
 	//registry.meshPtrs.emplace(entity, &mesh);
 
-	registry.obstacles.emplace(entity);
+	registry.obstacles.emplace(entity);	
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 		Animation& animation = registry.animations.emplace(entity);
@@ -132,6 +132,44 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 		animation.current_frame = 0;
 		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
 		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+	}
+	else if (aiType == AI::AIType::ROCKET) {
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.total_frames = 6;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
+		animation.loop = true;
+
+		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+		animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+		registry.renderRequests.insert(
+			entity,
+			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			 EFFECT_ASSET_ID::TEXTURED,
+			 GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::FOREGROUND });
+	}
+	else if (aiType == AI::AIType::FLAMETHROWER) {
+		Animation& animation = registry.animations.emplace(entity);
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.total_frames = 6;
+		animation.current_frame = 0;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
 		animation.loop = true;
 
 		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
@@ -474,6 +512,48 @@ Entity createRocketProjectile(RenderSystem* render, vec2 position, float angle, 
 	return entity;
 }
 
+Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float angle, Entity source)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = vec2({ 64.f, 64.f });
+	motion.velocity = vec2({ 400.0f * cos(angle), 400.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 1}, {12, 1}, {13, 1}, {14, 1} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
 Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
 {
 	auto entity = Entity();
@@ -490,7 +570,6 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 	Projectile& projectile = registry.projectiles.emplace(entity);
 	motion.position = position;
 	motion.look_angle = angle + M_PI / 4;
-	//motion.scale = vec2({ BULLET_BB_WIDTH * glm::linearRand(0.8f, 1.2f), BULLET_BB_HEIGHT * glm::linearRand(1.0f, 1.4f) });
 	motion.scale = vec2({ 32.f * glm::linearRand(0.8f, 1.2f), 32.f * glm::linearRand(0.8f, 1.2f) });
 	motion.velocity = vec2({ 600.0f * cos(angle), 600.0f * sin(angle) });
 
@@ -521,8 +600,95 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
 
-	/*registry.colors.emplace(entity);
-	registry.colors.get(entity) = vec3(glm::linearRand(0.8f, 1.0f), glm::linearRand(0.0f, 0.8f), 0.f);*/
+	return entity;
+}
+
+Entity createEnergyHaloProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
+{
+	auto entity = Entity();
+
+	float angle_increment = (2 * M_PI) / 16; // ADJUST BASED ON HOW MANY PROJECTILES
+	float shoot_angle = angle_increment * i;
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = shoot_angle;
+	motion.scale = vec2({ 64.f , 64.f });
+	motion.velocity = vec2({ 0.f, 0.f });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::ENERGY_HALO;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 8}, {12, 8}, {13, 8}, {14, 8} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, Entity source)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle + M_PI / 4;
+	motion.scale = vec2({ 32.f, 32.f });
+	motion.velocity = vec2({ 600.0f * cos(angle), 600.0f * sin(angle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::FLAMETHROWER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {6, 9}, {7, 9}, {8, 9}, {9, 9} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::MIDDLEGROUND });
 
 	return entity;
 }
@@ -738,7 +904,7 @@ void render_room(RenderSystem* render, Level& level)
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
-	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET, AI::AIType::SHOTGUN };
+	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET, AI::AIType::SHOTGUN, AI::AIType::ROCKET, AI::AIType::FLAMETHROWER };
 
 	// Create each enemy with their specified type
 	for (auto& pos : room_to_render.enemy_positions) {
