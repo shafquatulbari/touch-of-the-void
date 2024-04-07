@@ -99,12 +99,23 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 	Room* current_room_pointer = &room;
 
 
+
+	std::default_random_engine rng = std::default_random_engine(std::random_device()());
+
+	// number between 0..1 - 50/50 if a door will be there.
+	std::uniform_real_distribution<float> room_uniform_dist(0, 1);
+
+	int top_room_rng = std::rint(room_uniform_dist(rng));
+	int bot_room_rng = std::rint(room_uniform_dist(rng));
+	int left_room_rng = std::rint(room_uniform_dist(rng));
+	int right_room_rng = std::rint(room_uniform_dist(rng));
+
 	if (level.rooms.count(left_room_coords) > 0 && registry.rooms.get(level.rooms[left_room_coords]).is_visited)
 	{
 		/*current_room_pointer->has_left_door = true;*/
 		// remove for M3
 	}
-	else {
+	else if (left_room_rng == 0) {
 			auto left_room_entity = Entity();
 			Room & new_left_room = registry.rooms.emplace(left_room_entity);
 			level.rooms.emplace(left_room_coords, left_room_entity);
@@ -118,7 +129,7 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 		/*current_room_pointer->has_right_door = true;*/
 		// remove for M3
 	}
-	else {
+	else if (right_room_rng == 0) {
 			// generate a new room
 			auto right_room_entity = Entity();
 			registry.rooms.emplace(right_room_entity);
@@ -135,7 +146,7 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 		/*current_room_pointer->has_top_door = true;*/
 		// remove for M3
 	}
-	else {
+	else if (top_room_rng == 0) {
 			// generate a new room
 			auto top_room_entity = Entity();
 			Room& new_top_room = registry.rooms.emplace(top_room_entity);
@@ -151,7 +162,7 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 		/*current_room_pointer->has_bottom_door = true;*/
 		// remove for M3
 	}
-	else {
+	else if (bot_room_rng == 0) {
 		// generate a new room
 		auto bottom_room_entity = Entity();
 		Room& new_bottom_room = registry.rooms.emplace(bottom_room_entity);
