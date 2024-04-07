@@ -206,26 +206,46 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 	//registry.meshPtrs.emplace(entity, &mesh);
 
 	registry.obstacles.emplace(entity);
-	//registry.obstacles.emplace(entity);
-	
-		Animation& animation = registry.animations.emplace(entity);
+	// Set initial animation based on the initial state
+	Animation& animation = registry.animations.emplace(entity);
+	switch (state) {
+	case BossAI::BossState::DEFENSIVE:
 		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SHIELD;
-		animation.total_frames = 19;
-		animation.current_frame = 0;
 		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
 		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
-		animation.loop = true;
+		// Add frames and durations for DEFENSIVE state
+		break;
+	case BossAI::BossState::OFFENSIVE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SPAWN;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {20, 0}, {21, 0}, {22, 0}, {23, 0}, {24, 0}, {25, 0}, {26, 0}, {27, 0}, {28, 0}, {29, 0}, {30, 0}, {31, 0}, {32, 0}, {33, 0}, {34, 0}, {35, 0}, {36, 0}, {37, 0} };
+		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 };
+		// Add frames and durations for OFFENSIVE state
+		break;
+	case BossAI::BossState::GUIDED_MISSILE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+		// Add frames and durations for GUIDED_MISSILE state
+		break;
+	default:
+		// Handle unknown state if necessary
+		break;
+	}
+	animation.total_frames = 19; // Adjust accordingly
+	animation.current_frame = 0;
+	animation.loop = true;
+	// Remember to set sprites and frame_durations_ms according to the state
 
-		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
-		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
-		registry.renderRequests.insert(
-			entity,
-			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE,
-			RENDER_LAYER::FOREGROUND });
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
 	
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // Adjust if you have a specific texture for the initial state
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		  RENDER_LAYER::FOREGROUND });
+
 	return entity;
 }
 
