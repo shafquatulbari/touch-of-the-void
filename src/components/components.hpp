@@ -185,6 +185,8 @@ struct BossAI
 	BossState state = BossState::DEFENSIVE;
 	float shootTimer = 0.0f; // Timer to control shooting rate
 	float shootCooldown = 1.0f; // Cooldown in seconds between shots
+	float missileTimer = 0.0f; // Timer to control missile creation rate
+	float missileCooldown = 2.0f; // Cooldown in seconds between missile creation
 	float stateTimer = 0.0f; // Timer to track time in the current state
 	float stateDuration = 10.0f; // Duration to spend in each state before switching
 	int aliveEnemyCount = 0; // New member to track the number of alive enemies

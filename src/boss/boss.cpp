@@ -88,9 +88,18 @@ void Boss::handleDefensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         boss.stateTimer = 0.0f;
         boss.enemyCreationTimer = 0.0f;
         boss.aliveEnemyCount = 0; // Make sure to reset this count when switching to Offensive
-        if (registry.healths.get(entity).current_health <= (registry.healths.get(entity).max_health * 0.4f)) {
-            boss.state = BossAI::BossState::GUIDED_MISSILE;
-        }
+    }
+    if (registry.healths.get(entity).current_health <= (registry.healths.get(entity).max_health * 0.3f)) {
+        boss.state = BossAI::BossState::GUIDED_MISSILE;
+        Animation& animation = registry.animations.get(entity);
+        animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
+        animation.total_frames = 19;
+        animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+        animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+        animation.loop = true;
+        animation.current_frame = 0;
+        AnimationTimer& animation_timer = registry.animationTimers.get(entity);
+        animation_timer.counter_ms = animation.frame_durations_ms[0];
     }
 }
 
@@ -99,7 +108,7 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
     // Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
     std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE };
     //enemy positions is a set of vec2
-    vec2 pos = { 7.0f, 3.0f };
+    vec2 pos = { 7.0f, 2.0f };
     float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
     float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
     float x = x_origin + pos.x * game_window_block_size;
@@ -108,24 +117,22 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
     boss.stateDuration = 10.0f;
     boss.enemyCreationTimer += elapsed_ms / 1000.0f;
     boss.stateTimer += elapsed_ms / 1000.0f; // Convert milliseconds to seconds
-
+    if (registry.healths.get(entity).current_health <= (registry.healths.get(entity).max_health * 0.3f)) {
+        boss.state = BossAI::BossState::GUIDED_MISSILE;
+        Animation& animation = registry.animations.get(entity);
+        animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
+        animation.total_frames = 19;
+        animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+        animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+        animation.loop = true;
+        animation.current_frame = 0;
+        AnimationTimer& animation_timer = registry.animationTimers.get(entity);
+        animation_timer.counter_ms = animation.frame_durations_ms[0];
+    }
     // Check if it's time to switch state
     if (boss.stateTimer >= boss.stateDuration && boss.aliveEnemyCount == 0) {
         // if boss is at 80% health, switch to another state
-        if (registry.healths.get(entity).current_health <= (registry.healths.get(entity).max_health * 0.4f)) {
-			boss.state = BossAI::BossState::GUIDED_MISSILE;
-            Animation& animation = registry.animations.get(entity);
-            animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
-            animation.total_frames = 19;
-            animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
-            animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
-            animation.loop = true;
-            animation.current_frame = 0;
-            AnimationTimer& animation_timer = registry.animationTimers.get(entity);
-            animation_timer.counter_ms = animation.frame_durations_ms[0];
-            // print animation timer
-            printf("Animation Timer: %f\n", animation_timer.counter_ms);
-		}
+        
 
         Animation& animation = registry.animations.get(entity);
         animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SHIELD;
@@ -158,9 +165,9 @@ void Boss::handleGuidedMissile(Entity entity, BossAI& boss, Motion& motion, floa
     Entity playerEntity = registry.players.entities[0]; // Assuming single player
 
     // Logic to decide when to shoot a guided missile
-    boss.shootTimer += elapsed_ms/1000;
-    if (boss.shootTimer >= boss.shootCooldown) {
-        boss.shootTimer = 0.0f; // Reset the timer
+    boss.missileTimer += elapsed_ms/1000;
+    if (boss.missileTimer >= boss.missileCooldown) {
+        boss.missileTimer = 0.0f; // Reset the timer
 
         // Position at which the missile is spawned could be directly at the boss's location or adjusted as needed
         vec2 startPosition = motion.position;
@@ -180,7 +187,6 @@ void Boss::updateGuidedMissiles(float elapsed_ms) {
         Motion& missileMotion = registry.motions.get(missileEntity);
         Entity targetEntity = registry.players.entities[0]; // Assuming the player is the target
         Motion& targetMotion = registry.motions.get(targetEntity);
-
         // Calculate the direction to the target
         vec2 directionToTarget = normalize(targetMotion.position - missileMotion.position);
 
@@ -188,8 +194,8 @@ void Boss::updateGuidedMissiles(float elapsed_ms) {
         float steeringStrength = 0.05f; // Control how sharply the missile can turn
         missileMotion.velocity = lerp(missileMotion.velocity, directionToTarget * glm::length(missileMotion.velocity), steeringStrength);
 
-        // adjust the missile's rotation to face its direction of travel
-        missileMotion.look_angle = atan2(missileMotion.velocity.y, missileMotion.velocity.x);
+        // in our case 180 degrees is added to the angle to make it face the right direction
+        missileMotion.look_angle = atan2(missileMotion.velocity.y, missileMotion.velocity.x) + M_PI;
     }
 }
 

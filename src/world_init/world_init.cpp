@@ -83,7 +83,6 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 
 		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
 		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
@@ -978,7 +977,7 @@ void render_room(RenderSystem* render, Level& level)
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
 		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
-			createBoss(render, vec2(x, y), 2000.0f, BossAI::BossState::DEFENSIVE);
+			createBoss(render, vec2(x, y), 4000.0f, BossAI::BossState::DEFENSIVE);
 		}
 		else {
 			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], false);
@@ -1335,7 +1334,6 @@ Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity 
 	vec2 direction = normalize(targetPosition - startPosition);
 	motion.velocity = direction * 250.0f; // Adjust speed as needed
 	Projectile& guidedMissile = registry.guidedMissiles.emplace(entity);
-
 	// Set the source of the projectile
 	registry.projectiles.get(entity).source = source;
 	projectile.lifetime = 5000.0f; // Adjust lifetime as needed

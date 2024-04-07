@@ -709,6 +709,57 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
+			// Collision logic for boss projectile hitting player
+			else if (registry.bosses.has(projectileSource) && registry.players.has(entity_other)) {
+				// Apply damage to the player
+				if (registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
+					assert(registry.shields.has(entity_other) && "Player should have a shield");
+					Shield& playerShield = registry.shields.get(entity_other);
+
+					if (registry.damagedTimers.has(entity_other)) {
+						DamagedTimer& damagedTimer = registry.damagedTimers.get(entity_other);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
+					}
+					else {
+						DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
+					}
+
+					if (playerShield.current_shield > 0) {
+						play_sound(player_hit_sound);
+						playerShield.current_shield -= 100;
+						playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
+					}
+					else {
+						assert(registry.healths.has(entity_other) && "Player should have health");
+						assert(registry.deadlies.has(entity) && "Entity should have a deadly component");
+						Deadly& deadly = registry.deadlies.get(entity);
+						Health& playerHealth = registry.healths.get(entity_other);
+						playerHealth.current_health -= 4; //hardcoded damage
+						if (playerHealth.current_health <= 0) {
+							// Trigger darkening immediately, but actual effect is controlled in step
+							if (!registry.deathTimers.has(player)) {
+								// cease motion
+								assert(registry.motions.has(player) && "Player should have a motion");
+								Motion& motion = registry.motions.get(player);
+								motion.velocity = { 0, 0 };
+								motion.is_moving_up = false;
+								motion.is_moving_down = false;
+								motion.is_moving_left = false;
+								motion.is_moving_right = false;
+								registry.deathTimers.emplace(player);
+								play_sound(game_over_sound);
+							}
+						}
+						else {
+							play_sound(player_hit_sound);
+						}
+					}
+
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+			}
+
 
 			// Collision logic for projectiles hitting obstacles
 			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {

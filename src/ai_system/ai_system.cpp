@@ -353,7 +353,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
         // Rotate towards player if in line of sight
         vec2 direction = normalize(playerPosition - motion.position);
         float angle = atan2(direction.y, direction.x);
-        motion.look_angle = angle;
+        motion.look_angle = angle + M_PI/2;
 
         // Generate path using A* if the line of sight is clear
         std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
