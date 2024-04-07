@@ -122,6 +122,10 @@ struct Player
 
 	std::vector<PowerupType> powerups;
 	int powerups_collected = 0;
+	bool instant_ammo_reload = false;
+	bool damage_boost = false;
+	bool defense_boost = false; // only makes shield stronger, not health at the moment
+	bool accuracy_boost = false;
 
 	// Constructor to set the initial values
 	Player() : 
@@ -353,85 +357,8 @@ struct Sprite {
 struct PowerupRandom {
 };
 
-struct MaxHealthPowerup {
-	float health_increase = 0.0f;
-};
-
-struct HealthRegenPowerup {
-	float regen_rate = 0.0f;
-	float regen_delay = 0.0f;
-	float regen_counter_ms = 0.0f;
-};
-
-struct MaxShieldPowerup {
-	float shield_increase = 0.0f;
-};
-
-struct InstantAmmoReloadPowerup {
-};
-
-struct DamageBoostPowerup {
-	float damage_boost = 0.0f;
-	float duration = 0.0f;
-	float counter_ms = 0.0f;
-};
-
-struct DefenseBoostPowerup {
-	float defense_boost = 0.0f;
-	float duration = 0.0f;
-	float counter_ms = 0.0f;
-};
-
-struct SpeedBoostPowerup {
-	float speed_boost = 0.0f;
-	float duration = 0.0f;
-	float counter_ms = 0.0f;
-};
-
-struct MultiplierBoostPowerup {
-};
-
-struct AccuracyBoostPowerup {
-};
-
-struct MaxAmmoPowerup {
-	float ammo_increase = 0.0f;
-};
-
-struct TimeSlowPowerup {
-	float slow_factor = 0.0f;
-	float duration = 0.0f;
-	float counter_ms = 0.0f;
-};
-
-struct InstantKillPowerup {
-};
-
-struct MoreEnemiesPowerup {
-};
-
-struct MoreObstaclesPowerup {
-};
-
-struct MorePowerupsPowerup {
-};
-
-struct BleedPowerup {
-	float bleed_rate = 0.0f;
-	float bleed_delay = 0.0f;
-	float bleed_counter_ms = 0.0f;
-};
-
-struct BiggerBulletsPowerup {
-};
-
-struct BoostPowerup {
-	float boost = 0.0f;
-	float duration = 0.0f;
-	float counter_ms = 0.0f;
-};
-
-struct ShufflerPowerup {
+struct MultiplierBoostPowerupTimer {
+	float counter_ms = 500.0f; 
 };
 
 

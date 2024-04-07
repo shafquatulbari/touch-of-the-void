@@ -72,9 +72,11 @@ void UISystem::createMap(Level& level) {
 
 	auto entity = Entity();
 
+	float top_left_corner_x = 208.f, top_left_corner_y = 290.f, box_width = 36.f, box_height = 36.f;
+
 	Motion& motion = registry.motions.emplace(entity);
-	motion.position = { 208.f, 290.f };
-	motion.scale = vec2({ 36.f, 36.f });
+	motion.position = { top_left_corner_x, top_left_corner_y };
+	motion.scale = vec2({ box_width, box_height });
 
 	registry.renderRequests.insert(
 		entity,
@@ -89,6 +91,8 @@ void UISystem::createMap(Level& level) {
 			if (room_coords.first == current_room_coords.first && room_coords.second == current_room_coords.second) {
 				continue;
 			}
+
+
 			if (level.rooms.find(room_coords) != level.rooms.end()) {
 				assert(registry.rooms.has(level.rooms[room_coords]) && "Room does not exist in registry");
 				Room& room = registry.rooms.get(level.rooms[room_coords]);
@@ -96,8 +100,8 @@ void UISystem::createMap(Level& level) {
 				if (room.is_visited) {
 
 					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
-					motion.scale = vec2({ 36.f, 36.f });
+					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
+					motion.scale = vec2({ box_width, box_height });
 
 					registry.renderRequests.insert(
 						entity,
@@ -108,8 +112,8 @@ void UISystem::createMap(Level& level) {
 				}
 				else {
 					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
-					motion.scale = vec2({ 36.f, 36.f });
+					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
+					motion.scale = vec2({ box_width, box_height });
 
 					registry.renderRequests.insert(
 						entity,
@@ -150,10 +154,13 @@ void UISystem::updateMap(Level& level) {
 				Room& room = registry.rooms.get(level.rooms[room_coords]);
 				auto entity = Entity();
 
+				float top_left_corner_x = 208.f, top_left_corner_y = 290.f, box_width = 36.f, box_height = 36.f;
+
 				if (room.is_visited) {
 					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
-					motion.scale = vec2({ 36.f, 36.f });
+					
+					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
+					motion.scale = vec2({ box_width, box_height });
 
 					registry.renderRequests.insert(
 						entity,
@@ -165,8 +172,8 @@ void UISystem::updateMap(Level& level) {
 				else {
 
 					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { 208.f + (x * 36.f), 290.f - (y * 36.f) };
-					motion.scale = vec2({ 36.f, 36.f });
+					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
+					motion.scale = vec2({ box_width, box_height });
 
 					registry.renderRequests.insert(
 						entity,
@@ -216,7 +223,7 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 	// multiplier
 	std::string multiplierText = std::to_string(multiplier);
 	multiplierText = multiplierText.substr(0, multiplierText.find(".") + 2);
-	multiplier_text = createText(renderer, multiplierText, { 1545.0f, 919.0f }, 1.25f, COLOR_BLACK, TextAlignment::LEFT);
+	multiplier_text = createText(renderer, multiplierText, { 1545.0f, 919.0f }, 1.0f, COLOR_BLACK, TextAlignment::LEFT);
 	
 	switch (player.weapon_type) {
 	case WeaponType::GATLING_GUN:

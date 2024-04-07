@@ -201,6 +201,28 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 			registry.damagedTimers.remove(entity);
 		}
 	}
+
+	for (Entity entity : registry.multiplierBoostPowerupTimers.entities) {
+		// progress timer
+		MultiplierBoostPowerupTimer& counter = registry.multiplierBoostPowerupTimers.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+		if (counter.counter_ms < min_counter_ms) {
+			min_counter_ms = counter.counter_ms;
+		}
+
+		// once the timer expired, 50% chance to add or subtract 1 from the multiplier and then restart the timer
+		if (counter.counter_ms < 0) {
+			registry.multiplierBoostPowerupTimers.remove(entity);
+			if (rand() % 2 == 0) {
+				multiplier += .1f;
+			}
+			else {
+				multiplier -= .1f;
+			}
+			registry.multiplierBoostPowerupTimers.emplace(entity);
+		}
+	}
+
 	return false;
 }
 
@@ -343,7 +365,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// decrement multiplier over time
 	multiplier -= 0.00005f * elapsed_ms_since_last_update;
-	multiplier = std::max(multiplier, 1.0f);
+	// don't let multiplier go below 1.0 or above 9.9
+	multiplier = std::max(1.0f, multiplier);
+	multiplier = std::min(9.9f, multiplier);
 
 	// power ups drift towards player
 	for (Entity e : registry.powerups.entities) {
@@ -426,7 +450,7 @@ void WorldSystem::restart_game() {
 		createText(renderer, "CONTROLS", { 30.0f, 674.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "WASD to move", { 30.0f, 714.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "Mouse to aim", { 30.0f, 754.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-		createText(renderer, "Right-Click to shoot", { 30.0f, 794.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
+		createText(renderer, "Left-Click to shoot", { 30.0f, 794.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "R to reload", { 30.0f, 834.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "Q/E to change weapons", { 30.0f, 874.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 
@@ -642,25 +666,28 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 				// choose a random powerup that has not been collected yet
 				std::vector<PowerupType> powerups = { 
-					PowerupType::MAX_HEALTH, 
+					// COMMENT OR UNCOMMENT TO ENABLE OR DISABLE POWERUPS FROM SPAWNING
+					PowerupType::MAX_HEALTH,
 					PowerupType::HEALTH_REGEN,
 					PowerupType::MAX_SHIELD,
-					//PowerupType::INSTANT_AMMO_RELOAD,
-					//PowerupType::DAMAGE_BOOST,
-					//PowerupType::DEFENSE_BOOST,
-					//PowerupType::SPEED_BOOST,
-					//PowerupType::MULTIPLIER_BOOST,
-					//PowerupType::ACCURACY_BOOST,
-					//PowerupType::MAX_AMMO,
-					//PowerupType::TIME_SLOW,
-					//PowerupType::INSTANT_KILL,
-					//PowerupType::MORE_ENEMIES,
-					//PowerupType::MORE_OBSTACLES,
-					//PowerupType::MORE_POWERUPS,
-					//PowerupType::BLEED,
-					//PowerupType::BIGGER_BULLETS,
-					//PowerupType::BOOST,
-					//PowerupType::SHUFFLER
+					PowerupType::INSTANT_AMMO_RELOAD,
+					PowerupType::DAMAGE_BOOST,
+					PowerupType::DEFENSE_BOOST,
+					PowerupType::SPEED_BOOST,
+					PowerupType::MULTIPLIER_BOOST,
+					PowerupType::ACCURACY_BOOST,
+					/*
+					PowerupType::MAX_AMMO,
+					PowerupType::TIME_SLOW,
+					PowerupType::INSTANT_KILL,
+					PowerupType::MORE_ENEMIES,
+					PowerupType::MORE_OBSTACLES,
+					PowerupType::MORE_POWERUPS,
+					PowerupType::BLEED,
+					PowerupType::BIGGER_BULLETS,
+					PowerupType::BOOST,
+					PowerupType::SHUFFLER
+					*/
 				};
 				std::vector<PowerupType> powerups_collected = registry.players.get(entity).powerups;
 				std::vector<PowerupType> powerups_not_collected;
@@ -672,68 +699,93 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				}
 
 				if (powerups_not_collected.size() > 0) {
+					// maybe we should give certain powerups a higher chance of spawning than others
 					std::uniform_int_distribution<int> powerup_dist(0, powerups_not_collected.size() - 1);
 					PowerupType powerup = powerups_not_collected[powerup_dist(rng)];
 					registry.players.get(entity).powerups.push_back(powerup);
+					Motion& playerMotion = registry.motions.get(entity);
 					switch (powerup) {
 					case PowerupType::MAX_HEALTH:
 						registry.healths.get(entity).max_health += 30;
 						registry.healths.get(entity).current_health += 30;
+						std::cout << "MAX_HEALTH powerup collected" << std::endl;
 						break;
 					case PowerupType::HEALTH_REGEN:
 						registry.healths.get(entity).regen_rate += 0.1f;
+						std::cout << "HEALTH_REGEN powerup collected" << std::endl;
 						break;
 					case PowerupType::MAX_SHIELD:
 						registry.shields.get(entity).max_shield += 100;
 						registry.shields.get(entity).current_shield += 100;
+						std::cout << "MAX_SHIELD powerup collected" << std::endl;
 						break;
 					case PowerupType::INSTANT_AMMO_RELOAD:
-						// TODO: implement instant ammo reload
+						registry.players.get(entity).instant_ammo_reload = true;
+						std::cout << "INSTANT_AMMO_RELOAD powerup collected" << std::endl;
 						break;
 					case PowerupType::DAMAGE_BOOST:
-						// TODO: implement damage boost
+						registry.players.get(entity).damage_boost = true;
+						std::cout << "DAMAGE_BOOST powerup collected" << std::endl;
 						break;
 					case PowerupType::DEFENSE_BOOST:
-						// TODO: implement defense boost
+						registry.players.get(entity).defense_boost = true;
+						std::cout << "DEFENSE_BOOST powerup collected" << std::endl;
 						break;
 					case PowerupType::SPEED_BOOST:
-						// TODO: implement speed boost
+						playerMotion.acceleration_rate *= 2;
+						playerMotion.deceleration_rate *= 2;
+						playerMotion.max_velocity *= 2;
+						std::cout << "SPEED_BOOST powerup collected" << std::endl;
 						break;
 					case PowerupType::MULTIPLIER_BOOST:
-						// TODO: implement multiplier boost
+						registry.multiplierBoostPowerupTimers.emplace(entity);
+						std::cout << "MULTIPLIER_BOOST powerup collected" << std::endl;
 						break;
 					case PowerupType::ACCURACY_BOOST:
-						// TODO: implement accuracy boost
+						registry.players.get(entity).accuracy_boost = true;
+						std::cout << "ACCURACY_BOOST powerup collected" << std::endl;
 						break;
 					case PowerupType::MAX_AMMO:
 						// TODO: implement max ammo boost
+						// should boost the ammo limit of the player for all weapons
 						break;
 					case PowerupType::TIME_SLOW:
 						// TODO: implement time slow
+						// should introduce a new bullet time mechanic (slow down time, but player moves at normal speed for a short duration)
+						// on the press of a button
 						break;
 					case PowerupType::INSTANT_KILL:
 						// TODO: implement instant kill
+						// bullets kill enemies instantly for a short duration on the press of a button
 						break;
 					case PowerupType::MORE_ENEMIES:
 						// TODO: implement more enemies spawning
+						// more of a curse than a powerup, but could be interesting
+						// more enemies spawn in every room
 						break;
 					case PowerupType::MORE_OBSTACLES:
 						// TODO: implement more obstacles spawning
+						// more obstacles spawn in every room
 						break;
 					case PowerupType::MORE_POWERUPS:
 						// TODO: implement more powerups spawning
+						// better chance of powerups spawning on enemy death
 						break;
 					case PowerupType::BLEED:
 						// TODO: implement bleed
+						// enemies take damage over time after being hit
 						break;
 					case PowerupType::BIGGER_BULLETS:
 						// TODO: implement bigger bullets
+						// bullets are 2x bigger in size (should be goofy)
 						break;
 					case PowerupType::BOOST:
 						// TODO: implement boost
+						// player is propelled in the direction they are moving in, like a dash
 						break;
 					case PowerupType::SHUFFLER:
 						// TODO: implement shuffler
+						// rerolls all current power-ups (replaces all current power-ups with new ones, but doesn't change the number of power-ups)
 						break;
 					default:
 						break;
@@ -759,6 +811,9 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					Deadly& deadly = registry.deadlies.get(entity);
 					Health& enemyHealth = registry.healths.get(entity_other);
 					enemyHealth.current_health -= deadly.damage;
+					if (registry.players.get(projectileSource).damage_boost) {
+						enemyHealth.current_health -= deadly.damage; // double damage if player has damage boost
+					}
 					play_sound(enemy_hit_sound);
 
 					switch (projectile.weapon_type) 
@@ -796,7 +851,11 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 					if (playerShield.current_shield > 0) {
 						play_sound(player_hit_sound);
-						playerShield.current_shield -= 10.f; // registry.deadlies.get(entity).damage;
+						float damage = 10.f; // registry.deadlies.get(entity).damage; should probably be using this no?
+						if (registry.players.get(entity_other).defense_boost) {
+							damage *= 0.5f; // half damage if player has defense boost
+						}
+						playerShield.current_shield -= damage; 
 						playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
 					}
 					else {

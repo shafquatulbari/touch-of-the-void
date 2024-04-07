@@ -35,6 +35,7 @@ public:
 	ComponentContainer<OnFireTimer> onFireTimers;
 	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
 	ComponentContainer<DamagedTimer> damagedTimers;
+	ComponentContainer<MultiplierBoostPowerupTimer> multiplierBoostPowerupTimers;
 	ComponentContainer<Level> levels;
 	ComponentContainer<PowerupRandom> powerups;
 

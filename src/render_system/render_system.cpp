@@ -161,7 +161,7 @@ void RenderSystem::drawTexturedMesh(Entity entity,
 		int current_frame;
 		if (registry.players.has(entity)) {
 			Player& player = registry.players.get(entity);
-			// 12 is the number of frames in the player sprite sheet
+			// 12 frames in the player sprite sheet
 			if (0 <= player.rotation_factor && player.rotation_factor < 10) {
 				current_frame = 0;
 			}

@@ -480,7 +480,7 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 
 	// Actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
-	angle += (rng - 0.5f) * accuracy;
+	angle += (rng - 0.5f) * accuracy; 
 
 	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
 	registry.meshPtrs.emplace(entity, &mesh);
