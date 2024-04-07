@@ -38,7 +38,6 @@ void Boss::step(float elapsed_ms)
             printf("Unknown state\n");
             break;
         }
-
         // Always update position based on velocity, regardless of state
         motion.position += motion.velocity * elapsed_ms / 1000.0f;
     }	
@@ -46,6 +45,17 @@ void Boss::step(float elapsed_ms)
 
 void Boss::handleDefensiveState(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms)
 {
+    /*
+    Animation& animation = registry.animations.get(entity);
+    AnimationTimer& animationTimer = registry.animationTimers.get(entity);
+    animationTimer.counter_ms += elapsed_ms;
+    animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SHIELD;
+    animation.total_frames = 19;
+    animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+    animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+    animation.loop = true;
+    animation.current_frame = 0;
+    */
     // Update the shoot timer
     boss.shootTimer += elapsed_ms / 1000.0f; // Convert milliseconds to seconds
 
@@ -88,6 +98,17 @@ void Boss::handleDefensiveState(Entity entity, BossAI& boss, Motion& motion, flo
 
 void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms)
 {
+    /*
+    Animation& animation = registry.animations.get(entity);
+    AnimationTimer& animationTimer = registry.animationTimers.get(entity);
+    animationTimer.counter_ms += elapsed_ms;
+    animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SPAWN;
+    animation.total_frames = 38;
+    animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {20, 0}, {21, 0}, {22, 0}, {23, 0}, {24, 0}, {25, 0}, {26, 0}, {27, 0}, {28, 0}, {29, 0}, {30, 0}, {31, 0}, {32, 0}, {33, 0}, {34, 0}, {35, 0}, {36, 0}, {37, 0} };
+    animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 };
+    animation.loop = true;
+    animation.current_frame = 0;
+    */
     // Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
     std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE };
     //enemy positions is a set of vec2
@@ -125,6 +146,15 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
 }
 
 void Boss::handleGuidedMissile(Entity entity, BossAI& boss, Motion& motion, float elapsed_ms) {
+    /*
+    Animation& animation = registry.animations.get(entity);
+    animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
+    animation.total_frames = 19;
+    animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+    animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };;
+    animation.loop = true;
+    animation.current_frame = 0;
+    */
     Entity playerEntity = registry.players.entities[0]; // Assuming single player
 
     // Logic to decide when to shoot a guided missile
@@ -166,3 +196,4 @@ void Boss::updateGuidedMissiles(float elapsed_ms) {
 vec2 Boss:: lerp(const glm::vec2& a, const glm::vec2& b, float t) {
     return a + t * (b - a);
 }
+

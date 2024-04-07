@@ -74,11 +74,11 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
-		animation.total_frames = 6;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_DRILL;
+		animation.total_frames = 5;
 		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
-		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100 };
 		animation.loop = true;
 
 		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
@@ -141,7 +141,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	}
 	else if (aiType == AI::AIType::ROCKET) {
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_DROID;
 		animation.total_frames = 6;
 		animation.current_frame = 0;
 		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
@@ -207,13 +207,13 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 
 	registry.obstacles.emplace(entity);
 	//registry.obstacles.emplace(entity);
-	if (state == BossAI::BossState::DEFENSIVE) {
+	
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_SCARAB;
-		animation.total_frames = 8;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SHIELD;
+		animation.total_frames = 19;
 		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
-		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50 };
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
 		animation.loop = true;
 
 		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
@@ -225,45 +225,6 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND });
-	}
-	if (state == BossAI::BossState::OFFENSIVE) {
-		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
-		animation.total_frames = 6;
-		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
-		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
-		animation.loop = true;
-
-		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
-		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
-		registry.renderRequests.insert(
-			entity,
-			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE,
-			RENDER_LAYER::FOREGROUND });
-	}
-	if (state == BossAI::BossState::GUIDED_MISSILE) {
-		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_SCARAB;
-		animation.total_frames = 8;
-		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
-		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50 };
-		animation.loop = true;
-
-		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
-		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
-		registry.renderRequests.insert(
-			entity,
-			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
-			 EFFECT_ASSET_ID::TEXTURED,
-			 GEOMETRY_BUFFER_ID::SPRITE,
-			RENDER_LAYER::FOREGROUND });
-	}
 	
 	return entity;
 }
