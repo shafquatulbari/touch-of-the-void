@@ -33,6 +33,8 @@ class RenderSystem {
 		ivec2(12,1),
 		ivec2(6,1),
 		ivec2(20,16),
+		ivec2(12,1),
+		ivec2(17,1),
 		ivec2(20,16),
 		ivec2(20,16)
 	};
@@ -142,6 +144,8 @@ class RenderSystem {
 		sheets_path("explosion_192x192.png"),
 		sheets_path("exploding_skull_64x64.png"),
 		sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("player_sprite_64x64.png"),
+		sheets_path("power_up_random_64x64.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("red_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("yellow_effect_bullet_impact_explosion_32x32.png")

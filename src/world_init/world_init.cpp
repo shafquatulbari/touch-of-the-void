@@ -32,11 +32,17 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	health.current_health = 32.0f;
 	health.max_health = 32.0f;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::PLAYER;
+	animation.total_frames = 12;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };
+
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
 			entity,
-			{TEXTURE_ASSET_ID::PLAYER,
+			{TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND});
@@ -554,7 +560,7 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 
 	// Actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
-	angle += (rng - 0.5f) * accuracy;
+	angle += (rng - 0.5f) * accuracy; 
 
 	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
 	registry.meshPtrs.emplace(entity, &mesh);
@@ -1180,5 +1186,38 @@ Entity createLevel(RenderSystem* render)
 	world_generator.generateStartingRoom(starting_room, level);
 
 	render_room(render, level);
+	return entity;
+}
+
+Entity createPowerup(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
+
+	registry.obstacles.emplace(entity);
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::POWERUP;
+	animation.total_frames = 17;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0} };
+	animation.frame_durations_ms = { 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.powerups.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::FOREGROUND });
+
 	return entity;
 }

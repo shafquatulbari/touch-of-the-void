@@ -101,7 +101,9 @@ Entity createLevel(RenderSystem* render);
 void clearExistingWalls();
 // create walls
 void createWalls(RenderSystem* render, Room& room);
-
+// create powerup pick-up
+Entity createPowerup(RenderSystem* render, vec2 position);
+// create enenmy rocket
 Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
-
+// create enemy flamethrower projectile
 Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, Entity source);

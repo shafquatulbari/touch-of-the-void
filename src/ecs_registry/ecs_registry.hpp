@@ -35,7 +35,9 @@ public:
 	ComponentContainer<OnFireTimer> onFireTimers;
 	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
 	ComponentContainer<DamagedTimer> damagedTimers;
+	ComponentContainer<MultiplierBoostPowerupTimer> multiplierBoostPowerupTimers;
 	ComponentContainer<Level> levels;
+	ComponentContainer<PowerupRandom> powerups;
 
 
 	// constructor that adds all containers for looping over them

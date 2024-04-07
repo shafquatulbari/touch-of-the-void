@@ -8,6 +8,27 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
+enum class PowerupType {
+	MAX_HEALTH,
+	HEALTH_REGEN,
+	MAX_SHIELD,
+	INSTANT_AMMO_RELOAD,
+	DAMAGE_BOOST,
+	DEFENSE_BOOST,
+	SPEED_BOOST,
+	MULTIPLIER_BOOST,
+	ACCURACY_BOOST,
+	MAX_AMMO,
+	TIME_SLOW,
+	INSTANT_KILL,
+	MORE_ENEMIES,
+	MORE_OBSTACLES,
+	MORE_POWERUPS,
+	BLEED,
+	BIGGER_BULLETS,
+	BOOST,
+	SHUFFLER
+};
 
 struct Level {
 	// the current level of the game
@@ -21,8 +42,6 @@ struct Level {
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 };
-
-
 
 struct vec2comp {
 	bool operator() (vec2 lhs, vec2 rhs) const
@@ -110,6 +129,14 @@ struct Player
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
 
+	float rotation_factor = 0.0f; // used to choose frame of sprite to display
+
+	std::vector<PowerupType> powerups;
+	int powerups_collected = 0;
+	bool instant_ammo_reload = false;
+	bool damage_boost = false;
+	bool defense_boost = false; // only makes shield stronger, not health at the moment
+	bool accuracy_boost = false;
 
 	// Constructor to set the initial values
 	Player() : 
@@ -188,6 +215,7 @@ struct Health
 {
 	float current_health = 100.0f; // health points of an entity
 	float max_health = 100.0f; // maximum health points of an entity
+	float regen_rate = 0.0f; // rate at which the health regenerates
 };
 
 // Shield component 
@@ -274,6 +302,12 @@ struct RoomTransitionTimer
 	float counter_ms = 0;
 };
 
+struct EarnedGoldTimer {
+	float counter_ms = 0;
+	float duration_ms = 1000;
+	float gold_earned = 0;
+};
+
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & chicken.vs.glsl)
 struct ColoredVertex
 {
@@ -329,6 +363,15 @@ struct Sprite {
 	vec2 minTexCoords;
 	vec2 maxTexCoords;
 };
+
+// Empty shell for powerup pickup
+struct PowerupRandom {
+};
+
+struct MultiplierBoostPowerupTimer {
+	float counter_ms = 500.0f; 
+};
+
 
 /**
  * The following enumerators represent global identifiers refering to graphic
@@ -454,8 +497,10 @@ enum class SPRITE_SHEET_ID {
 	EXPLOSION = ENEMY_SCARAB + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
 	GREEN_EFFECT = ENEMY_EXPLODER + 1,
+	PLAYER = GREEN_EFFECT + 1,
+	POWERUP = PLAYER + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
-	RED_EFFECT = GREEN_EFFECT + 1,
+	RED_EFFECT = POWERUP + 1,
 	YELLOW_EFFECT = RED_EFFECT + 1,
 	SPRITE_SHEET_COUNT = YELLOW_EFFECT + 1
 };
@@ -476,7 +521,6 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 	RENDER_LAYER used_render_layer = RENDER_LAYER::RENDER_LAYER_COUNT;
 };
-
 
 // A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
 struct Animation {
