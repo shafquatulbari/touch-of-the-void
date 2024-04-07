@@ -924,7 +924,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 			// roll 10% chance to spawn a powerup
 			std::uniform_int_distribution<int> powerup_dist(0, 9);
-			if (true) { //powerup_dist(rng) == 0) {
+			if (powerup_dist(rng) == 0) {
 				// spawn a powerup
 				// TODO: Play sound effect for powerup spawn
 				createPowerup(renderer, pos);
