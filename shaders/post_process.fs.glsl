@@ -16,7 +16,8 @@ vec4 color_shift(vec4 in_color)
 vec4 fade_color(vec4 in_color) 
 {
 	if (darken_screen_factor > 0)
-		in_color -= darken_screen_factor * vec4(0.8, 0.8, 0.8, 0);
+		//in_color -= darken_screen_factor * vec4(0.8, 0.8, 0.8, 0);
+		in_color *= (1 - darken_screen_factor);
 	return in_color;
 }
 
