@@ -1074,7 +1074,7 @@ Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 		TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::FOREGROUND });
+		RENDER_LAYER::UI });
 
 	return entity;
 }
