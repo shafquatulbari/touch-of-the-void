@@ -211,13 +211,31 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 
 	// score
 	std::string scoreText = std::to_string(score);
-	score_text = createText(renderer, scoreText, { 1750.0f, 932.0f }, 1.5f, COLOR_GREEN, TextAlignment::RIGHT);
-	
+	score_text = createText(renderer, scoreText, { 1750.0f, 886.0f }, 1.5f, COLOR_GREEN, TextAlignment::RIGHT);
+
+	// funds
+	std::string fundsText = std::to_string(player.funds);
+	funds_text = createText(renderer, fundsText, {1750.f, 932.0f }, 1.5f, COLOR_GREEN, TextAlignment::RIGHT);
+
 	// multiplier
 	std::string multiplierText = std::to_string(multiplier);
 	multiplierText = multiplierText.substr(0, multiplierText.find(".") + 2);
 	multiplier_text = createText(renderer, multiplierText, { 1545.0f, 919.0f }, 1.25f, COLOR_BLACK, TextAlignment::LEFT);
 	
+	std::string total_ammo_count_text;
+	if (player.total_ammo_count[player.weapon_type] == INT_MIN) {
+		total_ammo_count_text = "Locked";
+	} else {
+		total_ammo_count_text = std::to_string(player.total_ammo_count[player.weapon_type]);
+	}
+
+	std::string ammo_count_text;
+	if (player.total_ammo_count[player.weapon_type] == INT_MIN) {
+		total_ammo_count_text = "N/A";
+	} else {
+		total_ammo_count_text = std::to_string(player.total_ammo_count[player.weapon_type]);
+	}
+
 	switch (player.weapon_type) {
 	case WeaponType::GATLING_GUN:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { 1648.0f, 130.0f }, TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED); // 1st slot EQUIPPED
@@ -225,7 +243,7 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { 1648.0f, 578.0f }, TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { 1648.0f, 738.0f }, TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED); // 4th slot UN-EQUIPPED
 		//total_ammo_icon = createIconInfinity(renderer, { 1810.0f, 405.0f });
-		current_ammo_icon = createText(renderer, std::to_string(player.ammo_count), { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		current_ammo_icon = createText(renderer, ammo_count_text, { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		total_ammo_text = createText(renderer, "Infinite", { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
 		break;
 	case WeaponType::SNIPER:
@@ -233,40 +251,40 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { 1616.0f, 354.0f }, TEXTURE_ASSET_ID::SNIPER_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { 1648.0f, 578.0f }, TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { 1648.0f, 738.0f }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		current_ammo_icon = createText(renderer, std::to_string(player.ammo_count), { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
+		current_ammo_icon = createText(renderer, ammo_count_text, { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_text, { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
 		break;
 	case WeaponType::SHOTGUN:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { 1648.0f, 130.0f }, TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { 1616.0f, 354.0f }, TEXTURE_ASSET_ID::SHOTGUN_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { 1648.0f, 578.0f }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { 1648.0f, 738.0f }, TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		current_ammo_icon = createText(renderer, std::to_string(player.ammo_count), { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
+		current_ammo_icon = createText(renderer, ammo_count_text, { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_text, { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
 		break;
 	case WeaponType::ROCKET_LAUNCHER:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { 1648.0f, 130.0f }, TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { 1616.0f, 354.0f }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { 1648.0f, 578.0f }, TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { 1648.0f, 738.0f }, TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		current_ammo_icon = createText(renderer, std::to_string(player.ammo_count), { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
+		current_ammo_icon = createText(renderer, ammo_count_text, { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_text, { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
 		break;
 	case WeaponType::FLAMETHROWER:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { 1648.0f, 130.0f }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { 1616.0f, 354.0f }, TEXTURE_ASSET_ID::FLAME_THROWER_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { 1648.0f, 578.0f }, TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { 1648.0f, 738.0f }, TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		current_ammo_icon = createText(renderer, std::to_string(player.ammo_count), { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
+		current_ammo_icon = createText(renderer, ammo_count_text, { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_text, { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
 		break;
 	case WeaponType::ENERGY_HALO:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { 1648.0f, 130.0f }, TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { 1616.0f, 354.0f }, TEXTURE_ASSET_ID::ENERGY_HALO_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { 1648.0f, 578.0f }, TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { 1648.0f, 738.0f }, TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		current_ammo_icon = createText(renderer, std::to_string(player.ammo_count), { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
+		current_ammo_icon = createText(renderer, ammo_count_text, { 1810.0f, 425.0f }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_text, { 1810.0f, 350.0f }, 1.0f, COLOR_BRIGHT_GREEN, TextAlignment::CENTER);
 		break;
 	case WeaponType::TOTAL_WEAPON_TYPES:
 		break;
@@ -301,6 +319,10 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 	std::string scoreText = std::to_string(score);
 	registry.texts.get(score_text).content = scoreText;
 
+	// Update Funds
+	std::string fundsText = std::to_string(player.funds);
+	registry.texts.get(funds_text).content = fundsText;
+
 	// Update Multiplier
 	std::string multiplierText = std::to_string(multiplier);
 	multiplierText = multiplierText.substr(0, multiplierText.find(".") + 2);
@@ -323,6 +345,19 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 		registry.texts.get(fps_text).content = "";
 	}
 	
+	std::string total_ammo_count_text;
+	if (player.total_ammo_count[player.weapon_type] == INT_MIN) {
+		total_ammo_count_text = "Locked";
+	} else {
+		total_ammo_count_text = std::to_string(player.total_ammo_count[player.weapon_type]);
+	}
+
+	std::string ammo_count_text;
+	if (player.ammo_count == INT_MIN) {
+		ammo_count_text = "N/A";
+	} else {
+		ammo_count_text = std::to_string(player.ammo_count);
+	}
 
 	switch (player.weapon_type) {
 	case WeaponType::GATLING_GUN:
@@ -334,7 +369,7 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 		// NOTE: this is a temporary solution ideally we should sense the change in ammo and update the ammo icon only when the ammo changes
 		//registry.remove_all_components_of(total_ammo_icon);
 		//total_ammo_icon = createIconInfinity(renderer, { 1810.0f, 405.0f });
-		registry.texts.get(current_ammo_icon).content = std::to_string(player.ammo_count);
+		registry.texts.get(current_ammo_icon).content = ammo_count_text;
 		registry.texts.get(total_ammo_text).content = "Infinite";
 		break;
 	case WeaponType::SNIPER:
@@ -342,40 +377,40 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 		registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::SNIPER_EQUIPPED; // 2nd slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 		registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED; // 4th slot UN-EQUIPPED
-		registry.texts.get(current_ammo_icon).content = std::to_string(player.ammo_count);
-		registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+		registry.texts.get(current_ammo_icon).content = ammo_count_text;
+		registry.texts.get(total_ammo_text).content = total_ammo_count_text;
 		break;
 	case WeaponType::SHOTGUN:
 		registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED; // 1st slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::SHOTGUN_EQUIPPED; // 2nd slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 		registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED; // 4th slot UN-EQUIPPED
-		registry.texts.get(current_ammo_icon).content = std::to_string(player.ammo_count);
-		registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+		registry.texts.get(current_ammo_icon).content = ammo_count_text;
+		registry.texts.get(total_ammo_text).content = total_ammo_count_text;
 		break;
 	case WeaponType::ROCKET_LAUNCHER:
 		registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED; // 1st slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_EQUIPPED; // 2nd slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 		registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED; // 4th slot UN-EQUIPPED
-		registry.texts.get(current_ammo_icon).content = std::to_string(player.ammo_count);
-		registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+		registry.texts.get(current_ammo_icon).content = ammo_count_text;
+		registry.texts.get(total_ammo_text).content = total_ammo_count_text;
 		break;
 	case WeaponType::FLAMETHROWER:
 		registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED; // 1st slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_EQUIPPED; // 2nd slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 		registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED; // 4th slot UN-EQUIPPED
-		registry.texts.get(current_ammo_icon).content = std::to_string(player.ammo_count);
-		registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+		registry.texts.get(current_ammo_icon).content = ammo_count_text;
+		registry.texts.get(total_ammo_text).content = total_ammo_count_text;
 		break;
 	case WeaponType::ENERGY_HALO:
 		registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED; // 1st slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_EQUIPPED; // 2nd slot EQUIPPED
 		registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 		registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED; // 4th slot UN-EQUIPPED
-		registry.texts.get(current_ammo_icon).content = std::to_string(player.ammo_count);
-		registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+		registry.texts.get(current_ammo_icon).content = ammo_count_text;
+		registry.texts.get(total_ammo_text).content = total_ammo_count_text;
 		break;
 	case WeaponType::TOTAL_WEAPON_TYPES:
 		break;
@@ -407,6 +442,10 @@ void UISystem::reinit(Health& player_health, Shield& player_shield, Player& play
 	// Update Score
 	std::string scoreText = std::to_string(score);
 	registry.texts.get(score_text).content = scoreText;
+
+	// Update Funds
+	std::string fundsText = std::to_string(player.funds);
+	registry.texts.get(funds_text).content = fundsText;
 
 	// Update Multiplier
 	std::string multiplierText = std::to_string(multiplier);

@@ -131,7 +131,10 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 		if (counter.counter_ms < 0) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
+			
+			is_paused = false;
 			game_state = GAME_STATE::GAME_OVER;
+			
 			restart_game();
 			return true;
 		}
@@ -281,6 +284,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 			playerShield.current_shield = std::min(playerShield.current_shield, playerShield.max_shield); // don't exceed max shield
 		}
 
+	}
+
+	// Check if the player is in close proximity to a shop
+	vec2& player_pos = p_m.position;
+	for (Entity entity : registry.shopPanels.entities) {
+		vec2& shop_pos = registry.motions.get(entity).position;
+		if (glm::distance(shop_pos, player_pos) < game_window_block_size) {
+			createShopIndicator(renderer, player_pos + vec2({ game_window_block_size / 2, -game_window_block_size / 2 }));
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
@@ -549,7 +561,12 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 							motion.is_moving_down = false;
 							motion.is_moving_left = false;
 							motion.is_moving_right = false;
+
+							is_paused = true;
+							registry.players.get(player).is_firing = false;
+							
 							registry.deathTimers.emplace(player);
+
 							play_sound(game_over_sound);
 						}
 					}
@@ -708,6 +725,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
+			registry.players.get(player).funds++;
 
 			if (current_room.enemy_count == 0)
 			{
@@ -765,6 +783,10 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		break;
 
 	case GAME_STATE::GAME:
+		if (registry.deathTimers.size() > 0) {
+			break;
+		}
+
 		// Exit the game on escape
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
 			// TODO: Change to different screen or close depending on the game state
@@ -829,12 +851,12 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				weapons->reload_weapon();
 			}
-			if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-				weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
-			}
-			if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-				weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
-			}
+			//if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+			//	weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
+			//}
+			//if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+			//	weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
+			//}
 
 			// MOVEMENT CONTROLS
 			if (key == GLFW_KEY_W) {
@@ -870,6 +892,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				}
 			}
 		}
+
 		break;
 
 	case GAME_STATE::PAUSE_MENU:
@@ -979,6 +1002,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	case GAME_STATE::PAUSE_MENU:
 		PauseMenu::has_state_changed = false;
 
+		PauseMenu::previous_entity = PauseMenu::current_entity;
 		for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
 			Entity& e = PauseMenu::button_entities[i];
 
@@ -993,24 +1017,24 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 			) {
 				PauseMenu::has_state_changed = true;
 				PauseMenu::is_hovering = true;
-				PauseMenu::hovered_entity = e;
+				PauseMenu::current_entity = e;
 
 				Text& text = registry.texts.get(PauseMenu::text_entities[i]);
-				text.color = { 0.f, 1.f, 0.f };
+				text.color = { 0.047, 0.639, 0.18 };
 
 				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
 				break;
 			}
 		}
 
-		if (!PauseMenu::has_state_changed) {
+		if (!PauseMenu::has_state_changed || PauseMenu::previous_entity != PauseMenu::current_entity) {
 			PauseMenu::is_hovering = false;
 
-			if (registry.buttons.has(PauseMenu::hovered_entity)) {
+			if (registry.buttons.has(PauseMenu::previous_entity)) {
 				for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
-					if (PauseMenu::hovered_entity == PauseMenu::button_entities[i]) {
+					if (PauseMenu::previous_entity == PauseMenu::button_entities[i]) {
 						Text& text = registry.texts.get(PauseMenu::text_entities[i]);
-						text.color = { 1.f, 0.f, 0.f };
+						text.color = { 0.682, 0.18, 0.18 };
 						break;
 					}
 				}
@@ -1076,7 +1100,7 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 
 	case GAME_STATE::PAUSE_MENU:
 		if (PauseMenu::is_hovering) {
-			Button& button = registry.buttons.get(PauseMenu::hovered_entity);
+			Button& button = registry.buttons.get(PauseMenu::current_entity);
 			button.on_click();
 		}
 

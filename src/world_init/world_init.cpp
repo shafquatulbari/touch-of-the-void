@@ -879,14 +879,30 @@ void render_room(RenderSystem* render, Level& level)
 			// Generate a shop room
 			current_room.room_type = ROOM_TYPE::SHOP_ROOM;
 			world_generator.generateNewRoom(current_room, level);
+			
+			Player& player = registry.players.components.back();
+			std::vector<WeaponType> locked_weapons;
+			
+			for (int i = 0; i < (int)WeaponType::TOTAL_WEAPON_TYPES; i++) {
+				// total_ammo_count of the smallest integer value implies locked weapons
+				if (player.total_ammo_count[(WeaponType)i] == INT_MIN) {
+					locked_weapons.push_back((WeaponType)i);
+				}
+			}
+
+			current_room.weapon_on_sale = locked_weapons[rand() % locked_weapons.size()];
+
 			level.num_shop_spawned++;
 			level.num_shop_spawn_counter = 0;
+
 			std::cout << "shop room generated" << '\n';
 		} else if (level.num_rooms_until_boss <= 0) {
 			// Generate a boss room
 			current_room.room_type = ROOM_TYPE::BOSS_ROOM;
 			world_generator.generateNewRoom(current_room, level);
+
 			std::cout << "boss room generated, back to rendering" << std::endl;
+			
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
 		} else {
 			// Generate a normal room
@@ -922,7 +938,32 @@ void render_room(RenderSystem* render, Level& level)
 		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
 	}
 
+	// Create a shop panel if a shop room is encountered
+	if (room_to_render.room_type == ROOM_TYPE::SHOP_ROOM) {
+		createShopPanel(render, current_room.weapon_on_sale);
+	}
+
 	createWalls(render, room_to_render);
+}
+
+Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
+	auto entity = Entity();
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = { game_window_block_size, game_window_block_size };
+
+	ShopPanel& shop = registry.shopPanels.emplace(entity);
+
+	return entity;
+}
+
+Entity createShopIndicator(RenderSystem* renderer, vec2 position) {
+	Entity text_e = createText(renderer, "E", position, 1.25f, { 1.f, 1.f, 1.f }, TextAlignment::CENTER);
+	registry.renderRequests.emplace(text_e).used_render_layer = RENDER_LAYER::FOREGROUND;
+	registry.debugComponents.emplace(text_e);
+
+	return text_e;
 }
 
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)

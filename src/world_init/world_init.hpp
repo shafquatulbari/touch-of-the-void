@@ -99,6 +99,12 @@ Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_
 Entity createIconInfinity(RenderSystem* render, vec2 pos);
 // a game level
 Entity createLevel(RenderSystem* render);
+// create shop access panel
+Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale);
+// create a toggleable hint when close to a shop panel
+Entity createShopIndicator(RenderSystem* renderer, vec2 position);
+
+
 // clear walls
 void clearExistingWalls();
 // create walls

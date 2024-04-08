@@ -23,7 +23,8 @@ public:
 
 	static bool has_state_changed;
 	static bool is_hovering;
-	static Entity hovered_entity;
+	static Entity current_entity;
+	static Entity previous_entity;
 
 	static void init(
 		RenderSystem* renderer

@@ -35,6 +35,7 @@ public:
 	ComponentContainer<OnFireTimer> onFireTimers;
 	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
 	ComponentContainer<DamagedTimer> damagedTimers;
+	ComponentContainer<ShopPanel> shopPanels;
 	ComponentContainer<Level> levels;
 	ComponentContainer<Button> buttons;
 
@@ -67,6 +68,7 @@ public:
 		registry_list.push_back(&damagedTimers);
 		registry_list.push_back(&levels);
 		registry_list.push_back(&buttons);
+		registry_list.push_back(&shopPanels);
 	}
 
 	void clear_all_components() {

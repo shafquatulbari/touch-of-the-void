@@ -18,7 +18,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			play_sound(reload_start_sound);
 			p.is_reloading = true;
 		}
-		else {
+		else if (p.total_ammo_count[p.weapon_type] != INT_MIN) {
 			play_sound(no_ammo_sound);
 		}
 	}
@@ -31,7 +31,11 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			p.reload_timer_ms = weapon_stats[p.weapon_type].reload_time;
 			int ammo_to_refill = std::min(weapon_stats[p.weapon_type].magazine_size - p.ammo_count, p.total_ammo_count[p.weapon_type]);
 			p.ammo_count += ammo_to_refill; // Refill ammo after reload
-			p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
+			
+			if (p.weapon_type != WeaponType::GATLING_GUN) {
+				p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
+			}
+			
 			play_sound(reload_end_sound);
 		}
 	}
