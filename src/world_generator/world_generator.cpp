@@ -229,6 +229,7 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 }
 
 
+/*
 void WorldGenerator::populateBossRoom(Room& room)
 {
 	// space is effectively 15x15 since 480/32 = 30 
@@ -270,5 +271,21 @@ void WorldGenerator::populateBossRoom(Room& room)
 		}
 
 	}
+
+}
+*/
+void WorldGenerator::populateBossRoom(Room& room)
+{
+	// space is effectively 15x15 since 480/32 = 30 
+	room.is_cleared = false;
+	room.is_boss_room = true; // this is the boss room
+
+	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
+	Level& level = registry.levels.get(registry.levels.entities[0]);
+	room.obstacle_count += level.num_rooms_cleared;
+	room.enemy_count += level.num_rooms_cleared;
+
+	room.enemy_positions.insert(vec2(7.0f, 2.0f));
+	room.all_positions.insert(vec2(7.0f, 2.0f));
 
 }

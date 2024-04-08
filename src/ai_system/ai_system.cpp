@@ -320,10 +320,13 @@ void AISystem::activeState(Entity entity, Motion& motion, float elapsed_ms) {
         break;
     case AI::AIType::SHOTGUN:
         handleShotgunAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
     case AI::AIType::ROCKET:
 		handleRocketAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
     case AI::AIType::FLAMETHROWER:
 		handleFlameAI(entity, motion, ai, elapsed_ms, playerPosition);
+        break;
     default:
         break;
     }
@@ -350,7 +353,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
         // Rotate towards player if in line of sight
         vec2 direction = normalize(playerPosition - motion.position);
         float angle = atan2(direction.y, direction.x);
-        motion.look_angle = angle;
+        motion.look_angle = angle + M_PI/2;
 
         // Generate path using A* if the line of sight is clear
         std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
@@ -359,7 +362,7 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
             // Consider the next step in the path
             vec2 nextStep = path[1]; // Assuming path[0] is the current position
             vec2 direction = normalize(nextStep - motion.position);
-            float speed = 70.0f; // Tune this value as needed
+            float speed = 40.0f; // Tune this value as needed
 
             // Update velocity towards the next step in the path
             motion.velocity = direction * speed;

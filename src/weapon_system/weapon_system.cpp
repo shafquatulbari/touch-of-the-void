@@ -145,7 +145,7 @@ void WeaponSystem::step_weapon_timers(float elapsed_ms)
 
 		// move the fire
 		registry.motions.get(timer.fire).position = registry.motions.get(entity).position;
-		registry.motions.get(timer.fire).look_angle = registry.motions.get(entity).look_angle;
+		// registry.motions.get(timer.fire).look_angle = registry.motions.get(entity).look_angle;
 
 		// deal dot damage
 		if (registry.healths.has(entity)) {

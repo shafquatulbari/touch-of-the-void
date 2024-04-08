@@ -38,7 +38,8 @@ public:
 	ComponentContainer<MultiplierBoostPowerupTimer> multiplierBoostPowerupTimers;
 	ComponentContainer<Level> levels;
 	ComponentContainer<PowerupRandom> powerups;
-
+	ComponentContainer<BossAI>bosses;
+	ComponentContainer<Projectile> guidedMissiles;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -68,6 +69,8 @@ public:
 		registry_list.push_back(&onFireTimers);
 		registry_list.push_back(&damagedTimers);
 		registry_list.push_back(&levels);
+		registry_list.push_back(&bosses);
+		registry_list.push_back(&guidedMissiles);
 	}
 
 	void clear_all_components() {

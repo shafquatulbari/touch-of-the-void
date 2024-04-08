@@ -50,7 +50,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType, float in_boss_room)
 {
 	// Reserve en entity
 	auto entity = Entity();
@@ -64,6 +64,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
+	ai.in_boss_room = in_boss_room;
 
 	Health& health = registry.healths.emplace(entity);
 	health.current_health = health_points;
@@ -79,16 +80,15 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
-		animation.total_frames = 6;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_DRILL;
+		animation.total_frames = 5;
 		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
-		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100 };
 		animation.loop = true;
 
 		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
 		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
@@ -146,7 +146,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	}
 	else if (aiType == AI::AIType::ROCKET) {
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_DROID;
 		animation.total_frames = 6;
 		animation.current_frame = 0;
 		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
@@ -183,6 +183,73 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			RENDER_LAYER::FOREGROUND });
 	}
 
+
+	return entity;
+}
+
+Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state)
+{
+	// Reserve en entity
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	BossAI& boss = registry.bosses.emplace(entity);
+	boss.state = BossAI::BossState::DEFENSIVE;
+	motion.position = position;
+	motion.complex = false;
+	motion.scale = vec2({ BOSS_BB_WIDTH, BOSS_BB_HEIGHT });
+
+	Health& health = registry.healths.emplace(entity);
+	health.current_health = health_points;
+	health.max_health = health_points;
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 10.0f;
+
+	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	//registry.meshPtrs.emplace(entity, &mesh);
+
+	registry.obstacles.emplace(entity);
+	// Set initial animation based on the initial state
+	Animation& animation = registry.animations.emplace(entity);
+	switch (state) {
+	case BossAI::BossState::DEFENSIVE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SHIELD;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+		// Add frames and durations for DEFENSIVE state
+		break;
+	case BossAI::BossState::OFFENSIVE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SPAWN;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {20, 0}, {21, 0}, {22, 0}, {23, 0}, {24, 0}, {25, 0}, {26, 0}, {27, 0}, {28, 0}, {29, 0}, {30, 0}, {31, 0}, {32, 0}, {33, 0}, {34, 0}, {35, 0}, {36, 0}, {37, 0} };
+		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 };
+		// Add frames and durations for OFFENSIVE state
+		break;
+	case BossAI::BossState::GUIDED_MISSILE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+		// Add frames and durations for GUIDED_MISSILE state
+		break;
+	default:
+		// Handle unknown state if necessary
+		break;
+	}
+	animation.total_frames = 19; // Adjust accordingly
+	animation.current_frame = 0;
+	animation.loop = true;
+	// Remember to set sprites and frame_durations_ms according to the state
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+	
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // Adjust if you have a specific texture for the initial state
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		  RENDER_LAYER::FOREGROUND });
 
 	return entity;
 }
@@ -531,7 +598,7 @@ Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float an
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
-	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+	deadly.damage = 50.f; // tune this for damage
 
 	Animation& animation = registry.animations.emplace(entity);
 	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
@@ -670,7 +737,7 @@ Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, fl
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	projectile.weapon_type = WeaponType::FLAMETHROWER;
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
-	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+	deadly.damage = 0.5f; // tune this for damage
 
 	Animation& animation = registry.animations.emplace(entity);
 	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
@@ -892,7 +959,6 @@ void render_room(RenderSystem* render, Level& level)
 	// in case current room was not visited, re-retrieve current room 
 	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
 
-
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
@@ -900,7 +966,12 @@ void render_room(RenderSystem* render, Level& level)
 	{
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createObstacle(render, vec2(x, y));
+		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
+			//do nothing, no obstacles
+		}
+		else {
+			createObstacle(render, vec2(x, y));
+		}
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
@@ -911,7 +982,12 @@ void render_room(RenderSystem* render, Level& level)
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
+			createBoss(render, vec2(x, y), 4000.0f, BossAI::BossState::DEFENSIVE);
+		}
+		else {
+			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], false);
+		}
 	}
 
 	createWalls(render, room_to_render);
@@ -1074,7 +1150,7 @@ Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 		TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::FOREGROUND });
+		RENDER_LAYER::UI });
 
 	return entity;
 }
@@ -1190,6 +1266,109 @@ Entity createLevel(RenderSystem* render)
 	return entity;
 }
 
+Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
+{
+	auto entity = Entity();
+
+	// Actual firing angle is randomly perturbed based on accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	float perturbedAngle = angle + (rng - 0.5f) * accuracy;
+
+	float coneWidth = 0.5f;
+
+	// Calculate the angle for each shotgun projectile in a cone
+	float coneAngle = perturbedAngle - coneWidth / 2 + i * coneWidth / 10;
+
+	// Setting initial motion values
+	/*
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = vec2({ 64.f , 64.f });
+	motion.velocity = vec2({ 400.0f * cos(angle), 400.0f * sin(angle) });
+	*/
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 1}, {12, 1}, {13, 1}, {14, 1} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = coneAngle;
+	motion.scale = vec2({ 90.0f, 90.0f });
+	motion.velocity = vec2({ 250.0f * cos(coneAngle), 250.0f * sin(coneAngle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER; // Assume you add this type to your WeaponType enum
+	motion.position = startPosition;
+	motion.scale = vec2({ 128.f, 128.f }); // Adjust size as needed
+
+	// Initial velocity pointing straight towards the player, you can adjust this logic to make it start with a curve
+	vec2 targetPosition = registry.motions.get(target).position;
+	vec2 direction = normalize(targetPosition - startPosition);
+	motion.velocity = direction * 250.0f; // Adjust speed as needed
+	Projectile& guidedMissile = registry.guidedMissiles.emplace(entity);
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+	projectile.lifetime = 5000.0f; // Adjust lifetime as needed
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 50.0f; // Adjust damage as needed
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 5}, {12, 5}, {13, 5}, {14, 5} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // You might want to create a specific texture for this missile
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		  RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
 Entity createPowerup(RenderSystem* render, vec2 position)
 {
 	auto entity = Entity();
@@ -1219,6 +1398,59 @@ Entity createPowerup(RenderSystem* render, vec2 position)
 		 EFFECT_ASSET_ID::TEXTURED,
 		 GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::FOREGROUND });
+
+	return entity;
+}
+
+Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ CURRENT_AMMO_ICON_BB_WIDTH, CURRENT_AMMO_ICON_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	switch (player.weapon_type)
+	{
+	case WeaponType::GATLING_GUN:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_GATLING_GUN;
+		break;
+	case WeaponType::SNIPER:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_SNIPER;
+		break;
+	case WeaponType::SHOTGUN:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_SHOTGUN;
+		break;
+	case WeaponType::ROCKET_LAUNCHER:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_ROCKET_LAUNCHER;
+		break;
+	case WeaponType::FLAMETHROWER:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_FLAMETHROWER;
+		break;
+	case WeaponType::ENERGY_HALO:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_ENERGY_HALO;
+		break;
+	default:
+		break;
+	}
+	animation.current_frame = player.ammo_count; // set the current frame to the ammo count
+	// animation.total_frames = player.total_ammo_count[player.weapon_type]; // set the total frames to the max ammo
+
+	// sprite' coords are only used in relation to the sheet, 
+	// so as long as we don't go below the minimum number of sprites 
+	// from any of the sheets that we will be swapping through
+	// we can use the same sprite sheet data for all weapons
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {20, 0}, {21, 0}, {22, 0}, {23, 0}, {24, 0}, {25, 0}, {26, 0}, {27, 0}, {28, 0}, {29, 0}, {30, 0}, {31, 0}, {32, 0}, {33, 0}, {34, 0}, {35, 0}, {36, 0}, {37, 0}, {38, 0}, {39, 0}, {40, 0}, {41, 0}, {42, 0}, {43, 0}, {44, 0}, {45, 0}, {46, 0}, {47, 0}, {48, 0}, {49, 0}, {50, 0}, {51, 0}, {52, 0}, {53, 0}, {54, 0}, {55, 0}, {56, 0}, {57, 0}, {58, 0}, {59, 0}, {60, 0}, {61, 0}, {62, 0}, {63, 0}, {64, 0}, {65, 0}, {66, 0}, {67, 0}, {68, 0}, {69, 0}, {70, 0}, {71, 0}, {72, 0}, {73, 0}, {74, 0}, {75, 0}, {76, 0}, {77, 0}, {78, 0}, {79, 0}, {80, 0}, {81, 0}, {82, 0} };
+
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
 
 	return entity;
 }

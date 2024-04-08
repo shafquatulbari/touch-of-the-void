@@ -30,19 +30,29 @@ private:
 	Entity total_ammo_icon;
 	Entity current_ammo_icon;
 	Entity total_ammo_text;
+	WeaponType current_weapon;
 
 	// FPS 
 	Entity fps_text;
 	float fps;
 	float maxFps;
 	float frameTime;
+	bool showingFPS;
 
 	// Map
 	std::pair<int, int> current_room;
 	std::vector<Entity> drawn_rooms;
 
-	void UISystem::createMap(Level& level);
-	void UISystem::updateMap(Level& level);
+	
+
+	void createMap(Level& level);
+	void updateMap(Level& level);
+	void createPlayerStatus(Health& player_health, Shield& player_shield);
+	void updatePlayerStatus(Health& player_health, Shield& player_shield);
+	void createScoreboard(int score, float multiplier);
+	void updateScoreboard(int score, float multiplier, int deltaScore);
+	void createWeaponMenu(Player& player);
+	void updateWeaponMenu(Player& player);
 public:
 	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, Level& current_level);
 	void reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore);
