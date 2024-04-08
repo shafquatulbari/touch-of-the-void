@@ -12,6 +12,9 @@ const float PLAYER_BB_HEIGHT = 64.0f;
 const float ENEMY_BB_WIDTH = 64.0f;
 const float ENEMY_BB_HEIGHT = 64.0f;
 
+const float BOSS_BB_WIDTH = 128.0f;
+const float BOSS_BB_HEIGHT = 128.0f;
+
 const float OBSTACLE_BB_WIDTH = 64.0f;
 const float OBSTACLE_BB_HEIGHT = 64.0f;
 
@@ -48,7 +51,7 @@ const float ICON_INFINITY_BB_HEIGHT = 54.0f;
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
-Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points, AI::AIType aiType);
+Entity createEnemy(RenderSystem* renderer, vec2 position, float health_points, AI::AIType aiType, float in_boss_room);
 // the obstacle
 Entity createObstacle(RenderSystem* renderer, vec2 position);
 // the background
@@ -107,3 +110,9 @@ Entity createPowerup(RenderSystem* render, vec2 position);
 Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
 // create enemy flamethrower projectile
 Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
+
+Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state);
+
+Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
+
+Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target);
