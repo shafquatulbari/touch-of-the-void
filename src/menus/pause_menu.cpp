@@ -22,6 +22,9 @@ void PauseMenu::init(
 		TextAlignment::CENTER
 	);
 
+	registry.renderRequests.emplace(title_e).used_render_layer = RENDER_LAYER::GAME_MENU;
+
+
 	int offset_multiplier = 1;
 	// Create buttons
 	// Resume button
@@ -32,6 +35,8 @@ void PauseMenu::init(
 		{1.f, 0.f, 0.f},
 		TextAlignment::CENTER
 	);
+
+	registry.renderRequests.emplace(resume_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 
 	Motion& resume_motion = registry.motions.get(resume_e);
 	Entity resume_btn_e = createButton(
@@ -50,6 +55,8 @@ void PauseMenu::init(
 		TextAlignment::CENTER
 	);
 
+	registry.renderRequests.emplace(exit_e).used_render_layer = RENDER_LAYER::GAME_MENU;
+
 	Motion& exit_motion = registry.motions.get(exit_e);
 	Entity exit_btn_e = createButton(
 		renderer, {exit_motion.position.x, window_height_px - exit_motion.position.y },
@@ -66,6 +73,8 @@ void PauseMenu::init(
 		{ 1.f, 0.f, 0.f },
 		TextAlignment::CENTER
 	);
+
+	registry.renderRequests.emplace(close_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 
 	Motion& close_motion = registry.motions.get(close_e);
 	Entity close_btn_e = createButton(

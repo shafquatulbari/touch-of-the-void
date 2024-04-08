@@ -14,6 +14,13 @@ public:
 	static std::vector<Entity> button_entities;
 	static std::vector<Entity> text_entities;
 
+	enum class BUTTON_ID {
+		RESUME_BUTTON,
+		EXIT_BUTTON,
+		CLOSE_MENU_BUTTON,
+		BUTTON_COUNT
+	};
+
 	static bool has_state_changed;
 	static bool is_hovering;
 	static Entity hovered_entity;

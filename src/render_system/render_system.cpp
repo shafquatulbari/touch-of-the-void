@@ -248,18 +248,36 @@ void RenderSystem::drawToScreen(const mat3& projection)
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void RenderSystem::drawText(const mat3& projection)
+void RenderSystem::drawText(const mat3& projection, bool before_post_process)
 {
 	// Setting shaders
 	glUseProgram(m_font_shaderProgram);
 	gl_has_errors();
 
-
 	// Draw all text entities
 	for (Entity entity : registry.texts.entities)
 	{
-		if (!registry.motions.has(entity))
-			continue;
+		if (!before_post_process) {
+			// Rendering text after drawToScreen
+			if (!registry.renderRequests.has(entity)) {
+				continue;
+			}
+
+			RenderRequest& renderRequest = registry.renderRequests.get(entity);
+			if (renderRequest.used_render_layer < RENDER_LAYER::GAME_MENU) {
+				continue;
+			}
+
+		} else {
+			// Rendering text before drawToScreen
+			if (registry.renderRequests.has(entity) && !registry.motions.has(entity)) {
+				continue;
+			}
+		}
+
+		//if (registry.renderRequests.has(entity) && !registry.motions.has(entity)) {
+		//	continue;
+		//}
 
 		Motion& motion = registry.motions.get(entity);
 		Text& text_component = registry.texts.get(entity);
@@ -444,11 +462,15 @@ void RenderSystem::draw()
 	sorted_entities = registry.renderRequests.entities;
 	std::sort(sorted_entities.begin(), sorted_entities.end(), [this](Entity a, Entity b) {
 		return registry.renderRequests.get(a).used_render_layer < registry.renderRequests.get(b).used_render_layer;
-		});
+	});
 
 	for (Entity entity : sorted_entities)
 	{
-		if (!registry.motions.has(entity) || registry.texts.has(entity))
+		if (
+			!registry.motions.has(entity) || 
+			registry.texts.has(entity)
+			/*registry.renderRequests.get(entity).used_render_layer == RENDER_LAYER::GAME_MENU*/
+		)
 			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize
@@ -456,14 +478,28 @@ void RenderSystem::draw()
 		drawTexturedMesh(entity, projection_2D);
 	}
 
-	//for (Line& line : registry.lines.components) {
-	//	drawLine(line);
-	//}
-
-	drawText(projection_2D);
+	drawText(projection_2D, true);
 
 	// Truely render to the screen
 	drawToScreen(projection_2D);
+
+	// Renable some features
+	glEnable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+
+	for (Entity entity : sorted_entities) {
+		if (!registry.motions.has(entity) || registry.texts.has(entity))
+			continue;
+
+		if (registry.renderRequests.get(entity).used_render_layer != RENDER_LAYER::GAME_MENU)
+			continue;
+		// Note, its not very efficient to access elements indirectly via the entity
+		// albeit iterating through all Sprites in sequence. A good point to optimize
+
+		drawTexturedMesh(entity, projection_2D);
+	}
+
+	drawText(projection_2D, false);
 
 	// flicker-free display with a double buffer
 	glfwSwapBuffers(window);

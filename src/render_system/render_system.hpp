@@ -102,6 +102,9 @@ class RenderSystem {
 		textures_path("weapon_icon_shotgun_blast_unequipped_128x128.png"),
 		textures_path("weapon_icon_sniper_rifle_equipped_192x192.png"),
 		textures_path("weapon_icon_sniper_rifle_unequipped_128x128.png"),
+
+		// Generic UI textures
+		textures_path("start_button.png")
 	};
 
 	std::array<GLuint, effect_count> effects;
@@ -170,7 +173,7 @@ public:
 	void draw();
 
 	// Draw all text entities
-	void drawText(const mat3& projection);
+	void drawText(const mat3& projection, bool use_framebuffer);
 
 	mat3 createProjectionMatrix();
 

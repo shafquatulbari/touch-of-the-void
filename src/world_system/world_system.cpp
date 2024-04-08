@@ -956,6 +956,8 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		}
 
 		if (!PauseMenu::has_state_changed) {
+			PauseMenu::is_hovering = false;
+
 			if (registry.buttons.has(PauseMenu::hovered_entity)) {
 				for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
 					if (PauseMenu::hovered_entity == PauseMenu::button_entities[i]) {
@@ -1025,6 +1027,50 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	case GAME_STATE::PAUSE_MENU:
+		if (!PauseMenu::is_hovering) {
+			break;
+		}
+		
+		PauseMenu::BUTTON_ID button_id;
+		button_id = PauseMenu::BUTTON_ID::BUTTON_COUNT;
+
+		for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
+			if (PauseMenu::hovered_entity == PauseMenu::button_entities[i]) {
+				button_id = (PauseMenu::BUTTON_ID)i;
+				break;
+			}
+		}
+		
+		switch (button_id) {
+			case PauseMenu::BUTTON_ID::RESUME_BUTTON:
+				PauseMenu::close();
+
+				game_state = GAME_STATE::GAME;
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				break;
+			case PauseMenu::BUTTON_ID::EXIT_BUTTON:
+				PauseMenu::close();
+
+				game_state = GAME_STATE::START_MENU;
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				restart_game();
+				break;
+			case PauseMenu::BUTTON_ID::CLOSE_MENU_BUTTON:
+				PauseMenu::close();
+
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				glfwSetWindowShouldClose(window, GL_TRUE);
+				break;
+			default:
+				break;
+		}
+
 		break;
 	case GAME_STATE::GAME_OVER:
 		break;
