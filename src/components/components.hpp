@@ -38,7 +38,7 @@ struct Level {
 	// the current room the player is in
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
-	int num_rooms_until_boss = 1;
+	int num_rooms_until_boss = 3;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 };
