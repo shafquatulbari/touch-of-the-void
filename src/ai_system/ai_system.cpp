@@ -633,7 +633,7 @@ void AISystem::handleRocketAI(Entity entity, Motion& motion, AI& ai, float elaps
     // Shooting logic
     if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
         vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+        motion.look_angle = atan2(direction.y, direction.x) + M_PI / 2;
 
         ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
         if (ai.shootingCooldown <= 0) {

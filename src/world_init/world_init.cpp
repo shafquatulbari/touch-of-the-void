@@ -1411,6 +1411,7 @@ Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player
 	motion.scale = vec2({ CURRENT_AMMO_ICON_BB_WIDTH, CURRENT_AMMO_ICON_BB_HEIGHT });
 
 	Animation& animation = registry.animations.emplace(entity);
+	animation.current_frame = player.ammo_count;
 	switch (player.weapon_type)
 	{
 	case WeaponType::GATLING_GUN:
@@ -1427,6 +1428,12 @@ Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player
 		break;
 	case WeaponType::FLAMETHROWER:
 		animation.sheet_id = SPRITE_SHEET_ID::AMMO_FLAMETHROWER;
+		if (player.ammo_count == 200) {
+			animation.current_frame = 19;
+		}
+		else {
+			animation.current_frame = player.ammo_count / 10;
+		}
 		break;
 	case WeaponType::ENERGY_HALO:
 		animation.sheet_id = SPRITE_SHEET_ID::AMMO_ENERGY_HALO;
@@ -1434,8 +1441,6 @@ Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player
 	default:
 		break;
 	}
-	animation.current_frame = player.ammo_count; // set the current frame to the ammo count
-	// animation.total_frames = player.total_ammo_count[player.weapon_type]; // set the total frames to the max ammo
 
 	// sprite' coords are only used in relation to the sheet, 
 	// so as long as we don't go below the minimum number of sprites 
