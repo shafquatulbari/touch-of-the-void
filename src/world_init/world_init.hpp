@@ -69,6 +69,8 @@ Entity createShotgunProjectile(RenderSystem* renderer, vec2 position, float angl
 Entity createRocketProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
 // a single flamethrower projectile
 Entity createFlamethrowerProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, Entity source);
+// a single energy halo projectile
+Entity createEnergyHaloProjectile(RenderSystem* renderer, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
 // debug line
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color);
 // the start screen
