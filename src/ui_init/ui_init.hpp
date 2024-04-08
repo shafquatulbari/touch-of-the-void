@@ -8,7 +8,7 @@
 
 
 // create a button
-Entity createButton(
+Entity createTextButton(
 	RenderSystem* renderer,
 	vec2 position,
 	vec2 size,
@@ -19,4 +19,17 @@ Entity createButton(
 	std::function<void(void)> on_click
 );
 
-Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment);
+Entity createTextureButton(
+	RenderSystem* renderer,
+	vec2 position,
+	vec2 size,
+	vec3 color,
+	TEXTURE_ASSET_ID texture,
+	std::function<void(void)> on_click
+);
+
+Entity createButton(
+	RenderSystem* renderer,
+	vec2 position,
+	vec2 size
+);

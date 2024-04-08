@@ -5,6 +5,7 @@
 #include "ui_system/ui_system.hpp"
 #include "ui_init/ui_init.hpp"
 #include "weapon_system/weapon_system.hpp"
+#include "menus/pause_menu.hpp"
 
 // stlib
 #include <cassert>
@@ -214,6 +215,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	case GAME_STATE::START_MENU:
 		return true;
 		break;
+	
 	case GAME_STATE::GAME:
 		break;
 
@@ -326,7 +328,7 @@ void WorldSystem::restart_game() {
 	// All that have a motion, we could also iterate over all bug, eagles, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
-
+	
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
@@ -349,16 +351,6 @@ void WorldSystem::restart_game() {
 		createText(renderer, "Right-Click to shoot", { 30.0f, 794.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "R to reload", { 30.0f, 834.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
 		createText(renderer, "Q/E to change weapons", { 30.0f, 874.0f }, 0.7f, COLOR_WHITE, TextAlignment::LEFT);
-
-		createButton(renderer,
-			{ 622 + 337.5f, 410 + 56.f }, { 675, 112 }, { 1.f, 0.f, 0.f }, 
-			"Press ENTER to start", 1.f, TextAlignment::CENTER,
-			[this]() {
-				game_state = GAME_STATE::GAME;
-				play_sound(game_start_sound);
-				restart_game();
-			}
-		);
 
 		break;
 
@@ -392,6 +384,9 @@ void WorldSystem::restart_game() {
 
 		break;
 	}
+
+	case GAME_STATE::PAUSE_MENU:
+		break;
 
 	case GAME_STATE::GAME_OVER: {
 		high_score = std::max(high_score, score);
@@ -760,7 +755,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			//glfwSetWindowShouldClose(window, GL_TRUE);
 			is_paused = true;
 			game_state = GAME_STATE::PAUSE_MENU;
-			registry.screenStates.components[0].darken_screen_factor = 0.25f;
+			PauseMenu::init(renderer);
+
+			registry.screenStates.components[0].darken_screen_factor = 0.75f;
 			break;
 		}
 
@@ -829,15 +826,18 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 	case GAME_STATE::PAUSE_MENU:
 		if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
-			registry.screenStates.components[0].darken_screen_factor = 0.f;
+			PauseMenu::close();
 			game_state = GAME_STATE::GAME;
 			is_paused = false;
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+			break;
 		}
-		
+
 		if (action == GLFW_RELEASE && key == GLFW_KEY_BACKSPACE) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
+			break;
 		}
-		
+
 		break;
 
 	case GAME_STATE::GAME_OVER:
@@ -915,45 +915,9 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 
 {
-	bool has_state_change = false;
-
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
-		for (Entity& e : registry.buttons.entities) {
-			Motion& motion = registry.motions.get(e);
-			Button& button = registry.buttons.get(e);
-
-			if (
-				mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
-				mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
-				mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
-				mouse_position.y >= motion.position.y - motion.scale.y / 2
-			) {
-				has_state_change = true;
-				is_hovering = true;
-				hovered_entity = e;
-
-				Text& button_text = registry.texts.get(button.text_entity);
-				button_text.color = { 0.f, 1.f, 0.f };
-
-				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
-				break;
-			}
-		}
-
-		if (!has_state_change) {
-			is_hovering = false;
-			
-			if (registry.buttons.has(hovered_entity)) {
-				Button& current_button = registry.buttons.get(hovered_entity);
-				Text& current_button_text = registry.texts.get(current_button.text_entity);
-				current_button_text.color = { 1.f, 0.f, 0.f };
-			}
-
-			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-		}
-		
 		break;
 	case GAME_STATE::GAME:
 		if (registry.deathTimers.has(player)) {
@@ -964,6 +928,48 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 		break;
 	
+	case GAME_STATE::PAUSE_MENU:
+		PauseMenu::has_state_changed = false;
+
+		for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
+			Entity& e = PauseMenu::button_entities[i];
+
+			Motion& motion = registry.motions.get(e);
+			Button& button = registry.buttons.get(e);
+
+			if (
+				mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
+				mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
+				mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
+				mouse_position.y >= motion.position.y - motion.scale.y / 2
+			) {
+				PauseMenu::has_state_changed = true;
+				PauseMenu::is_hovering = true;
+				PauseMenu::hovered_entity = e;
+
+				Text& text = registry.texts.get(PauseMenu::text_entities[i]);
+				text.color = { 0.f, 1.f, 0.f };
+
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
+				break;
+			}
+		}
+
+		if (!PauseMenu::has_state_changed) {
+			if (registry.buttons.has(PauseMenu::hovered_entity)) {
+				for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
+					if (PauseMenu::hovered_entity == PauseMenu::button_entities[i]) {
+						Text& text = registry.texts.get(PauseMenu::text_entities[i]);
+						text.color = { 1.f, 0.f, 0.f };
+						break;
+					}
+				}
+			}
+
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+		}
+
+		break;
 	case GAME_STATE::GAME_OVER:
 		break;
 	
@@ -1000,12 +1006,6 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 	{
 
 	case GAME_STATE::START_MENU:
-		if (is_hovering) {
-			Button& button = registry.buttons.get(hovered_entity);
-			button.on_click();
-			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-		}
-		
 		break;
 
 	case GAME_STATE::GAME:
@@ -1024,6 +1024,8 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		}
 		break;
 
+	case GAME_STATE::PAUSE_MENU:
+		break;
 	case GAME_STATE::GAME_OVER:
 		break;
 

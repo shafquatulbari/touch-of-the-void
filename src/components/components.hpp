@@ -328,10 +328,12 @@ struct Character {
 };
 
 struct Button {
-	Entity text_entity;						// Text entity associated with the button				
-	std::function<void(void)> on_click;		// The callback function associated with the button
-	std::function<void(void)> on_mouse_in;	// The callback function for when the mouse enters the button's area
-	std::function<void(void)> on_mouse_out; // The callback function for when the mouse exits the button's area
+	Entity text_entity;
+	bool hover = false;	
+	bool disabled = false;
+	std::function<void(void)> on_click;
+	std::function<void(void)> on_mouse_in;
+	std::function<void(void)> on_mouse_out;
 };
 
 // A structure to store the data concerning a single sprite sheet texture
@@ -421,7 +423,10 @@ enum class TEXTURE_ASSET_ID {
 	SNIPER_EQUIPPED = SHOTGUN_UNEQUIPPED + 1,
 	SNIPER_UNEQUIPPED = SNIPER_EQUIPPED + 1,
 
-	TEXTURE_COUNT = SNIPER_UNEQUIPPED + 1
+	// Generic UI textures
+	START_BUTTON = SNIPER_UNEQUIPPED + 1,
+
+	TEXTURE_COUNT = START_BUTTON + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
