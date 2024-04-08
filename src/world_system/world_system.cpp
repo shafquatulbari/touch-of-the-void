@@ -447,9 +447,6 @@ void WorldSystem::restart_game() {
 	case GAME_STATE::START_MENU:
 		play_music(start_menu_music);
 
-		/*createText(renderer, "TOUCH OF THE VOID", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
-		createText(renderer, "Press 'enter' to start", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
-
 		createStartScreen(renderer);
 		//// Tutorial Text
 		createText(renderer, "CONTROLS", { 30.0f, 674.0f }, 1.4f, COLOR_WHITE, TextAlignment::LEFT);
@@ -519,8 +516,6 @@ void WorldSystem::restart_game() {
 		break;
 	}
 }
-
-
 
 void WorldSystem::enter_room(vec2 player_pos) {
 	// Debugging for memory/component leaks
