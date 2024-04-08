@@ -111,7 +111,7 @@ struct Player
 	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
 		{WeaponType::GATLING_GUN, 100},
-		{WeaponType::SNIPER, 1},
+		{WeaponType::SNIPER, 4},
 		{WeaponType::SHOTGUN, 6},
 		{WeaponType::ROCKET_LAUNCHER, 1},
 		{WeaponType::FLAMETHROWER, 200},
@@ -416,8 +416,9 @@ struct MultiplierBoostPowerupTimer {
  */
 
 enum class TEXTURE_ASSET_ID {
+	AMMO_PLACEMENT_HELPER = 0,
 	// Projectile textures
-	BULLET = 0,
+	BULLET = AMMO_PLACEMENT_HELPER + 1, // 0,
 	
 	// Enemy textures
 	ENEMY_SPITTER = BULLET + 1,
@@ -504,7 +505,13 @@ enum class GEOMETRY_BUFFER_ID {
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 enum class SPRITE_SHEET_ID {
-	BLUE_EFFECT = 0,
+	AMMO_ENERGY_HALO = 0,
+	AMMO_FLAMETHROWER = AMMO_ENERGY_HALO + 1,
+	AMMO_GATLING_GUN = AMMO_FLAMETHROWER + 1,
+	AMMO_ROCKET_LAUNCHER = AMMO_GATLING_GUN + 1,
+	AMMO_SHOTGUN = AMMO_ROCKET_LAUNCHER + 1,
+	AMMO_SNIPER = AMMO_SHOTGUN + 1,
+	BLUE_EFFECT = AMMO_SNIPER + 1,
 	ENEMY_BOSS_IDLE = BLUE_EFFECT + 1,
 	ENEMY_BOSS_SHIELD = ENEMY_BOSS_IDLE + 1,
 	ENEMY_BOSS_SPAWN = ENEMY_BOSS_SHIELD + 1,

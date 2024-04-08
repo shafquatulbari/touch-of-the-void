@@ -541,6 +541,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	// Render the room
 	Level& level_struct = registry.levels.get(level);
 	render_room(renderer, level_struct);
+	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
 
 	// Move the player to position
 	assert(registry.motions.has(player) && "Player should have a motion");

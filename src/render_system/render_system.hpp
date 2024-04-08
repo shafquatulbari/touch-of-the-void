@@ -22,6 +22,12 @@ class RenderSystem {
 	std::array<ivec2, texture_count> texture_dimensions;
 	// number of sprites per row and column in the sprite sheet
 	std::array<ivec2, sheet_count> sheet_sprite_count = {
+		ivec2(3,1),
+		ivec2(20,1),
+		ivec2(31,1),
+		ivec2(2,1),
+		ivec2(7,1),
+		ivec2(5,1),
 		ivec2(20,16),
 		ivec2(19,1),
 		ivec2(19,1),
@@ -56,6 +62,8 @@ class RenderSystem {
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, texture_count> texture_paths = {
 		// TODO: specify textures of other assets here like so:
+
+		textures_path("ammo_placement_helper.png"),
 
 		textures_path("bullet_16x16.png"),
 
@@ -133,6 +141,12 @@ class RenderSystem {
 	std::array<GLuint, sheet_count> sheets;
 	// IMPORTANT: Make sure these paths remain in sync with the associated enumerators on components.hpp
 	const std::array<std::string, sheet_count> sheet_paths = {
+		sheets_path("ammo_energy_halo_160x98.png"),
+		sheets_path("ammo_flame_thrower_160x98.png"),
+		sheets_path("ammo_gatling_gun_160x98.png"),
+		sheets_path("ammo_rocket_launcher_160x98.png"),
+		sheets_path("ammo_shotgun_160x98.png"),
+		sheets_path("ammo_sniper_160x98.png"),
 		sheets_path("blue_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("enemy_boss_idle_128x128.png"),
 		sheets_path("enemy_boss_shield_128x128.png"),

@@ -48,6 +48,9 @@ const float WEAPON_UNEQUIPPED_ICON_BB_HEIGHT = 128.0f;
 const float ICON_INFINITY_BB_WIDTH = 122.0f;
 const float ICON_INFINITY_BB_HEIGHT = 54.0f;
 
+const float CURRENT_AMMO_ICON_BB_WIDTH = 160.0f;
+const float CURRENT_AMMO_ICON_BB_HEIGHT = 98.0f;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
@@ -110,9 +113,11 @@ Entity createPowerup(RenderSystem* render, vec2 position);
 Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
 // create enemy flamethrower projectile
 Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, float angle, Entity source);
-
+// the current ammo animated sprite
+Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player);
+// enemy boss
 Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state);
-
+// boss projectile
 Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
-
+// boss missiles
 Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target);
