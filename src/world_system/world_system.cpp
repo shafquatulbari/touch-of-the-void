@@ -757,6 +757,38 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			game_state = GAME_STATE::PAUSE_MENU;
 			PauseMenu::init(renderer);
 
+			Button& resume_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::RESUME_BUTTON]);
+			Button& exit_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::EXIT_BUTTON]);
+			Button& quit_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::CLOSE_MENU_BUTTON]);
+
+			// Setup the callback functions
+			resume_btn.on_click = [this]() {
+				PauseMenu::close();
+
+				game_state = GAME_STATE::GAME;
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+			};
+
+			exit_btn.on_click = [this]() {
+				PauseMenu::close();
+
+				game_state = GAME_STATE::START_MENU;
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				restart_game();
+			};
+
+			quit_btn.on_click = [this]() {
+				PauseMenu::close();
+
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				glfwSetWindowShouldClose(window, GL_TRUE);
+			};
+
 			registry.screenStates.components[0].darken_screen_factor = 0.75f;
 			break;
 		}
@@ -1027,48 +1059,9 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	case GAME_STATE::PAUSE_MENU:
-		if (!PauseMenu::is_hovering) {
-			break;
-		}
-		
-		PauseMenu::BUTTON_ID button_id;
-		button_id = PauseMenu::BUTTON_ID::BUTTON_COUNT;
-
-		for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
-			if (PauseMenu::hovered_entity == PauseMenu::button_entities[i]) {
-				button_id = (PauseMenu::BUTTON_ID)i;
-				break;
-			}
-		}
-		
-		switch (button_id) {
-			case PauseMenu::BUTTON_ID::RESUME_BUTTON:
-				PauseMenu::close();
-
-				game_state = GAME_STATE::GAME;
-				is_paused = false;
-				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-
-				break;
-			case PauseMenu::BUTTON_ID::EXIT_BUTTON:
-				PauseMenu::close();
-
-				game_state = GAME_STATE::START_MENU;
-				is_paused = false;
-				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-
-				restart_game();
-				break;
-			case PauseMenu::BUTTON_ID::CLOSE_MENU_BUTTON:
-				PauseMenu::close();
-
-				is_paused = false;
-				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-
-				glfwSetWindowShouldClose(window, GL_TRUE);
-				break;
-			default:
-				break;
+		if (PauseMenu::is_hovering) {
+			Button& button = registry.buttons.get(PauseMenu::hovered_entity);
+			button.on_click();
 		}
 
 		break;

@@ -331,7 +331,7 @@ struct Button {
 	Entity text_entity;
 	bool hover = false;	
 	bool disabled = false;
-	std::function<void(void)> on_click;
+	std::function<void()> on_click;
 	std::function<void(void)> on_mouse_in;
 	std::function<void(void)> on_mouse_out;
 };
