@@ -56,6 +56,51 @@ void WorldGenerator::populateRoom(Room& room)
 
 }
 
+void WorldGenerator::populateTutorialRoomOne(Room& room)
+{
+	// space is effectively 15x15 since 480/32 = 30 
+	room.is_cleared = false;
+
+	room.obstacle_count = 5;
+	room.enemy_count = 1;
+
+
+	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
+	Level& level = registry.levels.get(registry.levels.entities[0]);
+	room.obstacle_count += level.num_rooms_cleared;
+	room.enemy_count += level.num_rooms_cleared;
+
+	int cur_obstacles_count = 0;
+	for (int i = 0; i < 12; i++) {
+		if (i != 6) {
+			room.obstacle_positions.insert(vec2(i, i));
+			room.all_positions.insert(vec2(i, i));
+		}
+	}
+	
+
+	room.has_right_door = true;
+}
+
+void WorldGenerator::generateTutorialRoomOne(Room& room, Level& level)
+{
+	room.is_cleared = false;
+	room.is_visited = true;
+
+	populateTutorialRoomOne(room);
+	
+
+	auto right_room = Entity();
+
+
+
+	registry.rooms.emplace(right_room);
+	
+
+	level.rooms.emplace(std::pair<int, int>(1, 0), right_room);
+	
+}
+
 void WorldGenerator::generateStartingRoom(Room& room, Level& level)
 {
 	room.is_cleared = false;

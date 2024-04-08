@@ -1183,7 +1183,8 @@ Entity createLevel(RenderSystem* render)
 	WorldGenerator world_generator;
 
 	// modifies Room component using pointer to Room component
-	world_generator.generateStartingRoom(starting_room, level);
+	//world_generator.generateStartingRoom(starting_room, level);
+	world_generator.generateTutorialRoomOne(starting_room, level);
 
 	render_room(render, level);
 	return entity;
