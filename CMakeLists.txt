@@ -63,6 +63,8 @@ src/ui_init/*.cpp
 src/ui_init/*.hpp
 src/shop_system/*.cpp
 src/shop_system/*.hpp
+src/menus/*.cpp
+src/menus/*.hpp
 )
 
 # external libraries will be installed into /usr/local/include and /usr/local/lib but that folder is not automatically included in the search on MACs

@@ -10,3 +10,12 @@ std::unordered_map<WeaponType, WeaponStats> weapon_stats = {
 	{WeaponType::ENERGY_HALO, {200.0f, 10000.0f, 2, 2500.0f, 300.0f}},
 	// Add more weapons as needed
 };
+
+// Weapon price mapping (base weapon price, ammo price per ammo
+std::unordered_map<WeaponType, WeaponPrice> weapon_pricelist {
+	{WeaponType::SNIPER, {5, 1}},
+	{WeaponType::SHOTGUN, {3, 1}},
+	{WeaponType::ROCKET_LAUNCHER, {10, 2}},
+	{WeaponType::FLAMETHROWER, {3, 1}},
+	{WeaponType::ENERGY_HALO, {5, 1}}
+};

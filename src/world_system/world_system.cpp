@@ -6,6 +6,7 @@
 #include "ui_init/ui_init.hpp"
 #include "weapon_system/weapon_system.hpp"
 #include "menus/pause_menu.hpp"
+#include "menus/shop_menu.hpp"
 
 // stlib
 #include <cassert>
@@ -288,9 +289,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 
 	// Check if the player is in close proximity to a shop
 	vec2& player_pos = p_m.position;
-	for (Entity entity : registry.shopPanels.entities) {
-		vec2& shop_pos = registry.motions.get(entity).position;
-		if (glm::distance(shop_pos, player_pos) < game_window_block_size) {
+	if (registry.shopPanels.entities.size() > 0) {
+		vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
+		if (glm::distance(shop_pos, player_pos) <= 1.5f * game_window_block_size) {
 			createShopIndicator(renderer, player_pos + vec2({ game_window_block_size / 2, -game_window_block_size / 2 }));
 		}
 	}
@@ -793,8 +794,34 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			//glfwSetWindowShouldClose(window, GL_TRUE);
 			is_paused = true;
 			game_state = GAME_STATE::PAUSE_MENU;
-			PauseMenu::init(renderer);
+			PauseMenu::init(renderer,
+				[this]() {
+					PauseMenu::close();
 
+					game_state = GAME_STATE::GAME;
+					is_paused = false;
+					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+				},
+				[this]() {
+					PauseMenu::close();
+
+					game_state = GAME_STATE::START_MENU;
+					is_paused = false;
+					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+					restart_game();
+				},
+				[this]() {
+					PauseMenu::close();
+
+					is_paused = false;
+					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+					glfwSetWindowShouldClose(window, GL_TRUE);
+				}
+			);
+
+			/*
 			Button& resume_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::RESUME_BUTTON]);
 			Button& exit_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::EXIT_BUTTON]);
 			Button& quit_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::CLOSE_MENU_BUTTON]);
@@ -826,8 +853,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 				glfwSetWindowShouldClose(window, GL_TRUE);
 			};
+			*/
 
-			registry.screenStates.components[0].darken_screen_factor = 0.75f;
+			registry.screenStates.components[0].darken_screen_factor = 0.875f;
 			break;
 		}
 
@@ -857,6 +885,32 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			//if (key == GLFW_KEY_E && action == GLFW_PRESS) {
 			//	weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
 			//}
+
+			if (key == GLFW_KEY_E && action == GLFW_PRESS && registry.shopPanels.entities.size() > 0) {
+				vec2& player_pos = registry.motions.get(player).position;
+				vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
+
+				if (glm::distance(shop_pos, player_pos) > 1.5f * game_window_block_size) {
+					break;
+				}
+
+				Level& current_level = registry.levels.get(level);
+				Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
+				
+				registry.screenStates.components[0].darken_screen_factor = 0.875f;
+				game_state = GAME_STATE::SHOP_MENU;
+				is_paused = true;
+
+				ShopMenu::init(renderer, current_room.weapon_on_sale);
+				registry.buttons.get(ShopMenu::button_entities[0]).on_click = [this]() {
+					registry.screenStates.components[0].darken_screen_factor = 1.f;
+					game_state = GAME_STATE::GAME;
+					is_paused = false;
+					ShopMenu::close();
+				};
+
+				break;
+			}
 
 			// MOVEMENT CONTROLS
 			if (key == GLFW_KEY_W) {
@@ -1000,7 +1054,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		break;
 	
 	case GAME_STATE::PAUSE_MENU:
-		PauseMenu::has_state_changed = false;
+		/*PauseMenu::has_state_changed = false;
 
 		PauseMenu::previous_entity = PauseMenu::current_entity;
 		for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
@@ -1041,8 +1095,20 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 			}
 
 			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-		}
+		}*/
 
+		int cursor; 
+		cursor = PauseMenu::on_mouse_move(mouse_position);
+		glfwSetCursor(window, glfwCreateStandardCursor(cursor));
+
+		break;
+
+	case GAME_STATE::SHOP_MENU:
+		if (ShopMenu::on_mouse_move(mouse_position)) {
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
+		} else {
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+		}
 		break;
 	case GAME_STATE::GAME_OVER:
 		break;
@@ -1099,11 +1165,12 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	case GAME_STATE::PAUSE_MENU:
-		if (PauseMenu::is_hovering) {
-			Button& button = registry.buttons.get(PauseMenu::current_entity);
-			button.on_click();
-		}
+		
+		PauseMenu::on_mouse_click();
+		break;
 
+	case GAME_STATE::SHOP_MENU:
+		ShopMenu::on_mouse_click(button, action, mods);
 		break;
 	case GAME_STATE::GAME_OVER:
 		break;

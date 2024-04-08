@@ -14,8 +14,37 @@ bool	PauseMenu::has_state_changed = false;
 Entity	PauseMenu::current_entity;
 Entity	PauseMenu::previous_entity;
 
+std::function<void()> create_button_on_enter_callback(Entity button_e, Entity text_e) {
+	return [button_e, text_e]() {
+		assert(registry.texts.has(text_e));
+		assert(registry.buttons.has(button_e));
+		
+		registry.buttons.get(button_e).hover = true;
+		registry.texts.get(text_e).color = COLOR_GREEN;
+	};
+}
+
+std::function<void()> create_button_on_exit_callback(Entity button_e, Entity text_e) {
+	return [button_e, text_e]() {
+		assert(registry.texts.has(text_e));
+		assert(registry.buttons.has(button_e));
+
+		registry.texts.get(text_e).color = COLOR_RED;
+		registry.buttons.get(button_e).hover = false;
+	};
+}
+
+void bind_button(Entity button_e, Entity text_e) {
+	Button& btn = registry.buttons.get(button_e);
+	btn.on_mouse_in = create_button_on_enter_callback(button_e, text_e);
+	btn.on_mouse_out = create_button_on_exit_callback(button_e, text_e);
+}
+
 void PauseMenu::init(
-	RenderSystem* renderer
+	RenderSystem* renderer,
+	std::function<void()> resume_callback,
+	std::function<void()> exit_callback,
+	std::function<void()> close_window_callback
 ) {
 	const int top_padding = 200.f;
 	const int left_padding = 200.f;
@@ -48,7 +77,10 @@ void PauseMenu::init(
 		button_color,
 		TextAlignment::LEFT
 	);
+	
 	registry.renderRequests.emplace(resume_e).used_render_layer = RENDER_LAYER::GAME_MENU;
+	registry.buttons.get(resume_btn_e).on_click = resume_callback;
+	bind_button(resume_btn_e, resume_e);
 
 	offset_multiplier++;
 	
@@ -70,6 +102,8 @@ void PauseMenu::init(
 	);
 
 	registry.renderRequests.emplace(exit_e).used_render_layer = RENDER_LAYER::GAME_MENU;
+	registry.buttons.get(exit_btn_e).on_click = exit_callback;
+	bind_button(exit_btn_e, exit_e);
 
 	offset_multiplier++;
 
@@ -90,10 +124,49 @@ void PauseMenu::init(
 	);
 
 	registry.renderRequests.emplace(close_e).used_render_layer = RENDER_LAYER::GAME_MENU;
+	registry.buttons.get(close_btn_e).on_click = close_window_callback;
+	bind_button(close_btn_e, close_e);
 
 	title_entity = title_e;
 	text_entities = { resume_e, exit_e, close_e };
 	button_entities = { resume_btn_e, exit_btn_e, close_btn_e };
+}
+
+int PauseMenu::on_mouse_move(vec2 mouse_position) {
+	int cursor = GLFW_ARROW_CURSOR;
+
+	for (Entity btn_e : button_entities) {
+		Button& button = registry.buttons.get(btn_e);
+		Motion& motion = registry.motions.get(btn_e);
+		
+		if (
+			mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
+			mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
+			mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
+			mouse_position.y >= motion.position.y - motion.scale.y / 2
+		) {
+			cursor = GLFW_HAND_CURSOR;
+			button.on_mouse_in();
+		} else {
+			button.on_mouse_out();
+		}
+	}
+
+	return cursor;
+}
+
+int PauseMenu::on_mouse_click() {
+	for (Entity btn_e : button_entities) {
+		assert(registry.buttons.has(btn_e));
+		Button& button = registry.buttons.get(btn_e);
+
+		if (button.hover) {
+			button.on_click();
+			break;
+		}
+	}
+
+	return 0;
 }
 
 void PauseMenu::close() {

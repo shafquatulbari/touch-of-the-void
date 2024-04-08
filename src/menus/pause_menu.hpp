@@ -27,8 +27,14 @@ public:
 	static Entity previous_entity;
 
 	static void init(
-		RenderSystem* renderer
+		RenderSystem* renderer,
+		std::function<void()> resume_callback,
+		std::function<void()> exit_callback,
+		std::function<void()> close_window_callback
 	);
+	
+	static int on_mouse_move(vec2 mouse_position);
+	static int on_mouse_click();
 
 	static void close();
 };

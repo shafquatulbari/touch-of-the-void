@@ -873,7 +873,7 @@ void render_room(RenderSystem* render, Level& level)
 		WorldGenerator world_generator;
 		
 		std::knuth_b rnd_engine;
-		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 2.f)) );
+		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 0.f)) );
 
 		if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
 			// Generate a shop room
@@ -959,7 +959,7 @@ Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
 }
 
 Entity createShopIndicator(RenderSystem* renderer, vec2 position) {
-	Entity text_e = createText(renderer, "E", position, 1.25f, { 1.f, 1.f, 1.f }, TextAlignment::CENTER);
+	Entity text_e = createText(renderer, "E", position, 0.75f, { 1.f, 1.f, 1.f }, TextAlignment::CENTER);
 	registry.renderRequests.emplace(text_e).used_render_layer = RENDER_LAYER::FOREGROUND;
 	registry.debugComponents.emplace(text_e);
 

@@ -406,7 +406,7 @@ bool RenderSystem::initializeFonts() {
 		// Initialize each font
 		FONT_ASSET_ID font_index = (FONT_ASSET_ID)i;
 		const std::string& name = font_paths[i];
-		bool is_valid = loadFontFromFile(name, 48);
+		bool is_valid = loadFontFromFile(name, 48); // default fontsize: 48px
 		assert(is_valid);
 		fprintf(stderr, "Loaded font %s\n", name.c_str());
 	}

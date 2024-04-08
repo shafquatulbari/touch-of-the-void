@@ -22,4 +22,9 @@ struct WeaponStats {
 	float fire_rate;
 };
 
+struct WeaponPrice {
+	int weapon_price;
+	int price_per_ammo;
+};
+
 extern std::unordered_map<WeaponType, WeaponStats> weapon_stats;
