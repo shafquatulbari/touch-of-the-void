@@ -76,6 +76,7 @@ private:
 		START_MENU,
 		GAME,
 		GAME_OVER,
+		GAME_WIN,
 		TOTAL_GAME_STATES // Keep this as the last element
 	};
 

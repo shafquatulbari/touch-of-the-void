@@ -243,6 +243,9 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		return true;
 		break;
 
+	case GAME_STATE::GAME_WIN:
+		return true;
+		break;
 	default:
 		return true;
 		break;
@@ -504,7 +507,13 @@ void WorldSystem::restart_game() {
 		}
 		break;
 	}
+	
+	case GAME_STATE::GAME_WIN: {
 		
+		createStartScreen(renderer);
+		createText(renderer, "Congrats! You escaped!", { 960.0f, 664.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		break;
+	}
 
 	default:
 		break;
@@ -559,7 +568,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		Entity entity = collisionsRegistry.entities[i];
 		Entity entity_other = collisionsRegistry.components[i].other;
 		float scalar = collisionsRegistry.components[i].scalar;
-		
+	
 		if (registry.players.has(entity) && registry.obstacles.has(entity_other)) {
 			
 			/*for (Entity e : p_mesh_lines) {
@@ -801,19 +810,74 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			}
 		}
 
-		//if obstacle and enemies collide, enemy moves in random direction
+		//if obstacle and enemies collide, enemy moves perpendicularly to the obstacle
 		else if (registry.obstacles.has(entity) && registry.ais.has(entity_other)) {
 			Motion& obs_motion = registry.motions.get(entity_other);
-			obs_motion.velocity = obs_motion.velocity * -1.0f;
+			if (registry.ais.has(entity)) {
+				AI& ai = registry.ais.get(entity_other);
+				AI& ai2 = registry.ais.get(entity);
+				if (ai.type == ai2.type) {
+					//if same type of enemies dont do anything on collision, do nothing
+				} 
+			}
+			else if (!registry.ais.has(entity)) {
+				obs_motion.velocity = { - 2* obs_motion.velocity.x, -2 * obs_motion.velocity.y };
+			}
 		}
-		// PROJECTILE COLLISONS
+		//Player projectile to boss
+		if (registry.projectiles.has(entity)) {
+			Projectile& projectile = registry.projectiles.get(entity);
+			Entity projectileSource = projectile.source;
+
+			// Collision logic for player projectiles hitting enemies
+			if (registry.players.has(projectileSource) && (registry.bosses.has(entity_other))) {
+				if (!(registry.bosses.get(entity_other).state == BossAI::BossState::DEFENSIVE)) {
+					// Apply damage to the enemy
+					if (registry.healths.has(entity_other)) {
+						Deadly& deadly = registry.deadlies.get(entity);
+						Health& enemyHealth = registry.healths.get(entity_other);
+						enemyHealth.current_health -= deadly.damage;
+						play_sound(enemy_hit_sound);
+
+						switch (projectile.weapon_type)
+						{
+						case WeaponType::ROCKET_LAUNCHER:
+							weapons->handle_rocket_collision(renderer, entity, player);
+							break;
+
+						case WeaponType::FLAMETHROWER:
+							weapons->handle_flamethrower_collision(renderer, entity, entity_other);
+							break;
+
+						default:
+							createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+						}
+					}
+					registry.remove_all_components_of(entity); // Remove projectile after collision
+				}
+			}
+		}
+		// PROJECTILE TO GUIDED MISSILE COLLISION
+		if (registry.projectiles.has(entity))
+		{
+			Projectile& projectile = registry.projectiles.get(entity);
+			Entity projectileSource = projectile.source;
+			if (registry.players.has(projectileSource) && (registry.guidedMissiles.has(entity_other))) {
+				// destroy the boss projectile if the player projectile hits it, destroy player projectile too, show explosion effect and play sound
+				createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+				play_sound(explosion_sound);
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+				registry.remove_all_components_of(entity_other); // Remove projectile after collision
+			}
+		}
+		// PROJECTILE COLLISONS player to ais
 		if (registry.projectiles.has(entity)) 
 		{
 			Projectile& projectile = registry.projectiles.get(entity);
 			Entity projectileSource = projectile.source;
 
 			// Collision logic for player projectiles hitting enemies
-			if (registry.players.has(projectileSource) && registry.ais.has(entity_other)) {
+			if (registry.players.has(projectileSource) && (registry.ais.has(entity_other))) {
 				// Apply damage to the enemy
 				if (registry.healths.has(entity_other)) {
 					Deadly& deadly = registry.deadlies.get(entity);
@@ -895,6 +959,57 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
+			// Collision logic for boss projectile hitting player
+			else if (registry.bosses.has(projectileSource) && registry.players.has(entity_other)) {
+				// Apply damage to the player
+				if (registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
+					assert(registry.shields.has(entity_other) && "Player should have a shield");
+					Shield& playerShield = registry.shields.get(entity_other);
+
+					if (registry.damagedTimers.has(entity_other)) {
+						DamagedTimer& damagedTimer = registry.damagedTimers.get(entity_other);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
+					}
+					else {
+						DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
+					}
+
+					if (playerShield.current_shield > 0) {
+						play_sound(player_hit_sound);
+						playerShield.current_shield -= 100;
+						playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
+					}
+					else {
+						assert(registry.healths.has(entity_other) && "Player should have health");
+						assert(registry.deadlies.has(entity) && "Entity should have a deadly component");
+						Deadly& deadly = registry.deadlies.get(entity);
+						Health& playerHealth = registry.healths.get(entity_other);
+						playerHealth.current_health -= 4; //hardcoded damage
+						if (playerHealth.current_health <= 0) {
+							// Trigger darkening immediately, but actual effect is controlled in step
+							if (!registry.deathTimers.has(player)) {
+								// cease motion
+								assert(registry.motions.has(player) && "Player should have a motion");
+								Motion& motion = registry.motions.get(player);
+								motion.velocity = { 0, 0 };
+								motion.is_moving_up = false;
+								motion.is_moving_down = false;
+								motion.is_moving_left = false;
+								motion.is_moving_right = false;
+								registry.deathTimers.emplace(player);
+								play_sound(game_over_sound);
+							}
+						}
+						else {
+							play_sound(player_hit_sound);
+						}
+					}
+
+				}
+				registry.remove_all_components_of(entity); // Remove projectile after collision
+			}
+
 
 			// Collision logic for projectiles hitting obstacles
 			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
@@ -915,7 +1030,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
 				}
-			}
+			}		
 
 			// Collision logic for energy halo projectiles
 			else if (registry.projectiles.has(entity) && registry.projectiles.has(entity_other)) {
@@ -937,7 +1052,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		vec2 e_pos = registry.motions.get(e).position;
 		Health& e_health = registry.healths.get(e);
 
-		if (e_health.current_health <= 0) {
+		if (e_health.current_health <= 0 && registry.ais.get(e).in_boss_room == false) {
 
 			// remove the fire effect if an enemy dies
 			if (registry.onFireTimers.has(e)) {
@@ -963,7 +1078,6 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			multiplier += 0.25;
 			score += 10 * multiplier;
-
 			if (current_room.enemy_count == 0)
 			{
 				registry.levels.get(level).num_rooms_until_boss--;
@@ -999,6 +1113,40 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// UX Effects
 			createExplosion(renderer, e_pos, 1.0f, false);
 			play_sound(explosion_sound);
+		}
+	}
+	//check for dead boss
+	if (registry.bosses.entities.size() > 0) {
+		Entity boss_e = registry.bosses.entities[0];
+		vec2 boss_pos = registry.motions.get(boss_e).position;
+		Health& boss_health = registry.healths.get(boss_e);
+		for (Entity e : registry.ais.entities) {
+			vec2 e_pos = registry.motions.get(e).position;
+			Health& e_health = registry.healths.get(e);
+
+			if (e_health.current_health <= 0 && registry.ais.get(e).in_boss_room == true) {
+				BossAI& boss = registry.bosses.get(boss_e);
+				boss.aliveEnemyCount = std::max(0, boss.aliveEnemyCount - 1); // Decrement and ensure it doesn't go below 0
+				// remove the fire effect if an enemy diesa
+				if (registry.onFireTimers.has(e)) {
+					registry.remove_all_components_of(registry.onFireTimers.get(e).fire);
+				}
+				registry.remove_all_components_of(e);
+				score++;
+			
+				// UX Effects
+				createExplosion(renderer, e_pos, 1.0f, false);
+				play_sound(explosion_sound);
+			}
+		}
+		if (boss_health.current_health <= 0 ) {
+			registry.remove_all_components_of(boss_e);
+			score += 1000;
+			// UX Effects
+			createExplosion(renderer, boss_pos, 1.0f, false);
+			play_sound(explosion_sound);
+			game_state = GAME_STATE::GAME_WIN;
+			restart_game();
 		}
 	}
 
@@ -1119,11 +1267,27 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		break;
+	
+	case GAME_STATE::GAME_WIN:
+		// Enter key to start the game
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ENTER) {
+			game_state = GAME_STATE::GAME;
+			play_sound(game_start_sound);
+			restart_game();
+		}
+
+		// Exit the game on escape
+		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+			// TODO: Change to different screen or close depending on the game state
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		}
+		break;
 
 	default:
 		break;
 
 	}
+
 }
 
 void WorldSystem::bounce_back(Entity player, Entity obstacle) {
@@ -1197,7 +1361,10 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 	
 	case GAME_STATE::GAME_OVER:
 		break;
-	
+
+	case GAME_STATE::GAME_WIN:
+		break;
+
 	default:
 		break;
 
@@ -1250,6 +1417,9 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	case GAME_STATE::GAME_OVER:
+		break;
+
+	case GAME_STATE::GAME_WIN:
 		break;
 
 	default:

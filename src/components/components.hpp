@@ -38,7 +38,7 @@ struct Level {
 	// the current room the player is in
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
-	int num_rooms_until_boss = 4;
+	int num_rooms_until_boss = 3;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 };
@@ -68,6 +68,7 @@ struct Room {
 
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
+	bool is_boss_room = false; // if the room contains a boss
 	// The number of enemies in the room
 	int enemy_count = 0;
 
@@ -202,6 +203,23 @@ struct AI
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
 	int frequency = 0; // frequency of think cycles
 	int counter = 0; // counter for think cycles
+	bool in_boss_room = false; // if the AI is in a boss room
+};
+
+struct BossAI
+{
+	enum class BossState {DEFENSIVE, OFFENSIVE,GUIDED_MISSILE};
+	BossState state = BossState::DEFENSIVE;
+	float shootTimer = 0.0f; // Timer to control shooting rate
+	float shootCooldown = 1.0f; // Cooldown in seconds between shots
+	float missileTimer = 0.0f; // Timer to control missile creation rate
+	float missileCooldown = 2.0f; // Cooldown in seconds between missile creation
+	float stateTimer = 0.0f; // Timer to track time in the current state
+	float stateDuration = 10.0f; // Duration to spend in each state before switching
+	int aliveEnemyCount = 0; // New member to track the number of alive enemies
+	float enemyCreationTimer = 0.0f; // Timer for enemy creation in the offensive state
+	float enemyCreationCooldown = 1.5f; // Cooldown for enemy creation
+	int totalSpawnedEnemies = 0; // New member to track the number of alive enemies
 };
 
 // Harmful collision component
