@@ -269,6 +269,7 @@ struct Motion {
 	float deceleration_rate = 0.0f; // amount to be shaved off velocity if moving in direction
 	float max_velocity = 0.0f; 	// maximum velocity in any direction
 	float turn_rate = 0.0f;		// how fast the entity can turn
+	float turn_speed = 0.0f;		// how fast the entity is currently turning
 
 	bool is_passable = false; // if the entity is passable (cannot be collided with)
 };
