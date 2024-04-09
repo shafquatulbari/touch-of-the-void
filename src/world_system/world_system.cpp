@@ -276,20 +276,20 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		vec2 direction = p_m.velocity;
 		float movement_angle = atan2(direction.y, direction.x);
 		float look_angle = (p_m.look_angle - (M_PI / 2)) * -1;
-		float updated_movement_angle = movement_angle + look_angle;
+		movement_angle = movement_angle + look_angle;
 		// if updated_movement_angle is over PI, wrap it around to -PI
-		if (updated_movement_angle > M_PI) {
-			updated_movement_angle -= 2.f * M_PI;
+		if (movement_angle > M_PI) {
+			movement_angle -= 2.f * M_PI;
 		}
-		else if (updated_movement_angle < -M_PI) {
-			updated_movement_angle += 2.f * M_PI;
+		else if (movement_angle < -M_PI) {
+			movement_angle += 2.f * M_PI;
 		}
 
-		if ((M_PI / 4) <= updated_movement_angle && updated_movement_angle <= (3 * (M_PI / 4))) {
+		if ((M_PI / 4) <= movement_angle && movement_angle <= (3 * (M_PI / 4))) {
 			// rotating right
 			p.rotation_factor++;
 		}
-		else if ((-3 * (M_PI / 4)) <= updated_movement_angle && updated_movement_angle <= -(M_PI / 4)) {
+		else if ((-3 * (M_PI / 4)) <= movement_angle && movement_angle <= -(M_PI / 4)) {
 			// rotating left
 			p.rotation_factor--;
 		}

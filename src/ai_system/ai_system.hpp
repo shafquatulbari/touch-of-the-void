@@ -27,7 +27,7 @@ public:
 
 	void idleState(Entity entity, AI& ai, Motion& motion, float elapsed_ms);
 
-	void activeState(Entity entity, Motion& motion, float elapsed_ms);
+	void activeState(Entity entity, AI& ai, Motion& motion, float elapsed_ms);
 
 	void handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 
