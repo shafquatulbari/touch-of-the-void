@@ -13,6 +13,15 @@
 #include <iostream>
 #include <glm/trigonometric.hpp>
 
+const float cellSize = 128.0f;
+const int numCells = 15;
+const int maxIterations = 1000;
+const float xMin = 480.0f;
+const float yMin = 32.0f;
+const float xMax = 1440.0f;
+const float yMax = 992.0f;
+const float halfCellSize = cellSize / 2.0f;
+
 void Boss::step(float elapsed_ms)
 {
     auto& bossesRegistry = registry.bosses;
@@ -21,8 +30,23 @@ void Boss::step(float elapsed_ms)
         BossAI& boss = bossesRegistry.components[i];
         Entity entity = bossesRegistry.entities[i];
         Motion& motion = registry.motions.get(entity);
-        auto& renderComponent = registry.renderRequests.get(entity); // Assuming this gets the rendering component
 
+        // Update zigzag timer
+        boss.zigzagTimer += elapsed_ms / 1000.0f;
+
+        // If the zigzag timer exceeds the interval, invert the x direction of the velocity
+        if (boss.zigzagTimer >= boss.zigzagInterval) {
+            motion.velocity.x *= -1; // Invert X direction
+            boss.zigzagTimer = 0.0f; // Reset timer
+        }
+
+        // Ensure initial velocity is set for zigzag movement
+        if (glm::length(motion.velocity) < 0.01f) {
+            motion.velocity = boss.zigzagDirection;
+        }
+        // Movement logic
+        vec2 nextPosition = motion.position + motion.velocity * elapsed_ms / 1000.0f;
+        
         // Check AI state and perform actions accordingly
         switch (boss.state) {
             case BossAI::BossState::DEFENSIVE:
@@ -37,6 +61,9 @@ void Boss::step(float elapsed_ms)
         default:
             printf("Unknown state\n");
             break;
+        }
+        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize) || nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
+            motion.velocity *= -1; // Invert X component if hitting left or right wall
         }
         // Always update position based on velocity, regardless of state
         motion.position += motion.velocity * elapsed_ms / 1000.0f;
@@ -57,8 +84,8 @@ void Boss::handleDefensiveState(Entity entity, BossAI& boss, Motion& motion, flo
         float shootingAngle = atan2(direction.y, direction.x);
 
         // Widen the spray angle and adjust the number of projectiles if needed
-        int num_projectiles = 5;
-        float spread_angle_degrees = 90.0f; // Wider angle in degrees
+        int num_projectiles = 7;
+        float spread_angle_degrees = 200.0f; // Wider angle in degrees
 
         // Calculate the starting angle for the spread
         float angle_step = glm::radians(spread_angle_degrees) / static_cast<float>(num_projectiles - 1);
@@ -107,12 +134,7 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
 { 
     // Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
     std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE };
-    //enemy positions is a set of vec2
-    vec2 pos = { 7.0f, 2.0f };
-    float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
-    float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
-    float x = x_origin + pos.x * game_window_block_size;
-    float y = y_origin + pos.y * game_window_block_size;
+
     // Adjust state duration for offensive state
     boss.stateDuration = 10.0f;
     boss.enemyCreationTimer += elapsed_ms / 1000.0f;
@@ -155,7 +177,7 @@ void Boss::handleOffensiveState(Entity entity, BossAI& boss, Motion& motion, flo
     auto enemyType = enemy_types[rand() % enemy_types.size()]; // Random type from predefined vector
     if (boss.enemyCreationTimer >= boss.enemyCreationCooldown && boss.totalSpawnedEnemies < maxEnemies) {
         boss.enemyCreationTimer = 0.0f; // Reset timer for next enemy creation
-        createEnemy(renderer, vec2(x, y), 500.0f, enemyType, true);
+        createEnemy(renderer, vec2(motion.position.x, motion.position.y), 500.0f, enemyType, true);
         boss.aliveEnemyCount++;
         boss.totalSpawnedEnemies++;
     }
@@ -202,4 +224,3 @@ void Boss::updateGuidedMissiles(float elapsed_ms) {
 vec2 Boss:: lerp(const glm::vec2& a, const glm::vec2& b, float t) {
     return a + t * (b - a);
 }
-

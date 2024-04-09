@@ -270,10 +270,10 @@ void WorldGenerator::populateBossRoom(Room& room)
 	room.obstacle_count += level.num_rooms_cleared;
 	room.enemy_count += level.num_rooms_cleared;
 
-	room.enemy_positions.insert(vec2(7.0f, 2.0f));
-	room.all_positions.insert(vec2(7.0f, 2.0f));
 	room.has_left_door = false;
 	room.has_right_door = false;
 	room.has_top_door = false;
 	room.has_bottom_door = false;
+	room.enemy_positions.insert(vec2(7.0f, 7.0f));
+	room.all_positions.insert(vec2(7.0f, 7.0f));
 }
