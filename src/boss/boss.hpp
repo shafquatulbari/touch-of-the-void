@@ -25,4 +25,7 @@ public:
 
 	vec2 lerp(const glm::vec2& a, const glm::vec2& b, float t);
 
+	bool isPositionWithinBounds(const vec2& position);
+	
+	vec2 clampPositionToBounds(const vec2& position);
 };

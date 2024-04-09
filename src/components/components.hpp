@@ -220,6 +220,9 @@ struct BossAI
 	float enemyCreationTimer = 0.0f; // Timer for enemy creation in the offensive state
 	float enemyCreationCooldown = 1.5f; // Cooldown for enemy creation
 	int totalSpawnedEnemies = 0; // New member to track the number of alive enemies
+	float zigzagTimer = 0.0f; // Timer to track when to switch directions
+	float zigzagInterval = 4.0f; // Interval in seconds between direction changes
+	glm::vec2 zigzagDirection = glm::vec2(50.0f, 50.0f); // Initial direction and speed
 };
 
 // Harmful collision component
