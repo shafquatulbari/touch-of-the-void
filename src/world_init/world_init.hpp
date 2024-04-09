@@ -5,9 +5,11 @@
 #include "render_system/render_system.hpp"
 
 // These are hard coded to the dimensions of the entity texture
-// player is 32x32px and is standard for most
 const float PLAYER_BB_WIDTH = 64.0f;
 const float PLAYER_BB_HEIGHT = 64.0f;
+
+const float CURSOR_BB_WIDTH = 32.0f;
+const float CURSOR_BB_HEIGHT = 32.0f;
 
 const float ENEMY_BB_WIDTH = 64.0f;
 const float ENEMY_BB_HEIGHT = 64.0f;
@@ -121,3 +123,5 @@ Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, Bo
 Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source);
 // boss missiles
 Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target);
+// create the custom cursor
+Entity createCursor(RenderSystem* render, vec2 position);

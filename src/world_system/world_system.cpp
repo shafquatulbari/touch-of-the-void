@@ -94,6 +94,8 @@ GLFWwindow* WorldSystem::create_window() {
 	glfwSetCursorPosCallback(window, cursor_pos_redirect);
 	glfwSetScrollCallback(window, scroll_pos_redirect);
 	glfwSetMouseButtonCallback(window, mouse_button_redirect);
+	//hide cursor
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	
 	//////////////////////////////////////
 	// Loading music and sounds with SDL
@@ -430,7 +432,7 @@ void WorldSystem::restart_game() {
 	// Reset darken_screen_factor on game restart
     ScreenState& screen = registry.screenStates.components[0];
     screen.darken_screen_factor = 0.0f; 
-
+	
 	// Remove all entities that we created
 	// All that have a motion, we could also iterate over all bug, eagles, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
@@ -1340,6 +1342,12 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 
 {
+	if (!registry.motions.has(cursor)) {
+		cursor = createCursor(renderer, mouse_position);
+	}
+	else {
+		registry.motions.get(cursor).position = mouse_position;
+	}
 	switch (game_state) 
 	{
 

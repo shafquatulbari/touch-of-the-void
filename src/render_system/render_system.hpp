@@ -66,6 +66,7 @@ class RenderSystem {
 		textures_path("ammo_placement_helper.png"),
 
 		textures_path("bullet_16x16.png"),
+		textures_path("custom_cursor_32x32.png"),
 
 		// ENEMIES TEXTURES
 		textures_path("enemy_spitter_64x64.png"),
