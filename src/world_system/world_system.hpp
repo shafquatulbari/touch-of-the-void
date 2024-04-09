@@ -60,6 +60,7 @@ private:
 
 	// OpenGL window handle
 	GLFWwindow* window;
+	Entity cursor; // custom cursor
 
 	// Game state
 	RenderSystem* renderer;

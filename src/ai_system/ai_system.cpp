@@ -418,18 +418,18 @@ void AISystem::handleBoidMovement(Entity entity, Motion& motion, float elapsed_m
     // Calculate group's center of mass for cohesion force
     float x_pos_avg = 0.0f, y_pos_avg = 0.0f;
     neighborCount = 0;
-    for (auto& otherAI : registry.ais.entities) {
-        if (otherAI == entity) continue; // Skip self
+    //for (auto& otherAI : registry.ais.entities) {
+    //    if (otherAI == entity) continue; // Skip self
 
-        Motion& otherMotion = registry.motions.get(otherAI);
-        float distance = length(motion.position - otherMotion.position);
+    //    Motion& otherMotion = registry.motions.get(otherAI);
+    //    float distance = length(motion.position - otherMotion.position);
 
-        if (distance < cohesionDistance) {
-            x_pos_avg += otherMotion.position.x;
-            y_pos_avg += otherMotion.position.y;
-            neighborCount++;
-        }
-    }
+    //    if (distance < cohesionDistance) {
+    //        x_pos_avg += otherMotion.position.x;
+    //        y_pos_avg += otherMotion.position.y;
+    //        neighborCount++;
+    //    }
+    //}
     // stay close to player
     if (distanceToPlayer > playerFollowDistance) {
         x_pos_avg += playerPosition.x;
@@ -638,12 +638,12 @@ void AISystem::handleFlameAI(Entity entity, Motion& motion, AI& ai, float elapse
     float playerAvoidanceDistance = 50.0f; // Distance to avoid player
 
     float alignmentForce = 1.f; // base alignment force
-    float alignmentDistance = 200.0f; // Distance to consider for alignment
+    float alignmentDistance = 50.0f; // Distance to consider for alignment
     float alignmentWeight = .5f; // alignment weight when combined with other forces
 
     float cohesionForce = 1.f; // base cohesion force
     float cohesionWeight = .5f; // cohesion weight when combined with other forces
-    float cohesionDistance = 200.0f; // Distance to consider for cohesion
+    float cohesionDistance = 50.0f; // Distance to consider for cohesion
     float playerFollowDistance = 300.0f; // Distance to follow the player
 
     float maxSpeed = 150.0f; // Adjust as needed

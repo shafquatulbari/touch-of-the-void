@@ -1500,3 +1500,22 @@ Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player
 
 	return entity;
 }
+
+Entity createCursor(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ CURSOR_BB_WIDTH, CURSOR_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::CURSOR,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::CURSOR });
+
+	return entity;
+}
