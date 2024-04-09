@@ -816,8 +816,9 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				} 
 			}
 			else if (!registry.ais.has(entity)) {
-				obs_motion.velocity = { - 2* obs_motion.velocity.x, -2 * obs_motion.velocity.y };
+				// obs_motion.velocity = { - 2* obs_motion.velocity.x, -2 * obs_motion.velocity.y };
 			}
+			bounce_back(entity_other, entity);
 		}
 		//Player projectile to boss
 		if (registry.projectiles.has(entity)) {

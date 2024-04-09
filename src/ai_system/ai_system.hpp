@@ -20,8 +20,6 @@ public:
 	std::vector<vec2> generateNeighbors(const vec2& position);
 
 	std::vector<vec2> findPathAStar(const vec2& start, const vec2& goal);
-
-	vec2 flockMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float playerAvoidanceDistance);
 	
 	void step(float elapsed_ms);
 
@@ -33,12 +31,10 @@ public:
 
 	void handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 
-	void createProjectileForEnemy(vec2 position, float angle, Entity source);
-
-	bool isPositionWithinBounds(const vec2& position);
-
 	vec2 limit(vec2 v, float max);
 
+	void handleBoidMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float separationForce, float separationWeight, float friendlyAvoidanceDistance, float obstacleAvoidanceDistance, float projectileAvoidanceDistance, float playerAvoidanceDistance, float alignmentForce, float alignmentDistance, float alignmentWeight, float cohesionForce, float cohesionWeight, float cohesionDistance, float playerFollowDistance, float maxSpeed, float forceWeight);
+	
 	void handleTurretAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);
 
 	void handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition);

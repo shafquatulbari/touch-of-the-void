@@ -962,7 +962,6 @@ void render_room(RenderSystem* render, Level& level)
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
 
-	room_to_render.obstacle_positions = { { 1, 7}, {2, 7}, {3, 7}, {4, 7}, {5, 7}, {6, 7}, {8, 7}, {9, 7}, {10, 7} };
 	for (auto& pos : room_to_render.obstacle_positions)
 	{
 		float x = x_origin + pos.x * game_window_block_size;
@@ -979,7 +978,6 @@ void render_room(RenderSystem* render, Level& level)
 	std::vector<AI::AIType> enemy_types = { AI::AIType::MELEE, AI::AIType::RANGED, AI::AIType::TURRET, AI::AIType::SHOTGUN, AI::AIType::ROCKET, AI::AIType::FLAMETHROWER };
 
 	// Create each enemy with their specified type
-	/*
 	for (auto& pos : room_to_render.enemy_positions) {
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
@@ -991,8 +989,6 @@ void render_room(RenderSystem* render, Level& level)
 			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], false);
 		}
 	}
-	*/
-	createEnemy(render, vec2(960.f, 300.f), 500.0f, AI::AIType::TURRET, false);
 
 	createWalls(render, room_to_render);
 }

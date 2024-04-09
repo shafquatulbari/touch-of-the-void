@@ -185,77 +185,6 @@ std::vector<vec2> AISystem::findPathAStar(const vec2& start, const vec2& goal) {
     return path;
 }
 
-// https://en.wikipedia.org/wiki/Boids
-//Reynolds, C. W. (1987). Flocks, herds and schools: A distributed behavioral model. 
-// In Proceedings of the 14th annual conference on Computer graphics and interactive techniques (pp. 25-34).
-// The Boids algorithm for flocking behavior
-vec2 AISystem::flockMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float playerAvoidanceDistance) {
-    // Accumulators for the flocking behaviors
-    vec2 alignment(0.0f, 0.0f); // Average direction
-    vec2 cohesion(0.0f, 0.0f);  // Center of mass
-    vec2 separation(0.0f, 0.0f); // Distance from each other
-
-    int neighborCount = 0; // Number of nearby entities
-    float perceptionRadius = 700.0f; // Adjusted for larger radius
-    float separationDistance = 50.0f; // Adjusted for closer proximity
-    float maxSpeed = 200.0f; // Adjusted for faster movement
-    float maxForce = 0.1f; // Lower force for smoother steering
-
-    // Loop through each entity to apply flocking behaviors
-    for (auto& otherEntity : registry.ais.entities) {
-        if (otherEntity == entity) continue; // Skip self
-
-        Motion& otherMotion = registry.motions.get(otherEntity);
-        float distance = length(motion.position - otherMotion.position);
-
-        if (distance > 0 && distance < perceptionRadius) {
-            // alignment: steer towards the average heading of local flockmates
-            alignment += otherMotion.velocity;
-            // cohesion: steer to move toward the average position of local flockmates
-            cohesion += otherMotion.position;
-            // separation: steer to avoid crowding local flockmates
-            if (distance < separationDistance) {
-                separation += (motion.position - otherMotion.position) / distance; // Weight by distance
-            }
-            neighborCount++;
-        }
-    }
-
-    // average the accumulators and calculate steering vectors
-    if (neighborCount > 0) {
-        alignment /= neighborCount;
-        cohesion /= neighborCount;
-        cohesion -= motion.position; // steering vector towards the center of mass
-        separation /= neighborCount;
-
-        // Normalize and apply max force
-        if (length(alignment) > 0) {
-            alignment = normalize(alignment) * maxSpeed - motion.velocity;
-            alignment = limit(alignment, maxForce);
-        }
-        if (length(cohesion) > 0) {
-            cohesion = normalize(cohesion) * maxSpeed - motion.velocity;
-            cohesion = limit(cohesion, maxForce);
-        }
-        if (length(separation) > 0) {
-            separation = normalize(separation) * maxSpeed - motion.velocity;
-            separation = limit(separation, maxForce);
-        }
-    }
-
-    // Combine behaviors with weighted factors
-    vec2 steer = alignment * 1.0f + cohesion * 1.0f + separation * 1.5f; // Increase separation weight slightly
-
-    // Limit the final steering force and apply it to current velocity
-    steer = limit(steer, maxForce);
-    motion.velocity += steer;
-
-    // Ensure the velocity stays within max speed
-    motion.velocity = limit(motion.velocity, maxSpeed);
-
-    return motion.velocity;
-}
-
 // Utility function to limit the magnitude of a vector to max
 vec2 AISystem::limit(vec2 v, float max) {
     if (length(v) > max) {
@@ -329,21 +258,6 @@ void AISystem::activeState(Entity entity, AI& ai, Motion& motion, float elapsed_
     default:
         break;
     }
-
-    // Ensure velocity is clamped to avoid exceeding max speed after applying avoidance
-    //float maxSpeed = 50.0f; // Adjust as needed
-    //if (glm::length(motion.velocity) > maxSpeed) {
-    //    motion.velocity = normalize(motion.velocity) * maxSpeed;
-    //}
-
-    // Calculate the next position based on current velocity
-    //vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
-
-    // Clamp the next position to ensure it's within bounds
-    //vec2 clampedPosition = clampPositionToBounds(nextPosition);
-
-    // Update the entity's position to the clamped position
-    //motion.position = clampedPosition;
 }
 
 void rotateTowardsPlayer(Motion& motion, const vec2& playerPosition, float viewThreshold, float turnSpeed, float maxTurnSpeed, float offset) {
@@ -420,172 +334,229 @@ void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapse
     }
 }
 
+// https://vanhunteradams.com/Pico/Animal_Movement/Boids-algorithm.html
+// Algorithm adapted from the above link
+void AISystem::handleBoidMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float separationForce, float separationWeight, float friendlyAvoidanceDistance, float obstacleAvoidanceDistance, float projectileAvoidanceDistance, float playerAvoidanceDistance, float alignmentForce, float alignmentDistance, float alignmentWeight, float cohesionForce, float cohesionWeight, float cohesionDistance, float playerFollowDistance, float maxSpeed, float forceWeight) {
+    // SEPERATION
+    vec2 separation(0.0f, 0.0f); // Separation accumulator
+    // Calculate separation force based on all motion entities
+    float close_dx = 0.0f, close_dy = 0.0f;
+    // avoid other ais
+    for (auto& otherEntity : registry.ais.entities) { // Could be optimized to consider only nearby entities or a subset
+        if (otherEntity == entity) continue; // Skip self
+
+        Motion& otherMotion = registry.motions.get(otherEntity);
+        float distance = length(motion.position - otherMotion.position);
+        // avoid other entities if too close
+        if (distance < friendlyAvoidanceDistance) {
+            close_dx += motion.position.x - otherMotion.position.x;
+            close_dy += motion.position.y - otherMotion.position.y;
+
+        }
+    }
+    // avoid obstacles
+    for (auto& otherEntity : registry.obstacles.entities) { // Could be optimized to consider only nearby entities or a subset
+        if (otherEntity == entity || registry.ais.has(otherEntity)) continue; // Skip self
+
+        Motion& otherMotion = registry.motions.get(otherEntity);
+        float distance = length(motion.position - otherMotion.position);
+        // avoid other entities if too close
+        if (distance < obstacleAvoidanceDistance) {
+            close_dx += motion.position.x - otherMotion.position.x;
+            close_dy += motion.position.y - otherMotion.position.y;
+        }
+    }
+    // avoid projectiles
+    for (auto& otherEntity : registry.projectiles.entities) { // Could be optimized to consider only nearby entities or a subset
+        if (otherEntity == entity || registry.ais.has(otherEntity)) continue; // Skip self
+
+        Motion& otherMotion = registry.motions.get(otherEntity);
+        float distance = length(motion.position - otherMotion.position);
+        // avoid other entities if too close
+        if (distance < projectileAvoidanceDistance) {
+            close_dx += motion.position.x - otherMotion.position.x;
+            close_dy += motion.position.y - otherMotion.position.y;
+        }
+    }
+    // avoid player
+    float distanceToPlayer = length(motion.position - playerPosition);
+    if (distanceToPlayer < playerAvoidanceDistance) {
+        close_dx += motion.position.x - playerPosition.x;
+        close_dy += motion.position.y - playerPosition.y;
+    }
+    separation.x += close_dx * separationForce;
+    separation.y -= close_dy * separationForce;
+
+
+    // ALLIGNMENT
+    vec2 alignment(0.0f, 0.0f); // Alignment accumulator
+    // Calculate group's average velocity for alignment force
+    float x_vel_avg = 0.0f, y_vel_avg = 0.0f;
+    int neighborCount = 0;
+    for (auto& otherAI : registry.ais.entities) {
+        if (otherAI == entity) continue; // Skip self
+
+        Motion& otherMotion = registry.motions.get(otherAI);
+        float distance = length(motion.position - otherMotion.position);
+
+        if (distance < alignmentDistance) {
+            x_vel_avg += otherMotion.velocity.x;
+            y_vel_avg += otherMotion.velocity.y;
+            neighborCount++;
+        }
+    }
+    if (neighborCount > 0) {
+        x_vel_avg /= neighborCount;
+        y_vel_avg /= neighborCount;
+        alignment.y += (y_vel_avg - motion.velocity.y) * alignmentForce;
+        alignment.x += (x_vel_avg - motion.velocity.x) * alignmentForce;
+    }
+
+
+    // COHESION
+    vec2 cohesion(0.0f, 0.0f); // Cohesion accumulator
+    // Calculate group's center of mass for cohesion force
+    float x_pos_avg = 0.0f, y_pos_avg = 0.0f;
+    neighborCount = 0;
+    for (auto& otherAI : registry.ais.entities) {
+        if (otherAI == entity) continue; // Skip self
+
+        Motion& otherMotion = registry.motions.get(otherAI);
+        float distance = length(motion.position - otherMotion.position);
+
+        if (distance < cohesionDistance) {
+            x_pos_avg += otherMotion.position.x;
+            y_pos_avg += otherMotion.position.y;
+            neighborCount++;
+        }
+    }
+    // stay close to player
+    if (distanceToPlayer > playerFollowDistance) {
+        x_pos_avg += playerPosition.x;
+        y_pos_avg += playerPosition.y;
+        neighborCount++;
+    }
+    if (neighborCount > 0) {
+        x_pos_avg /= neighborCount;
+        y_pos_avg /= neighborCount;
+        cohesion.x += (x_pos_avg - motion.position.x) * cohesionForce;
+        cohesion.y += (y_pos_avg - motion.position.y) * cohesionForce;
+    }
+
+    // Combine all behaviors with weighted factors
+    vec2 steer = (alignment * alignmentWeight) + (cohesion * cohesionWeight) + (separation * separationWeight);
+
+    // Turn towards the center of the world if near the edge
+    float topMargin = yMin + 2 * cellSize + halfCellSize;
+    float bottomMargin = yMax - 2 * cellSize - halfCellSize;
+    float leftMargin = xMin + 2 * cellSize + halfCellSize;
+    float rightMargin = xMax - 2 * cellSize - halfCellSize;
+
+    float turn_factor = 100.f;
+    if (motion.position.x <= leftMargin) {
+        steer.x += turn_factor;
+    }
+    else if (rightMargin <= motion.position.x) {
+        steer.x -= turn_factor;
+    }
+    if (motion.position.y <= topMargin) {
+        steer.y += turn_factor;
+    }
+    else if (bottomMargin <= motion.position.y) {
+        steer.y -= turn_factor;
+    }
+
+    motion.velocity += steer * forceWeight;
+    motion.velocity = limit(motion.velocity, maxSpeed);
+}
+
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float maxTurnSpeed = 3.f; // Maximum turn speed
+    float turnSpeed = 0.1f; // Turn acceleration
+    float viewThreshold = .5f; // Threshold for angle difference that determines when it is facing the player
+
     float shootingRange = 500.0f; // Distance to shoot at the player
-    float playerAvoidanceDistance = 150.0f; // Distance to keep from the player
 
-    vec2 avoidanceForce(0.0f);
-    float obstacleAvoidanceRadius = 50.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 50.0f; // radius within which to avoid projectiles
+    float separationForce = 1.0f; // base separation force
+    float separationWeight = 1.0f; // separation weight when combined with other forces
+    float friendlyAvoidanceDistance = 150.0f; // Distance to avoid other entities
+    float obstacleAvoidanceDistance = 50.0f; // Distance to avoid obstacles
+    float projectileAvoidanceDistance = 150.0f; // Distance to avoid projectiles
+    float playerAvoidanceDistance = 200.0f; // Distance to avoid player
 
-    Level& level = registry.levels.get(registry.levels.entities[0]);
-    Room& room = registry.rooms.get(level.rooms[level.current_room]);
-   
-    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+    float alignmentForce = 1.f; // base alignment force
+    float alignmentWeight = .5f; // alignment weight when combined with other forces
+    float alignmentDistance = 200.0f; // Distance to consider for alignment
 
-    // Calculate distance to the player
+    float cohesionForce = 1.f; // base cohesion force
+    float cohesionWeight = .5f; // cohesion weight when combined with other forces
+    float cohesionDistance = 200.0f; // Distance to consider for cohesion
+    float playerFollowDistance = 300.0f; // Distance to follow the player
+
+    float maxSpeed = 200.0f; // Adjust as needed
+    float forceWeight = 0.01f; // Overall weight for steering force
+
     float distanceToPlayer = length(playerPosition - motion.position);
 
-    float maxSpeed = 50.0f; // Adjust as needed
-
-    // Movement logic considering player's distance and projectiles
-    if (distanceToPlayer > playerAvoidanceDistance) {
-        // Move normally if within shooting range but outside avoidance distance
-        motion.velocity = flockMove;
-    }
-    else if (distanceToPlayer <= playerAvoidanceDistance) {
-        // Move away from the player if too close
-        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
-        motion.velocity = flockMove + awayFromPlayer;
-    }
-    
-    // Calculate the next position based on current velocity
-    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
-
-    // kept value 100, 64 is too small and enemies get stuck
-    // Check if the next position is within bounds
-    if (!isPositionWithinBounds(nextPosition)) {
-        // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
-            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
-        }
-        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
-            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
-        }
-    }
-
-    // Avoidance behavior for projectiles
-    for (auto& projectileEntity : registry.projectiles.entities) {
-        // check if player projectile 
-        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
-            Motion& projectileMotion = registry.motions.get(projectileEntity);
-            vec2 directionToProjectile = projectileMotion.position - motion.position;
-            float distanceToProjectile = length(directionToProjectile);
-
-            if (distanceToProjectile < projectileAvoidanceRadius) {
-                avoidanceForce -= (directionToProjectile / distanceToProjectile);
-            }
-        }
-        else {
-            break; // No need to check further projectiles if not player's
-        }
-        
-    }
-
-    // Apply avoidance force to the current motion
-    if (glm::length(avoidanceForce) > 0) {
-        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
-    }
-
-    // Clamp velocity to max speed
-    if (length(motion.velocity) > maxSpeed) {
-        motion.velocity = normalize(motion.velocity) * maxSpeed;
-    }
+    handleBoidMovement(entity, motion, elapsed_ms, playerPosition, separationForce, separationWeight, friendlyAvoidanceDistance, obstacleAvoidanceDistance, projectileAvoidanceDistance, playerAvoidanceDistance, alignmentForce, alignmentDistance, alignmentWeight, cohesionForce, cohesionWeight, cohesionDistance, playerFollowDistance, maxSpeed, forceWeight);
 
     // Shooting logic
-    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+    ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
+    if (lineOfSightClear(motion.position, playerPosition)) {
         vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+        rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, -M_PI / 2);
 
-        ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
-        if (ai.shootingCooldown <= 0) {
+        if (distanceToPlayer <= shootingRange && ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
             createEnemySniperProjectile(renderer, motion.position, shootingAngle, entity);
             ai.shootingCooldown = 1.f; // Reset cooldown
         }
-	}
+    }
+    else {
+        motion.turn_speed = 0.0f;
+    }
 }
 
 void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float maxTurnSpeed = 3.f; // Maximum turn speed
+    float turnSpeed = 0.1f; // Turn acceleration
+    float viewThreshold = .5f; // Threshold for angle difference that determines when it is facing the player
+
     float shootingRange = 250.0f; // Distance to shoot at the player
-    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
 
-    vec2 avoidanceForce(0.0f);
-    float obstacleAvoidanceRadius = 100.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
+    float separationForce = 1.0f; // base separation force
+    float separationWeight = 1.0f; // separation weight when combined with other forces
+    float friendlyAvoidanceDistance = 150.0f; // Distance to avoid other entities
+    float obstacleAvoidanceDistance = 50.0f; // Distance to avoid obstacles
+    float projectileAvoidanceDistance = 150.0f; // Distance to avoid projectiles
+    float playerAvoidanceDistance = 50.0f; // Distance to avoid player
 
-    Level& level = registry.levels.get(registry.levels.entities[0]);
-    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+    float alignmentForce = 1.f; // base alignment force
+    float alignmentWeight = .5f; // alignment weight when combined with other forces
+    float alignmentDistance = 200.0f; // Distance to consider for alignment
 
-    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+    float cohesionForce = 1.f; // base cohesion force
+    float cohesionWeight = .5f; // cohesion weight when combined with other forces
+    float cohesionDistance = 200.0f; // Distance to consider for cohesion
+    float playerFollowDistance = 100.f; // Distance to follow the player
 
-    // Calculate distance to the player
+    float maxSpeed = 250.0f; // Adjust as needed
+    float forceWeight = 0.01f; // Overall weight for steering force
+
     float distanceToPlayer = length(playerPosition - motion.position);
 
-    float maxSpeed = 100.0f; // Adjust as needed
-
     // Movement logic considering player's distance and projectiles
-    if (distanceToPlayer > playerAvoidanceDistance) {
-        // Move normally if within shooting range but outside avoidance distance
-        motion.velocity = flockMove;
-    }
-    else if (distanceToPlayer <= playerAvoidanceDistance) {
-        // Move away from the player if too close
-        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
-        motion.velocity = flockMove + awayFromPlayer;
-    }
-
-    // Calculate the next position based on current velocity
-    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
-
-    // kept value 100, 64 is too small and enemies get stuck
-    // Check if the next position is within bounds
-    if (!isPositionWithinBounds(nextPosition)) {
-        // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
-            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
-        }
-        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
-            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
-        }
-    }
-
-    // Avoidance behavior for projectiles
-    for (auto& projectileEntity : registry.projectiles.entities) {
-        // check if player projectile 
-        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
-            Motion& projectileMotion = registry.motions.get(projectileEntity);
-            vec2 directionToProjectile = projectileMotion.position - motion.position;
-            float distanceToProjectile = length(directionToProjectile);
-
-            if (distanceToProjectile < projectileAvoidanceRadius) {
-                avoidanceForce -= (directionToProjectile / distanceToProjectile);
-            }
-        }
-        else {
-            break; // No need to check further projectiles if not player's
-        }
-
-    }
-
-    // Apply avoidance force to the current motion
-    if (glm::length(avoidanceForce) > 0) {
-        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
-    }
-
-    // Clamp velocity to max speed
-    if (length(motion.velocity) > maxSpeed) {
-        motion.velocity = normalize(motion.velocity) * maxSpeed;
-    }
+    handleBoidMovement(entity, motion, elapsed_ms, playerPosition, separationForce, separationWeight, friendlyAvoidanceDistance, obstacleAvoidanceDistance, projectileAvoidanceDistance, playerAvoidanceDistance, alignmentForce, alignmentDistance, alignmentWeight, cohesionForce, cohesionWeight, cohesionDistance, playerFollowDistance, maxSpeed, forceWeight);
 
     // Shooting logic
-    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+    ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
+    if (lineOfSightClear(motion.position, playerPosition)) {
         vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x) - M_PI/2;
+        //motion.look_angle = atan2(direction.y, direction.x) - M_PI/2;
+        rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, - M_PI / 2);
 
-        ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
-        if (ai.shootingCooldown <= 0) {
+        if (distanceToPlayer <= shootingRange && ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
             for (int i = 0; i < 10; i++) {
@@ -594,87 +565,50 @@ void AISystem::handleShotgunAI(Entity entity, Motion& motion, AI& ai, float elap
             ai.shootingCooldown = 1.5f; // Reset cooldown
         }
     }
+    else {
+		motion.turn_speed = 0.0f;
+	}
 }
 
 void AISystem::handleRocketAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
-    float shootingRange = 250.0f; // Distance to shoot at the player
-    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
+    float maxTurnSpeed = 3.f; // Maximum turn speed
+    float turnSpeed = 0.1f; // Turn acceleration
+    float viewThreshold = .5f; // Threshold for angle difference that determines when it is facing the player
 
-    vec2 avoidanceForce(0.0f);
-    float obstacleAvoidanceRadius = 100.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
+    float shootingRange = 500.0f; // Distance to shoot at the player
 
-    Level& level = registry.levels.get(registry.levels.entities[0]);
-    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+    float separationForce = 1.0f; // base separation force
+    float separationWeight = 1.5f; // separation weight when combined with other forces
+    float friendlyAvoidanceDistance = 150.0f; // Distance to avoid other entities
+    float obstacleAvoidanceDistance = 100.0f; // Distance to avoid obstacles
+    float projectileAvoidanceDistance = 250.0f; // Distance to avoid projectiles
+    float playerAvoidanceDistance = 50.0f; // Distance to avoid player
 
-    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+    float alignmentForce = 1.f; // base alignment force
+    float alignmentDistance = 200.0f; // Distance to consider for alignment
+    float alignmentWeight = .5f; // alignment weight when combined with other forces
 
-    // Calculate distance to the player
+    float cohesionForce = 1.f; // base cohesion force
+    float cohesionWeight = .5f; // cohesion weight when combined with other forces
+    float cohesionDistance = 200.0f; // Distance to consider for cohesion
+    float playerFollowDistance = 300.0f; // Distance to follow the player
+
+    float maxSpeed = 50.0f; // Adjust as needed
+    float forceWeight = 0.01f; // Overall weight for steering force
+
     float distanceToPlayer = length(playerPosition - motion.position);
 
-    float maxSpeed = 100.0f; // Adjust as needed
-
     // Movement logic considering player's distance and projectiles
-    if (distanceToPlayer > playerAvoidanceDistance) {
-        // Move normally if within shooting range but outside avoidance distance
-        motion.velocity = flockMove;
-    }
-    else if (distanceToPlayer <= playerAvoidanceDistance) {
-        // Move away from the player if too close
-        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
-        motion.velocity = flockMove + awayFromPlayer;
-    }
-
-    // Calculate the next position based on current velocity
-    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
-
-    // kept value 100, 64 is too small and enemies get stuck
-    // Check if the next position is within bounds
-    if (!isPositionWithinBounds(nextPosition)) {
-        // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
-            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
-        }
-        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
-            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
-        }
-    }
-
-    // Avoidance behavior for projectiles
-    for (auto& projectileEntity : registry.projectiles.entities) {
-        // check if player projectile 
-        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
-            Motion& projectileMotion = registry.motions.get(projectileEntity);
-            vec2 directionToProjectile = projectileMotion.position - motion.position;
-            float distanceToProjectile = length(directionToProjectile);
-
-            if (distanceToProjectile < projectileAvoidanceRadius) {
-                avoidanceForce -= (directionToProjectile / distanceToProjectile);
-            }
-        }
-        else {
-            break; // No need to check further projectiles if not player's
-        }
-
-    }
-
-    // Apply avoidance force to the current motion
-    if (glm::length(avoidanceForce) > 0) {
-        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
-    }
-
-    // Clamp velocity to max speed
-    if (length(motion.velocity) > maxSpeed) {
-        motion.velocity = normalize(motion.velocity) * maxSpeed;
-    }
-
+    handleBoidMovement(entity, motion, elapsed_ms, playerPosition, separationForce, separationWeight, friendlyAvoidanceDistance, obstacleAvoidanceDistance, projectileAvoidanceDistance, playerAvoidanceDistance, alignmentForce, alignmentDistance, alignmentWeight, cohesionForce, cohesionWeight, cohesionDistance, playerFollowDistance, maxSpeed, forceWeight);
+    
     // Shooting logic
-    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+    ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
+    if (lineOfSightClear(motion.position, playerPosition)) {
         vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x) + M_PI / 2;
+        //motion.look_angle = atan2(direction.y, direction.x) + M_PI / 2;
+        rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, M_PI / 2);
 
-        ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
-        if (ai.shootingCooldown <= 0) {
+        if (distanceToPlayer <= shootingRange && ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
             for (int i = 0; i < 5; i++) {
@@ -683,92 +617,61 @@ void AISystem::handleRocketAI(Entity entity, Motion& motion, AI& ai, float elaps
             ai.shootingCooldown = 1.5f; // Reset cooldown
         }
     }
+    else {
+        motion.turn_speed = 0.0f;
+	
+    }
 }
 
 void AISystem::handleFlameAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float maxTurnSpeed = 3.f; // Maximum turn speed
+    float turnSpeed = 0.1f; // Turn acceleration
+    float viewThreshold = .5f; // Threshold for angle difference that determines when it is facing the player
+
     float shootingRange = 250.0f; // Distance to shoot at the player
-    float playerAvoidanceDistance = 50.0f; // Distance to keep from the player
 
-    vec2 avoidanceForce(0.0f);
-    float obstacleAvoidanceRadius = 100.0f; // radius within which to avoid obstacles
-    float projectileAvoidanceRadius = 250.0f; // radius within which to avoid projectiles
+    float separationForce = 1.0f; // base separation force
+    float separationWeight = 1.0f; // separation weight when combined with other forces
+    float friendlyAvoidanceDistance = 150.0f; // Distance to avoid other entities
+    float obstacleAvoidanceDistance = 100.0f; // Distance to avoid obstacles
+    float projectileAvoidanceDistance = 250.0f; // Distance to avoid projectiles
+    float playerAvoidanceDistance = 50.0f; // Distance to avoid player
 
-    Level& level = registry.levels.get(registry.levels.entities[0]);
-    Room& room = registry.rooms.get(level.rooms[level.current_room]);
+    float alignmentForce = 1.f; // base alignment force
+    float alignmentDistance = 200.0f; // Distance to consider for alignment
+    float alignmentWeight = .5f; // alignment weight when combined with other forces
 
-    vec2 flockMove = flockMovement(entity, motion, elapsed_ms, playerPosition, playerAvoidanceDistance);
+    float cohesionForce = 1.f; // base cohesion force
+    float cohesionWeight = .5f; // cohesion weight when combined with other forces
+    float cohesionDistance = 200.0f; // Distance to consider for cohesion
+    float playerFollowDistance = 300.0f; // Distance to follow the player
 
-    // Calculate distance to the player
+    float maxSpeed = 150.0f; // Adjust as needed
+    float forceWeight = 0.01f; // Overall weight for steering force
+
     float distanceToPlayer = length(playerPosition - motion.position);
 
-    float maxSpeed = 100.0f; // Adjust as needed
-
     // Movement logic considering player's distance and projectiles
-    if (distanceToPlayer > playerAvoidanceDistance) {
-        // Move normally if within shooting range but outside avoidance distance
-        motion.velocity = flockMove;
-    }
-    else if (distanceToPlayer <= playerAvoidanceDistance) {
-        // Move away from the player if too close
-        vec2 awayFromPlayer = normalize(motion.position - playerPosition) * 100.0f; // Strength of repulsion
-        motion.velocity = flockMove + awayFromPlayer;
-    }
-
-    // Calculate the next position based on current velocity
-    vec2 nextPosition = motion.position + (motion.velocity * elapsed_ms / 1000.0f);
-
-    // kept value 100, 64 is too small and enemies get stuck
-    // Check if the next position is within bounds
-    if (!isPositionWithinBounds(nextPosition)) {
-        // Adjust velocity to bounce off the wall
-        if (nextPosition.x <= xMin + (cellSize + halfCellSize) || nextPosition.x >= xMax - (cellSize + halfCellSize)) {
-            motion.velocity.x *= -1; // Invert X component if hitting left or right wall
-        }
-        if (nextPosition.y <= yMin + (cellSize + halfCellSize) || nextPosition.y >= yMax - (cellSize + halfCellSize)) {
-            motion.velocity.y *= -1; // Invert Y component if hitting top or bottom wall
-        }
-    }
-
-    // Avoidance behavior for projectiles
-    for (auto& projectileEntity : registry.projectiles.entities) {
-        // check if player projectile 
-        if (registry.projectiles.get(projectileEntity).source == registry.players.entities[0]) {
-            Motion& projectileMotion = registry.motions.get(projectileEntity);
-            vec2 directionToProjectile = projectileMotion.position - motion.position;
-            float distanceToProjectile = length(directionToProjectile);
-
-            if (distanceToProjectile < projectileAvoidanceRadius) {
-                avoidanceForce -= (directionToProjectile / distanceToProjectile);
-            }
-        }
-        else {
-            break; // No need to check further projectiles if not player's
-        }
-
-    }
-
-    // Apply avoidance force to the current motion
-    if (glm::length(avoidanceForce) > 0) {
-        motion.velocity += normalize(avoidanceForce) * (100.0f * elapsed_ms);
-    }
-
-    // Clamp velocity to max speed
-    if (length(motion.velocity) > maxSpeed) {
-        motion.velocity = normalize(motion.velocity) * maxSpeed;
-    }
+    handleBoidMovement(entity, motion, elapsed_ms, playerPosition, separationForce, separationWeight, friendlyAvoidanceDistance, obstacleAvoidanceDistance, projectileAvoidanceDistance, playerAvoidanceDistance, alignmentForce, alignmentDistance, alignmentWeight, cohesionForce, cohesionWeight, cohesionDistance, playerFollowDistance, maxSpeed, forceWeight);
 
     // Shooting logic
-    if (distanceToPlayer <= shootingRange && lineOfSightClear(motion.position, playerPosition)) {
+    ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
+    if (lineOfSightClear(motion.position, playerPosition)) {
         vec2 direction = normalize(playerPosition - motion.position);
-        motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+        //motion.look_angle = atan2(direction.y, direction.x) - M_PI / 2;
+        // too short need to add pi/4
+        // pi/2 + pi/4 = 3pi/4
+        rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, -3 * M_PI / 4);
 
-        ai.shootingCooldown -= elapsed_ms / 1000.f; // Convert milliseconds to seconds
-        if (ai.shootingCooldown <= 0) {
+        if (distanceToPlayer <= shootingRange && ai.shootingCooldown <= 0) {
             vec2 shootingDirection = normalize(playerPosition - motion.position);
             float shootingAngle = atan2(shootingDirection.y, shootingDirection.x);
             createEnemyFlamethrowerProjectile(renderer, motion.position, shootingAngle, entity);
             ai.shootingCooldown = 0.05f; // Reset cooldown
         }
+    }
+    else {
+        motion.turn_speed = 0.0f;
     }
 }
 
@@ -778,7 +681,6 @@ void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elaps
     float viewThreshold = .5f; // Threshold for angle difference
     // Check for line of sight to the player
     if (lineOfSightClear(motion.position, playerPosition)) {
-        std::cout << "Player in line of sight" << std::endl;
         // Rotate turret to face player - Calculate the angle between the turret and the player
         rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, M_PI / 2);
 
@@ -792,28 +694,6 @@ void AISystem::handleTurretAI(Entity entity, Motion& motion, AI& ai, float elaps
         }
     }
     else {
-        std::cout << "Player not in line of sight" << std::endl;
         motion.turn_speed = 0.0f; // Stop turning if player is not in line of sight
     }
-}
-
-bool AISystem::isPositionWithinBounds(const vec2& position) {
-    // kept value 100, 64 is too small and enemies get stuck
-    // Using the game world boundaries 
-    float leftBound = xMin + (cellSize + halfCellSize);
-    float rightBound = xMax - (cellSize + halfCellSize);
-    float topBound = yMin + (cellSize + halfCellSize);
-    float bottomBound = yMax - (cellSize + halfCellSize);
-
-    // Check if the position is within bounds
-    return position.x >= leftBound && position.x <= rightBound &&
-        position.y >= topBound && position.y <= bottomBound;
-}
-
-// Create projectile for enemy
-void AISystem::createProjectileForEnemy(vec2 position, float angle, Entity source) {
-    // Adjust angle, position, and possibly texture for the enemy's projectiles
-    float rng = 0.0f; // Assuming no randomness for enemy shots, adjust as needed
-    float fire_length = 0.0f; // Not used for enemies in this context
-    createProjectile(renderer, position, angle, rng, fire_length, source);
 }
