@@ -53,6 +53,8 @@ private:
 	void updateScoreboard(int score, float multiplier, int deltaScore);
 	void createWeaponMenu(Player& player);
 	void createTutorialText();
+	void createFirstTutorialRoomText();
+	void createSecondTutorialRoomText();
 	void updateWeaponMenu(Player& player);
 public:
 	void init(RenderSystem* renderer, Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, Level& current_level);

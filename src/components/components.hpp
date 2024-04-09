@@ -41,6 +41,8 @@ struct Level {
 	int num_rooms_until_boss = 3;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
+	// number of unique rooms the player has visited
+	int num_rooms_visited = 0;
 };
 
 struct vec2comp {
@@ -93,6 +95,8 @@ struct Room {
 	bool has_right_door = false;
 	bool has_top_door = false;
 	bool has_bottom_door = false;
+
+	bool is_tutorial_room = false;
 };
 
 // Player component
@@ -138,7 +142,6 @@ struct Player
 	bool damage_boost = false;
 	bool defense_boost = false; // only makes shield stronger, not health at the moment
 	bool accuracy_boost = false;
-
 	// Constructor to set the initial values
 	Player() : 
 		max_ammo_count(weapon_stats[weapon_type].magazine_size),

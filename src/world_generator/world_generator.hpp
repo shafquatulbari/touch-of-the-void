@@ -10,11 +10,11 @@ public:
 
 	void populateFirstRoom(Room& room);
 
-	void populateTutorialRoomOne(Room& room);
+	void populateTutorialRoom(Room& room);
 
 	void generateTutorialRoomOne(Room& room, Level& level);
 
-	void generateFirstRoom(Room& room, Level& level);
+	void generateTutorialRoomTwo(Room& room, Level& level);
 
 	void generateNewRoom(Room& room, Level& level, bool is_boss_room);
 

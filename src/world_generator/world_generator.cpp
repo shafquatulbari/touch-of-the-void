@@ -105,19 +105,20 @@ void WorldGenerator::populateFirstRoom(Room& room)
 
 }
 
-void WorldGenerator::populateTutorialRoomOne(Room& room)
+void WorldGenerator::populateTutorialRoom(Room& room)
 {
 	room.has_left_door = true;
 	room.has_top_door = true;
 	room.has_bottom_door = true;
 	room.has_right_door = true;
+	room.is_tutorial_room = true;
 }
 
 void WorldGenerator::generateTutorialRoomOne(Room& room, Level& level)
 {
 	room.is_cleared = true;
 	room.is_visited = true;
-	populateTutorialRoomOne(room);
+	populateTutorialRoom(room);
 
 	auto left_room = Entity();
 	auto right_room = Entity();
@@ -134,9 +135,7 @@ void WorldGenerator::generateTutorialRoomOne(Room& room, Level& level)
 	level.rooms.emplace(std::pair<int, int>(0, -1), bottom_room);
 
 }
-
-// Room with doors on all 4 sides and a single enemy
-void WorldGenerator::generateFirstRoom(Room& room, Level& level)
+void WorldGenerator::generateTutorialRoomTwo(Room& room, Level& level)
 {
 	room.is_cleared = false;
 	room.is_visited = true;
@@ -145,7 +144,7 @@ void WorldGenerator::generateFirstRoom(Room& room, Level& level)
 	std::pair<int, int> right_room_coords = std::pair<int, int>(current_room_coords.first + 1, current_room_coords.second);
 	std::pair<int, int> top_room_coords = std::pair<int, int>(current_room_coords.first, current_room_coords.second + 1);
 	std::pair<int, int> bottom_room_coords = std::pair<int, int>(current_room_coords.first, current_room_coords.second - 1);
-	populateFirstRoom(room);
+	populateTutorialRoom(room);
 	auto left_room = Entity();
 	auto right_room = Entity();
 	auto top_room = Entity();
@@ -155,17 +154,15 @@ void WorldGenerator::generateFirstRoom(Room& room, Level& level)
 	registry.rooms.emplace(right_room);
 	registry.rooms.emplace(top_room);
 	registry.rooms.emplace(bottom_room);
-
-	// update the level with the new rooms, starting room is 0,0
-	level.rooms.emplace(left_room_coords, left_room);
 	level.rooms.emplace(right_room_coords, right_room);
+	level.rooms.emplace(left_room_coords, left_room);
 	level.rooms.emplace(top_room_coords, top_room);
 	level.rooms.emplace(bottom_room_coords, bottom_room);
+
 }
 
 void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room)
 {
-
 	// find neighbours if they exist
 	// if we should, generate a new room and add it to the level
 	std::pair<int, int> current_room_coords = level.current_room;
@@ -255,62 +252,13 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 		populateBossRoom(current_room);
 		
 	} else if (level.num_rooms_cleared == 0) {
-		populateFirstRoom(current_room); // make first room easy 
+			populateFirstRoom(current_room); // make first room easy 
 	}
 	else {
 		populateRoom(current_room);
 	}
-	
-
-
+	level.num_rooms_visited++;
 }
-
-
-/*
-void WorldGenerator::populateBossRoom(Room& room)
-{
-	// space is effectively 15x15 since 480/32 = 30 
-	room.is_cleared = false;
-
-	std::default_random_engine rng = std::default_random_engine(std::random_device()());
-
-	// number between 2..12 (don't spawn obstacles too close to where we start)
-	std::uniform_real_distribution<float> position_uniform_dist(2, 12);
-
-	// randomize number of enemies/obstacles per room
-	std::uniform_real_distribution<float> num_positions_uniform_dist(7, 9);
-	room.obstacle_count = num_positions_uniform_dist(rng);
-	room.enemy_count = num_positions_uniform_dist(rng);
-	
-	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
-	Level& level = registry.levels.get(registry.levels.entities[0]);
-	room.obstacle_count += level.num_rooms_cleared;
-	room.enemy_count += level.num_rooms_cleared;
-
-	while (room.obstacle_positions.size() < room.obstacle_count) {
-		int rand_x = std::rint(position_uniform_dist(rng));
-		int rand_y = std::rint(position_uniform_dist(rng));
-		vec2 position = vec2(rand_x, rand_y);
-		if (!shouldAvoidPosition(position)) {
-			room.obstacle_positions.insert(vec2(rand_x, rand_y));
-			room.all_positions.insert(vec2(rand_x, rand_y));
-		}
-	}
-
-	while (room.enemy_positions.size() < room.enemy_count) {
-		int rand_x = std::rint(position_uniform_dist(rng));
-		int rand_y = std::rint(position_uniform_dist(rng));
-		vec2 position = vec2(rand_x, rand_y);
-		// if something is not already in this position and it's not too close to the middle, add it
-		if (!room.all_positions.count(position) == 1 && !shouldAvoidPosition(position)) {
-			room.enemy_positions.insert(vec2(rand_x, rand_y));
-			room.all_positions.insert(vec2(rand_x, rand_y));
-		}
-
-	}
-
-}
-*/
 void WorldGenerator::populateBossRoom(Room& room)
 {
 	// space is effectively 15x15 since 480/32 = 30 

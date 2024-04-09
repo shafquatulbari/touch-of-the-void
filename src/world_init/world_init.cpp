@@ -938,20 +938,25 @@ void render_room(RenderSystem* render, Level& level)
 	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
 	if (!current_room.is_visited) {
+		level.num_rooms_visited++;
 		// set the room to visited
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
 
-		if (level.num_rooms_until_boss <= 0)
-		{
+		if (level.num_rooms_visited == 1) {
+			// second tutorial room
+			world_generator.generateTutorialRoomTwo(current_room, level);
+		}
+		else if (level.num_rooms_until_boss <= 0) {
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
-		}
-		else
+		} else
 		{
 			world_generator.generateNewRoom(current_room, level, false);
 		}
+		// have seen both tutorial rooms
+		
 		
 	} else {
 		std::cout << "revisiting room!" << std::endl;
@@ -1261,7 +1266,6 @@ Entity createLevel(RenderSystem* render)
 
 	// modifies Room component using pointer to Room component
 	world_generator.generateTutorialRoomOne(starting_room, level);
-
 	render_room(render, level);
 	return entity;
 }
