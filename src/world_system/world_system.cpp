@@ -1077,29 +1077,6 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			{
 				registry.levels.get(level).num_rooms_until_boss--;
 				registry.levels.get(level).num_rooms_cleared++;
-
-				// create doors to rooms if they exist
-				std::pair<int, int> cur_room_coords = registry.levels.get(level).current_room;
-				std::pair<int, int> top_room_coords = { cur_room_coords.first, cur_room_coords.second + 1 };
-				std::pair<int, int> bot_room_coords = { cur_room_coords.first, cur_room_coords.second - 1 };
-				std::pair<int, int> left_room_coords = { cur_room_coords.first - 1, cur_room_coords.second };
-				std::pair<int, int> right_room_coords = { cur_room_coords.first + 1, cur_room_coords.second };
-
-				if (registry.levels.get(level).rooms.count(top_room_coords) > 0) {
-					current_room.has_top_door = true;
-				}
-				if (registry.levels.get(level).rooms.count(bot_room_coords) > 0) {
-					current_room.has_bottom_door = true;
-					
-				}
-				if (registry.levels.get(level).rooms.count(left_room_coords) > 0) {
-					current_room.has_left_door = true;
-				}
-				if (registry.levels.get(level).rooms.count(right_room_coords) > 0) {
-					current_room.has_right_door = true;
-				}
-				
-
 				// tear down existing walls
 				clearExistingWalls();
 				// re-render walls with doors

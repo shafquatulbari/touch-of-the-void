@@ -188,7 +188,7 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(left_room_coords) > 0 && registry.rooms.get(level.rooms[left_room_coords]).is_visited)
 	{
-		/*current_room_pointer->has_left_door = true;*/
+		current_room_pointer->has_left_door = true;
 		// remove for M3
 	}
 	else if (left_room_rng == 0) {
@@ -197,13 +197,13 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 			level.rooms.emplace(left_room_coords, left_room_entity);
 			// retrieve current room again (old reference destroyed at this point)
 			current_room_pointer = &registry.rooms.get(current_room_entity);
+			current_room_pointer->has_left_door = true;
 	}
 
 
 	if (level.rooms.count(right_room_coords) > 0 && registry.rooms.get(level.rooms[right_room_coords]).is_visited)
 	{
-		/*current_room_pointer->has_right_door = true;*/
-		// remove for M3
+		current_room_pointer->has_right_door = true;
 	}
 	else if (right_room_rng == 0) {
 			// generate a new room
@@ -213,14 +213,14 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 			// retrieve current room again (old reference destroyed at this point)
 			current_room_pointer = &registry.rooms.get(current_room_entity);
+			current_room_pointer->has_right_door = true;
 	}
 
 
 
 	if (level.rooms.count(top_room_coords) > 0 && registry.rooms.get(level.rooms[top_room_coords]).is_visited)
 	{
-		/*current_room_pointer->has_top_door = true;*/
-		// remove for M3
+		current_room_pointer->has_top_door = true;
 	}
 	else if (top_room_rng == 0) {
 			// generate a new room
@@ -229,14 +229,13 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 			level.rooms.emplace(top_room_coords, top_room_entity);
 			// retrieve current room again (old reference destroyed at this point)
 			current_room_pointer = &registry.rooms.get(current_room_entity);
+			current_room_pointer->has_top_door = true;
 	}
 
 
 	if (level.rooms.count(bottom_room_coords) > 0 && registry.rooms.get(level.rooms[bottom_room_coords]).is_visited)
 	{
-		
-		/*current_room_pointer->has_bottom_door = true;*/
-		// remove for M3
+		current_room_pointer->has_bottom_door = true;
 	}
 	else if (bot_room_rng == 0) {
 		// generate a new room
@@ -244,6 +243,7 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 		Room& new_bottom_room = registry.rooms.emplace(bottom_room_entity);
 		level.rooms.emplace(bottom_room_coords, bottom_room_entity);
 		current_room_pointer = &registry.rooms.get(current_room_entity);
+		current_room_pointer->has_bottom_door = true;
 	}
 
 	Room& current_room = registry.rooms.get(current_room_entity);
@@ -272,5 +272,8 @@ void WorldGenerator::populateBossRoom(Room& room)
 
 	room.enemy_positions.insert(vec2(7.0f, 2.0f));
 	room.all_positions.insert(vec2(7.0f, 2.0f));
-
+	room.has_left_door = false;
+	room.has_right_door = false;
+	room.has_top_door = false;
+	room.has_bottom_door = false;
 }
