@@ -87,6 +87,7 @@ class RenderSystem {
 		textures_path("lvl1_full_bottom_wall_open_door_960x64.png"),
 		textures_path("lvl1_full_left_wall_open_door_832x64.png"),
 		textures_path("lvl1_full_wall_no_door_832x64.png"),
+		textures_path("lvl1_full_wall_no_door_64x832.png"),
 		textures_path("lvl1_obstacle_64x64.png"),
 		textures_path("lvl1_wall_bottom_corner_64x64.png"),
 		textures_path("lvl1_wall_end_64x64.png"),

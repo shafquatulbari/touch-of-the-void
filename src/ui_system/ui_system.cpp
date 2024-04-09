@@ -191,6 +191,75 @@ void UISystem::createScoreboard(int score, float multiplier) {
 	multiplier_text = createText(renderer, multiplierText, { multiplier_x, multiplier_y }, 1.0f, COLOR_BLACK, TextAlignment::LEFT);
 }
 
+const int window_center_px_x = window_width_px / 2;
+const int window_center_px_y = window_height_px / 2;
+// game window top left x
+float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
+// game window top left y
+float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
+void UISystem::createTutorialText() {
+	// movement
+	Entity moveText = createText(renderer, "Move", { x_origin + (1 * 64), y_origin + (2 * 64)}, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity moveCtrlsText = createText(renderer, "[W] [A] [S] [D]", { x_origin + (1 * 64), y_origin + (3 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	Entity nextWeaponText = createText(renderer, "Next Weapon", { x_origin + (1 * 64), y_origin + (7 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity nextWeaponCtrlsText = createText(renderer, "[E] OR Scroll Down", { x_origin + (1 * 64), y_origin + (8 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	Entity lastWeaponText = createText(renderer, "Last Weapon", { x_origin + (1 * 64) + 10, y_origin + (12 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity lastWeaponCtrlsText = createText(renderer, "[Q] OR Scroll Up", { x_origin + (1 * 64) + 10, y_origin + (13 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	Entity shootText = createText(renderer, "Shoot", { x_origin + (13 * 64) + 10, y_origin + (2 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+	Entity shootCtrlsText = createText(renderer, "Left Click", { x_origin + (13 * 64) + 10, y_origin + (3 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+
+	Entity reloadText = createText(renderer, "Reload", { x_origin + (13 * 64), y_origin + (12 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+	Entity reloadCtrlsText = createText(renderer, "[R]", { x_origin + (13 * 64), y_origin + (13 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+	registry.tutorialOnlys.emplace(moveText);
+	registry.tutorialOnlys.emplace(moveCtrlsText);
+	registry.tutorialOnlys.emplace(reloadText);
+	registry.tutorialOnlys.emplace(reloadCtrlsText);
+	registry.tutorialOnlys.emplace(nextWeaponText);
+	registry.tutorialOnlys.emplace(nextWeaponCtrlsText);
+	registry.tutorialOnlys.emplace(shootText);
+	registry.tutorialOnlys.emplace(shootCtrlsText);
+	registry.tutorialOnlys.emplace(lastWeaponText);
+	registry.tutorialOnlys.emplace(lastWeaponCtrlsText);
+}
+void UISystem::createFirstTutorialRoomText() {
+	// movement
+	Entity moveText = createText(renderer, "Move", { x_origin + (1 * 64), y_origin + (2 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity moveCtrlsText = createText(renderer, "[W] [A] [S] [D]", { x_origin + (1 * 64), y_origin + (3 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	Entity aimText = createText(renderer, "Aim", { x_origin + (1 * 64) + 10, y_origin + (12 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity aimCtrlsText = createText(renderer, "Move Mouse", { x_origin + (1 * 64) + 10, y_origin + (13 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	Entity shootText = createText(renderer, "Shoot", { x_origin + (13 * 64) + 10, y_origin + (2 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+	Entity shootCtrlsText = createText(renderer, "Left Click", { x_origin + (13 * 64) + 10, y_origin + (3 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+
+	Entity reloadText = createText(renderer, "Reload", { x_origin + (13 * 64), y_origin + (12 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+	Entity reloadCtrlsText = createText(renderer, "[R]", { x_origin + (13 * 64), y_origin + (13 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::RIGHT);
+	registry.tutorialOnlys.emplace(moveText);
+	registry.tutorialOnlys.emplace(moveCtrlsText);
+	registry.tutorialOnlys.emplace(reloadText);
+	registry.tutorialOnlys.emplace(reloadCtrlsText);
+	registry.tutorialOnlys.emplace(shootText);
+	registry.tutorialOnlys.emplace(shootCtrlsText);
+	registry.tutorialOnlys.emplace(aimText);
+	registry.tutorialOnlys.emplace(aimCtrlsText);
+}
+void UISystem::createSecondTutorialRoomText() {
+	
+	Entity nextWeaponText = createText(renderer, "Next Weapon", { x_origin + (1 * 64), y_origin + (2 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity nextWeaponCtrlsText = createText(renderer, "[E] OR Scroll Down", { x_origin + (1 * 64), y_origin + (3 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	Entity lastWeaponText = createText(renderer, "Last Weapon", { x_origin + (1 * 64) + 10, y_origin + (12 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+	Entity lastWeaponCtrlsText = createText(renderer, "[Q] OR Scroll Up", { x_origin + (1 * 64) + 10, y_origin + (13 * 64) }, 1.0f, COLOR_BLUE, TextAlignment::LEFT);
+
+	registry.tutorialOnlys.emplace(nextWeaponText);
+	registry.tutorialOnlys.emplace(nextWeaponCtrlsText);
+	registry.tutorialOnlys.emplace(lastWeaponText);
+	registry.tutorialOnlys.emplace(lastWeaponCtrlsText);
+}
+
 void UISystem::updateScoreboard(int score, float multiplier, int deltaScore) {
 	// Update Score
 	std::string scoreText = std::to_string(score);
@@ -428,6 +497,7 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 	createPlayerStatus(player_health, player_shield);
 	createScoreboard(score, multiplier);
 	createWeaponMenu(player);
+	createFirstTutorialRoomText();
 }
 
 void UISystem::update(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore, bool showFPS, Level& level)
@@ -464,7 +534,7 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 
 }
 
-void UISystem::reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore) {
+void UISystem::reinit(Health& player_health, Shield& player_shield, Player& player, int score, float multiplier, int deltaScore, Level& level) {
 	// remove all components of the UI for safety
 	registry.remove_all_components_of(player_health_text);
 	registry.remove_all_components_of(player_max_health_text);
@@ -485,4 +555,17 @@ void UISystem::reinit(Health& player_health, Shield& player_shield, Player& play
 	createPlayerStatus(player_health, player_shield);
 	createScoreboard(score, multiplier);
 	createWeaponMenu(player);
+	
+	// if re-entering tutorial room (0,0).
+	bool is_tutorial_room = registry.rooms.get(level.rooms[level.current_room]).is_tutorial_room;
+	if (is_tutorial_room) {
+		if (level.current_room.first == 0 && level.current_room.second == 0) {
+			createFirstTutorialRoomText();
+		}
+		else {
+			createSecondTutorialRoomText();
+		}
+		
+	}
+	
 }

@@ -815,6 +815,7 @@ void createWalls(RenderSystem* render, Room& room)
 	float y_max = y_mid + y_delta;
 	float y_min = y_mid - y_delta;
 
+	bool cleared_room = room.enemy_count == 0;
 	// top wall
 	Motion& top_motion = registry.motions.emplace(topWall);
 	top_motion.position = vec2({ x_mid, y_min });
@@ -822,23 +823,32 @@ void createWalls(RenderSystem* render, Room& room)
 
 	registry.obstacles.emplace(topWall);
 	registry.obstacles.get(topWall).is_wall = true;
+	TEXTURE_ASSET_ID top_wall_texture;
+	if (room.has_top_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			top_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto top_door = Entity();
+			Motion& top_door_motion = registry.motions.emplace(top_door);
+			top_door_motion.position = { x_mid, y_min };
+			top_door_motion.scale = { 64,64 };
+			Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
+			top_door_obstacle.is_passable = true;
+			top_door_obstacle.is_top_door = true;
+		}
+		else {
+			top_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		top_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR;
+	}
 	registry.renderRequests.insert(
 		topWall,
-		{ room.has_top_door ? TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ top_wall_texture,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
-	// create the door if room should have one
-	if (room.has_top_door) {
-		auto top_door = Entity();
-		Motion& top_door_motion = registry.motions.emplace(top_door);
-		top_door_motion.position = { x_mid, y_min };
-		top_door_motion.scale = { 64,64 };
-		Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
-		top_door_obstacle.is_passable = true;
-		top_door_obstacle.is_top_door = true;
-	}
 
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
@@ -846,24 +856,34 @@ void createWalls(RenderSystem* render, Room& room)
 	bottom_motion.scale = vec2({ HORIZONTAL_WALL_BB_WIDTH, HORIZONTAL_WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomWall);
+	TEXTURE_ASSET_ID bottom_wall_texture;
+	if (room.has_bottom_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			bottom_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto bottom_door = Entity();
+			Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
+			bottom_door_motion.position = { x_mid, y_max };
+			bottom_door_motion.scale = { 64,64 };
+			Obstacle& bottom_door_obstacle = registry.obstacles.emplace(bottom_door);
+			bottom_door_obstacle.is_passable = true;
+			bottom_door_obstacle.is_bottom_door = true;
+		}
+		else {
+			bottom_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		bottom_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR;
+	}
 	registry.renderRequests.insert(
 		bottomWall,
-		{ room.has_bottom_door ? TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{bottom_wall_texture,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
 	registry.obstacles.get(bottomWall).is_wall = true;
 
-	if (room.has_bottom_door) {
-		auto bottom_door = Entity();
-		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
-		bottom_door_motion.position = { x_mid, y_max };
-		bottom_door_motion.scale = { 64,64 };
-		Obstacle& bottom_door_obstacle = registry.obstacles.emplace(bottom_door);
-		bottom_door_obstacle.is_passable = true;
-		bottom_door_obstacle.is_bottom_door = true;
-	}
 	// player can pass through the door if it exists
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
@@ -872,23 +892,32 @@ void createWalls(RenderSystem* render, Room& room)
 
 	registry.obstacles.emplace(leftWall);
 	registry.obstacles.get(leftWall).is_wall = true;
-
+	TEXTURE_ASSET_ID left_wall_texture;
+	if (room.has_left_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			left_wall_texture = TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto left_door = Entity();
+			Motion& left_door_motion = registry.motions.emplace(left_door);
+			left_door_motion.position = { x_min, y_mid };
+			left_door_motion.scale = { 64,64 };
+			Obstacle& left_door_obstacle = registry.obstacles.emplace(left_door);
+			left_door_obstacle.is_passable = true;
+			left_door_obstacle.is_left_door = true;
+		}
+		else {
+			left_wall_texture = TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		left_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR_VERTICAL;
+	}
 	registry.renderRequests.insert(
 		leftWall,
-		{ room.has_left_door ? TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
+		{ left_wall_texture ,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
-	if (room.has_left_door) {
-		auto left_door = Entity();
-		Motion& left_door_motion = registry.motions.emplace(left_door);
-		left_door_motion.position = { x_min, y_mid };
-		left_door_motion.scale = { 64,64 };
-		Obstacle& left_door_obstacle = registry.obstacles.emplace(left_door);
-		left_door_obstacle.is_passable = true;
-		left_door_obstacle.is_left_door = true;
-	}
 
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
@@ -897,24 +926,32 @@ void createWalls(RenderSystem* render, Room& room)
 
 	registry.obstacles.emplace(rightWall);
 	registry.obstacles.get(rightWall).is_wall = true;
-
+	TEXTURE_ASSET_ID right_wall_texture;
+	if (room.has_right_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			right_wall_texture = TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto right_door = Entity();
+			Motion& right_door_motion = registry.motions.emplace(right_door);
+			right_door_motion.position = { x_max, y_mid };
+			right_door_motion.scale = { 64,64 };
+			Obstacle& right_door_obstacle = registry.obstacles.emplace(right_door);
+			right_door_obstacle.is_passable = true;
+			right_door_obstacle.is_right_door = true;
+		}
+		else {
+			right_wall_texture = TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		right_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR_VERTICAL;
+	}
 	registry.renderRequests.insert(
 		rightWall,
-		{ room.has_right_door ? TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
+		{ right_wall_texture ,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
-
-	if (room.has_right_door) {
-		auto right_door = Entity();
-		Motion& right_door_motion = registry.motions.emplace(right_door);
-		right_door_motion.position = { x_max, y_mid };
-		right_door_motion.scale = { 64,64 };
-		Obstacle& right_door_obstacle = registry.obstacles.emplace(right_door);
-		right_door_obstacle.is_passable = true;
-		right_door_obstacle.is_right_door = true;
-	}
 }
 
 void clearExistingWalls()
@@ -938,12 +975,16 @@ void render_room(RenderSystem* render, Level& level)
 	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
 	if (!current_room.is_visited) {
+		level.num_rooms_visited++;
 		// set the room to visited
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
 
-		if (level.num_rooms_until_boss <= 0)
-		{
+		if (level.num_rooms_visited == 1) {
+			// second tutorial room
+			world_generator.generateTutorialRoomTwo(current_room, level);
+		}
+		else if (level.num_rooms_until_boss <= 0) {
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
@@ -951,6 +992,8 @@ void render_room(RenderSystem* render, Level& level)
 		{
 			world_generator.generateNewRoom(current_room, level, false);
 		}
+		// have seen both tutorial rooms
+		
 		
 	} else {
 		std::cout << "revisiting room!" << std::endl;
@@ -1259,8 +1302,7 @@ Entity createLevel(RenderSystem* render)
 	WorldGenerator world_generator;
 
 	// modifies Room component using pointer to Room component
-	world_generator.generateStartingRoom(starting_room, level);
-
+	world_generator.generateTutorialRoomOne(starting_room, level);
 	render_room(render, level);
 	return entity;
 }

@@ -41,6 +41,8 @@ struct Level {
 	int num_rooms_until_boss = 3;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
+	// number of unique rooms the player has visited
+	int num_rooms_visited = 0;
 };
 
 struct vec2comp {
@@ -93,6 +95,8 @@ struct Room {
 	bool has_right_door = false;
 	bool has_top_door = false;
 	bool has_bottom_door = false;
+
+	bool is_tutorial_room = false;
 };
 
 // Player component
@@ -138,7 +142,6 @@ struct Player
 	bool damage_boost = false;
 	bool defense_boost = false; // only makes shield stronger, not health at the moment
 	bool accuracy_boost = false;
-
 	// Constructor to set the initial values
 	Player() : 
 		max_ammo_count(weapon_stats[weapon_type].magazine_size),
@@ -182,6 +185,8 @@ struct Obstacle
 	bool is_left_door = false;
 	bool is_right_door = false;
 
+	// if this is a door, is it locked
+	bool is_locked_door = true;
 	// if this is a wall
 	bool is_wall = false;
 };
@@ -444,7 +449,8 @@ enum class TEXTURE_ASSET_ID {
 	BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR = RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	LEFT_LEVEL1_FULL_WALL_OPEN_DOOR = BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
-	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_NO_DOOR + 1,
+	LEVEL1_FULL_WALL_NO_DOOR_VERTICAL = LEVEL1_FULL_WALL_NO_DOOR + 1,
+	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_NO_DOOR_VERTICAL + 1,
 	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
 	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
 	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
@@ -564,4 +570,9 @@ struct Animation {
 struct AnimationTimer
 {
 	float counter_ms = 0.0f;
+};
+
+// A struct to store data that should only exist in tutorial room.
+struct TutorialOnly {
+
 };
