@@ -55,7 +55,7 @@ const vec3 COLOR_GREEN = vec3(0.53f, 0.9f, 0.31f);
 const vec3 COLOR_DARK_GREEN = vec3(0.29f, 0.41f, 0.18f);
 // 217, 160, 102
 const vec3 COLOR_GOLD = vec3(0.85f, 0.63f, 0.4f);
-
+const vec3 COLOR_BLUE = vec3(0.5f, 0.75f, 1.0f);
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
 #endif

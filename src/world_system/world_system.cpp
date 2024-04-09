@@ -536,7 +536,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	// Render the room
 	Level& level_struct = registry.levels.get(level);
 	render_room(renderer, level_struct);
-	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0);
+	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, level_struct);
 
 	// Move the player to position
 	assert(registry.motions.has(player) && "Player should have a motion");
@@ -548,7 +548,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	for (Entity e : registry.motions.entities)
 	{
 		// remove all enemies, obstacles, animations
-		if (registry.obstacles.has(e) || registry.deadlies.has(e) || (registry.animations.has(e) && !registry.players.has(e)))
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.tutorialOnlys.has(e) || (registry.animations.has(e) && !registry.players.has(e)))
 		{
 			registry.remove_all_components_of(e);
 		}

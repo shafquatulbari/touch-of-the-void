@@ -40,6 +40,8 @@ public:
 	ComponentContainer<PowerupRandom> powerups;
 	ComponentContainer<BossAI>bosses;
 	ComponentContainer<Projectile> guidedMissiles;
+	ComponentContainer<TutorialOnly> tutorialOnlys;
+
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -71,6 +73,7 @@ public:
 		registry_list.push_back(&levels);
 		registry_list.push_back(&bosses);
 		registry_list.push_back(&guidedMissiles);
+		registry_list.push_back(&tutorialOnlys);
 	}
 
 	void clear_all_components() {

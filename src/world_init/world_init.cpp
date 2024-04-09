@@ -947,7 +947,8 @@ void render_room(RenderSystem* render, Level& level)
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
-		} else
+		}
+		else
 		{
 			world_generator.generateNewRoom(current_room, level, false);
 		}
@@ -1259,7 +1260,6 @@ Entity createLevel(RenderSystem* render)
 	WorldGenerator world_generator;
 
 	// modifies Room component using pointer to Room component
-	//world_generator.generateStartingRoom(starting_room, level);
 	world_generator.generateTutorialRoomOne(starting_room, level);
 
 	render_room(render, level);

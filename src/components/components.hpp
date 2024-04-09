@@ -561,3 +561,8 @@ struct AnimationTimer
 {
 	float counter_ms = 0.0f;
 };
+
+// A struct to store data that should only exist in tutorial room.
+struct TutorialOnly {
+
+};
