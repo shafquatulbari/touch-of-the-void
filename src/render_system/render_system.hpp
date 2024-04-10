@@ -44,6 +44,7 @@ class RenderSystem {
 		ivec2(8,1),
 		ivec2(4,1),
 		ivec2(12,1),
+		ivec2(2,1),
 		ivec2(17,1),
 		ivec2(20,16),
 		ivec2(20,16)
@@ -128,6 +129,25 @@ class RenderSystem {
 		textures_path("weapon_icon_sniper_rifle_unequipped_128x128.png"),
 		textures_path("weapon_icon_energy_halo_equipped_192x192.png"),
 		textures_path("weapon_icon_energy_halo_unequipped_128x128.png"),
+
+		// POWERUP TEXTURES
+		textures_path("upgrades/power_up_ability_boost_64x64.png"),
+		textures_path("upgrades/power_up_acc_boost_64x64.png"),
+		textures_path("upgrades/power_up_bigger_bullets_64x64.png"),
+		textures_path("upgrades/power_up_bleed_64x64.png"),
+		textures_path("upgrades/power_up_def_boost_64x64.png"),
+		textures_path("upgrades/power_up_dmg_boost_64x64.png"),
+		textures_path("upgrades/power_up_hp_boost_64x64.png"),
+		textures_path("upgrades/power_up_hp_regen_64x64.png"),
+		textures_path("upgrades/power_up_instant_ammo_reload_64x64.png"),
+		textures_path("upgrades/power_up_insta_kill_64x64.png"),
+		textures_path("upgrades/power_up_max_ammo_64x64.png"),
+		textures_path("upgrades/power_up_max_shield_64x64.png"),
+		textures_path("upgrades/power_up_more_enemies_64x64.png"),
+		textures_path("upgrades/power_up_multiplier_64x64.png"),
+		textures_path("upgrades/power_up_shuffler_64x64.png"),
+		textures_path("upgrades/power_up_speed_boost_64x64.png"),
+		textures_path("upgrades/power_up_time_slow_64x64.png"),
 		textures_path("end_screen.png"),
 	};
 
@@ -172,6 +192,7 @@ class RenderSystem {
 		sheets_path("instructions_shoot_256x256.png"),
 		sheets_path("instructions_switch_256x256.png"),
 		sheets_path("player_sprite_64x64.png"),
+		sheets_path("power_up_popup_464x232.png"),
 		sheets_path("power_up_random_64x64.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),
 		sheets_path("red_effect_bullet_impact_explosion_32x32.png"),

@@ -5,6 +5,7 @@
 #include "ui_system/ui_system.hpp"
 #include "weapon_system/weapon_system.hpp"
 #include "components/components.hpp"
+#include "powerup_system/powerup_system.hpp"
 
 // stlib
 #include <cassert>
@@ -107,10 +108,11 @@ GLFWwindow* WorldSystem::create_window() {
 	return window;
 }
 
-void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg) {
+void WorldSystem::init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg, PowerupSystem* powerups_arg) {
 	this->renderer = renderer_arg;
 	this->ui = ui_arg;
 	this->weapons = weapon_arg;
+	this->powerups = powerups_arg;
 
 	// Set all states to default
 	restart_game();
@@ -231,6 +233,21 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 				multiplier -= .1f;
 			}
 			registry.multiplierBoostPowerupTimers.emplace(entity);
+		}
+	}
+
+	for (Entity entity : registry.powerupPopUps.entities) {
+		// progress timer
+		PowerupPopUp& counter = registry.powerupPopUps.get(entity);
+		counter.counter_ms -= elapsed_ms_since_last_update;
+		if (counter.counter_ms < min_counter_ms) {
+			min_counter_ms = counter.counter_ms;
+		}
+
+		// remove the powerup pop up once the timer expired
+		if (counter.counter_ms < 0) {
+			registry.powerupPopUps.remove(entity);
+			powerups->destroyPopup();
 		}
 	}
 
@@ -494,7 +511,7 @@ void WorldSystem::restart_game() {
 		score = 0;
 		multiplier = 1.0;
 		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, registry.levels.get(level));
-
+		powerups->init(renderer);
 		break;
 	}
 
@@ -535,7 +552,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	// Reset darken_screen_factor on room enter
 	ScreenState& screen = registry.screenStates.components[0];
 	screen.darken_screen_factor = 0.0f;
-
+	powerups->destroyPopup(); // remove powerup popups when entering a new room if exists;
 	remove_entities_on_entry();
 	
 
@@ -682,137 +699,8 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				// player collided with a powerup
 				registry.remove_all_components_of(entity_other);
 				assert(registry.players.has(entity) && "Entity should be a player");
-				registry.players.get(entity).powerups_collected++;
-
-				// choose a random powerup that has not been collected yet
-				std::vector<PowerupType> powerups = { 
-					// COMMENT OR UNCOMMENT TO ENABLE OR DISABLE POWERUPS FROM SPAWNING
-					PowerupType::MAX_HEALTH,
-					PowerupType::HEALTH_REGEN,
-					PowerupType::MAX_SHIELD,
-					PowerupType::INSTANT_AMMO_RELOAD,
-					PowerupType::DAMAGE_BOOST,
-					PowerupType::DEFENSE_BOOST,
-					PowerupType::SPEED_BOOST,
-					PowerupType::MULTIPLIER_BOOST,
-					PowerupType::ACCURACY_BOOST,
-					/*
-					PowerupType::MAX_AMMO,
-					PowerupType::TIME_SLOW,
-					PowerupType::INSTANT_KILL,
-					PowerupType::MORE_ENEMIES,
-					PowerupType::MORE_OBSTACLES,
-					PowerupType::MORE_POWERUPS,
-					PowerupType::BLEED,
-					PowerupType::BIGGER_BULLETS,
-					PowerupType::BOOST,
-					PowerupType::SHUFFLER
-					*/
-				};
-				std::vector<PowerupType> powerups_collected = registry.players.get(entity).powerups;
-				std::vector<PowerupType> powerups_not_collected;
-				std::cout << "Powerups collected: " << registry.players.get(entity).powerups_collected << std::endl;
-				for (PowerupType powerup : powerups) {
-					if (std::find(powerups_collected.begin(), powerups_collected.end(), powerup) == powerups_collected.end()) {
-						powerups_not_collected.push_back(powerup);
-					}
-				}
-
-				if (powerups_not_collected.size() > 0) {
-					// maybe we should give certain powerups a higher chance of spawning than others
-					std::uniform_int_distribution<int> powerup_dist(0, powerups_not_collected.size() - 1);
-					PowerupType powerup = powerups_not_collected[powerup_dist(rng)];
-					registry.players.get(entity).powerups.push_back(powerup);
-					Motion& playerMotion = registry.motions.get(entity);
-					switch (powerup) {
-					case PowerupType::MAX_HEALTH:
-						registry.healths.get(entity).max_health += 30;
-						registry.healths.get(entity).current_health += 30;
-						std::cout << "MAX_HEALTH powerup collected" << std::endl;
-						break;
-					case PowerupType::HEALTH_REGEN:
-						registry.healths.get(entity).regen_rate += 0.1f;
-						std::cout << "HEALTH_REGEN powerup collected" << std::endl;
-						break;
-					case PowerupType::MAX_SHIELD:
-						registry.shields.get(entity).max_shield += 100;
-						registry.shields.get(entity).current_shield += 100;
-						std::cout << "MAX_SHIELD powerup collected" << std::endl;
-						break;
-					case PowerupType::INSTANT_AMMO_RELOAD:
-						registry.players.get(entity).instant_ammo_reload = true;
-						std::cout << "INSTANT_AMMO_RELOAD powerup collected" << std::endl;
-						break;
-					case PowerupType::DAMAGE_BOOST:
-						registry.players.get(entity).damage_boost = true;
-						std::cout << "DAMAGE_BOOST powerup collected" << std::endl;
-						break;
-					case PowerupType::DEFENSE_BOOST:
-						registry.players.get(entity).defense_boost = true;
-						std::cout << "DEFENSE_BOOST powerup collected" << std::endl;
-						break;
-					case PowerupType::SPEED_BOOST:
-						playerMotion.acceleration_rate *= 2;
-						playerMotion.deceleration_rate *= 2;
-						playerMotion.max_velocity *= 2;
-						std::cout << "SPEED_BOOST powerup collected" << std::endl;
-						break;
-					case PowerupType::MULTIPLIER_BOOST:
-						registry.multiplierBoostPowerupTimers.emplace(entity);
-						std::cout << "MULTIPLIER_BOOST powerup collected" << std::endl;
-						break;
-					case PowerupType::ACCURACY_BOOST:
-						registry.players.get(entity).accuracy_boost = true;
-						std::cout << "ACCURACY_BOOST powerup collected" << std::endl;
-						break;
-					case PowerupType::MAX_AMMO:
-						// TODO: implement max ammo boost
-						// should boost the ammo limit of the player for all weapons
-						break;
-					case PowerupType::TIME_SLOW:
-						// TODO: implement time slow
-						// should introduce a new bullet time mechanic (slow down time, but player moves at normal speed for a short duration)
-						// on the press of a button
-						break;
-					case PowerupType::INSTANT_KILL:
-						// TODO: implement instant kill
-						// bullets kill enemies instantly for a short duration on the press of a button
-						break;
-					case PowerupType::MORE_ENEMIES:
-						// TODO: implement more enemies spawning
-						// more of a curse than a powerup, but could be interesting
-						// more enemies spawn in every room
-						break;
-					case PowerupType::MORE_OBSTACLES:
-						// TODO: implement more obstacles spawning
-						// more obstacles spawn in every room
-						break;
-					case PowerupType::MORE_POWERUPS:
-						// TODO: implement more powerups spawning
-						// better chance of powerups spawning on enemy death
-						break;
-					case PowerupType::BLEED:
-						// TODO: implement bleed
-						// enemies take damage over time after being hit
-						break;
-					case PowerupType::BIGGER_BULLETS:
-						// TODO: implement bigger bullets
-						// bullets are 2x bigger in size (should be goofy)
-						break;
-					case PowerupType::BOOST:
-						// TODO: implement boost
-						// player is propelled in the direction they are moving in, like a dash
-						break;
-					case PowerupType::SHUFFLER:
-						// TODO: implement shuffler
-						// rerolls all current power-ups (replaces all current power-ups with new ones, but doesn't change the number of power-ups)
-						break;
-					default:
-						break;
-					}
-				}
+				powerups->awardPowerup(entity, rng, uniform_dist);
 			}
-			
 			else {
 				bounce_back(player, entity_other);
 			}
@@ -1085,6 +973,12 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			if (powerup_dist(rng) == 0) {
 				// spawn a powerup
 				// TODO: Play sound effect for powerup spawn
+				if (registry.powerupPopUps.has(player)) {
+					registry.powerupPopUps.remove(player);
+					powerups->destroyPopup();
+				}
+				PowerupPopUp& powerupPopUp = registry.powerupPopUps.emplace(player);
+				powerupPopUp.counter_ms = 3000;
 				createPowerup(renderer, pos);
 			}
 
