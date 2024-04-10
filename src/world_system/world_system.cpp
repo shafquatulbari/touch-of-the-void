@@ -15,6 +15,7 @@
 // Game configuration
 // TODO: set hard coded game configuration values here
 bool fullscreen;
+int invincibilityTime;
 
 // Create the world
 WorldSystem::WorldSystem()
