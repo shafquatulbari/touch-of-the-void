@@ -6,6 +6,7 @@
 #include "render_system/render_system.hpp"
 #include "ui_system/ui_system.hpp"
 #include "weapon_system/weapon_system.hpp"
+#include "powerup_system/powerup_system.hpp"
 
 // stlib
 #include <vector>
@@ -24,7 +25,7 @@ public:
 	GLFWwindow* create_window();
 
 	// starts the game
-	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
+	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg, PowerupSystem* powerups_arg);
 
 	// Releases all associated resources
 	~WorldSystem();
@@ -65,6 +66,7 @@ private:
 	// Game state
 	RenderSystem* renderer;
 	UISystem* ui;
+	PowerupSystem* powerups;
 	WeaponSystem* weapons;
 	Entity player;
 

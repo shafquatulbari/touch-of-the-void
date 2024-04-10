@@ -56,6 +56,12 @@ const float CURRENT_AMMO_ICON_BB_HEIGHT = 98.0f;
 const float TUTORIAL_WIDGET_BB_WIDTH = 256.0f;
 const float TUTORIAL_WIDGET_BB_HEIGHT = 256.0f;
 
+const float POWERUP_POPUP_BB_WIDTH = 464.0f;
+const float POWERUP_POPUP_BB_HEIGHT = 232.0f;
+
+const float POWERUP_ICON_BB_WIDTH = 64.0f;
+const float POWERUP_ICON_BB_HEIGHT = 64.0f;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
@@ -140,3 +146,8 @@ Entity createReloadTutorialWidget(RenderSystem* render, vec2 position);
 Entity createScrollTutorialWidget(RenderSystem* render, vec2 position);
 // create the switch tutorial widget
 Entity createSwitchTutorialWidget(RenderSystem* render, vec2 position);
+// create the powerup popup widget
+Entity createPowerupPopup(RenderSystem* render, vec2 position);
+// create the powerup icon
+Entity createPowerupIcon(RenderSystem* render, vec2 position, TEXTURE_ASSET_ID powerup_texture);
+

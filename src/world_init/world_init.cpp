@@ -1036,8 +1036,6 @@ void render_room(RenderSystem* render, Level& level)
 	createWalls(render, room_to_render);
 }
 
-
-
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 {
 	Entity entity = Entity();
@@ -1367,6 +1365,7 @@ Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, fl
 
 	return entity;
 }
+
 Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target) {
 	auto entity = Entity();
 
@@ -1674,6 +1673,55 @@ Entity createSwitchTutorialWidget(RenderSystem* render, vec2 position)
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE,
 						RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createPowerupPopup(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ POWERUP_POPUP_BB_WIDTH, POWERUP_POPUP_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::POWERUP_POPUP;
+	animation.total_frames = 2;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0} };
+	animation.frame_durations_ms = { 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::FOREGROUND });
+
+	return entity;
+}
+
+Entity createPowerupIcon(RenderSystem* render, vec2 position, TEXTURE_ASSET_ID powerup_texture)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ POWERUP_ICON_BB_WIDTH, POWERUP_ICON_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ powerup_texture,
+					EFFECT_ASSET_ID::TEXTURED,
+					GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::UI });
 
 	return entity;
 }

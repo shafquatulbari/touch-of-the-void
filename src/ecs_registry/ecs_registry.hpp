@@ -41,7 +41,7 @@ public:
 	ComponentContainer<BossAI>bosses;
 	ComponentContainer<Projectile> guidedMissiles;
 	ComponentContainer<TutorialOnly> tutorialOnlys;
-
+	ComponentContainer<PowerupPopUp> powerupPopUps;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
