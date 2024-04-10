@@ -516,8 +516,8 @@ void WorldSystem::restart_game() {
 	
 	case GAME_STATE::GAME_WIN: {
 		
-		createStartScreen(renderer);
-		createText(renderer, "Congrats! You escaped!", { 960.0f, 664.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createWinScreen(renderer);
+		createText(renderer, "Press Enter to Start Again", { 960.0f, 664.0f }, 2.f, COLOR_RED, TextAlignment::CENTER);
 		break;
 	}
 

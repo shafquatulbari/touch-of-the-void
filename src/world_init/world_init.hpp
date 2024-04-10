@@ -125,3 +125,5 @@ Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, fl
 Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target);
 // create the custom cursor
 Entity createCursor(RenderSystem* render, vec2 position);
+// create the win screen
+Entity createWinScreen(RenderSystem* render);
