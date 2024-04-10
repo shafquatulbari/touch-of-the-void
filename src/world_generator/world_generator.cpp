@@ -278,9 +278,4 @@ void WorldGenerator::populateBossRoom(Room& room)
 
 void WorldGenerator::populateShopRoom(Room& room) {
 	room.is_cleared = true;
-
-	room.has_bottom_door = true;
-	room.has_top_door = true;
-	room.has_left_door = true;
-	room.has_right_door = true;
 }
