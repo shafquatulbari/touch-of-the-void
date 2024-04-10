@@ -1011,7 +1011,7 @@ void render_room(RenderSystem* render, Level& level)
 		// - larger a -> larger increase of chance per room cleared
 		// - larger b -> smaller increase of chance per room cleared
 		std::knuth_b rnd_engine;
-		std::bernoulli_distribution prob( 1 / (1 + exp(-0.5 * level.num_shop_spawn_counter + 2.f)) );
+		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 2.f)) );
 
 		if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
 			// Generate a shop room

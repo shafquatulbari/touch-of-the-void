@@ -534,7 +534,7 @@ void RenderSystem::draw()
 		if (!registry.motions.has(entity) || registry.texts.has(entity))
 			continue;
 
-		if (registry.renderRequests.get(entity).used_render_layer != RENDER_LAYER::GAME_MENU)
+		if (registry.renderRequests.get(entity).used_render_layer < RENDER_LAYER::GAME_MENU)
 			continue;
 		// Note, its not very efficient to access elements indirectly via the entity
 		// albeit iterating through all Sprites in sequence. A good point to optimize

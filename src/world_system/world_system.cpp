@@ -626,7 +626,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	{
 		// remove all enemies, obstacles, animations
 		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.tutorialOnlys.has(e) 
-			|| registry.animations.has(e) && !registry.players.has(e) || registry.shopPanels.has(e)))
+			|| registry.animations.has(e) && !registry.players.has(e) || registry.shopPanels.has(e))
 		{
 			registry.remove_all_components_of(e);
 		}
@@ -1164,12 +1164,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			p_motion.is_moving_up = false;
 			p_motion.is_moving_left = false;
 			p_motion.is_moving_right = false;
+			
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			registry.remove_all_components_of(cursor);
 
 			PauseMenu::init(renderer,
 				[this]() {
 					game_state = GAME_STATE::GAME;
 					is_paused = false;
-					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 					PauseMenu::close();
 				},
 				[this]() {
@@ -1181,7 +1185,6 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 					restart_game();
 				},
 				[this]() {
-
 					is_paused = false;
 					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 
@@ -1279,6 +1282,9 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				p_motion.is_moving_left = false;
 				p_motion.is_moving_right = false;
 
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				registry.remove_all_components_of(cursor);
+
 				ShopMenu::init(
 					renderer, 
 					registry.shopPanels.components.back().weapon_on_sale,
@@ -1354,7 +1360,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
 			game_state = GAME_STATE::GAME;
 			is_paused = false;
-			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 			ShopMenu::close();
 			break;
 		}
@@ -1452,19 +1459,19 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 
 {
-	int cursor;
+	int cursor_;
 
-	if (!registry.motions.has(cursor)) {
-		cursor = createCursor(renderer, mouse_position);
-	}
-	else {
-		registry.motions.get(cursor).position = mouse_position;
-	}
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
 		break;
 	case GAME_STATE::GAME:
+		if (!registry.motions.has(cursor)) {
+			cursor = createCursor(renderer, mouse_position);
+		} else {
+			registry.motions.get(cursor).position = mouse_position;
+		}
+
 		if (registry.deathTimers.has(player)) {
 			return;
 		}
@@ -1516,16 +1523,15 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 
 			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 		}*/
-
-		cursor = PauseMenu::on_mouse_move(mouse_position);
-		glfwSetCursor(window, glfwCreateStandardCursor(cursor));
+		
+		cursor_ = PauseMenu::on_mouse_move(mouse_position);
+		glfwSetCursor(window, glfwCreateStandardCursor(cursor_));
 
 		break;
 
 	case GAME_STATE::SHOP_MENU:
-		
-		cursor = ShopMenu::on_mouse_move(mouse_position);
-		glfwSetCursor(window, glfwCreateStandardCursor(cursor));
+		cursor_ = ShopMenu::on_mouse_move(mouse_position);
+		glfwSetCursor(window, glfwCreateStandardCursor(cursor_));
 
 		break;
 	case GAME_STATE::GAME_OVER:

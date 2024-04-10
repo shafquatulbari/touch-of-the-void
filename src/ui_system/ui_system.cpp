@@ -3,6 +3,7 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
 #include "audio_manager/audio_manager.hpp"
+#include "weapon_system/weapon_system.hpp"
 
 #include <iomanip>
 #include <iostream>
@@ -238,6 +239,13 @@ float ammo_x = 1810.0f, current_ammo_y = 305.0f, total_ammo_icon_y = 405.0f, tot
 void UISystem::createWeaponMenu(Player& player) {
 	current_ammo_icon = createCurrentAmmoIcon(renderer, { ammo_x, current_ammo_y }, player);
 
+	std::string total_ammo_count_content;
+	if (is_weapon_locked(player.weapon_type)) {
+		total_ammo_count_content = "N/A";
+	} else {
+		total_ammo_count_content = std::to_string(player.total_ammo_count[player.weapon_type]);
+	}
+
 	// TODO: Will need to change once we have weapon pickups
 	switch (player.weapon_type) {
 	case WeaponType::GATLING_GUN:
@@ -252,35 +260,35 @@ void UISystem::createWeaponMenu(Player& player) {
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { equipped_x, slot_2_y }, TEXTURE_ASSET_ID::SNIPER_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_3_y }, TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_4_y }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_content, { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		break;
 	case WeaponType::SHOTGUN:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_1_y }, TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { equipped_x, slot_2_y }, TEXTURE_ASSET_ID::SHOTGUN_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_3_y }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_4_y }, TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_content, { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		break;
 	case WeaponType::ROCKET_LAUNCHER:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_1_y }, TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { equipped_x, slot_2_y }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_3_y }, TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_4_y }, TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_content, { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		break;
 	case WeaponType::FLAMETHROWER:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_1_y }, TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { equipped_x, slot_2_y }, TEXTURE_ASSET_ID::FLAME_THROWER_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_3_y }, TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_4_y }, TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_content, { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		break;
 	case WeaponType::ENERGY_HALO:
 		weapon_slot_1 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_1_y }, TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED); // 1st slot EQUIPPED
 		weapon_slot_2 = createWeaponEquippedIcon(renderer, { equipped_x, slot_2_y }, TEXTURE_ASSET_ID::ENERGY_HALO_EQUIPPED); // 2nd slot EQUIPPED
 		weapon_slot_3 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_3_y }, TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED); // 3rd slot UN-EQUIPPED
 		weapon_slot_4 = createWeaponUnequippedIcon(renderer, { unequipped_x, slot_4_y }, TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED); // 4th slot UN-EQUIPPED
-		total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+		total_ammo_text = createText(renderer, total_ammo_count_content, { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		break;
 	case WeaponType::TOTAL_WEAPON_TYPES:
 		break;
@@ -303,7 +311,7 @@ void UISystem::updateWeaponMenu(Player& player) {
 		case WeaponType::ENERGY_HALO:
 			assert(registry.texts.has(total_ammo_text) && "Total ammo text does not exist in registry");
 			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
-			ammo_animation.current_frame = player.ammo_count;
+			ammo_animation.current_frame = max(0, player.ammo_count);
 			break;
 		case WeaponType::FLAMETHROWER:
 			assert(registry.texts.has(total_ammo_text) && "Total ammo text does not exist in registry");
@@ -312,8 +320,10 @@ void UISystem::updateWeaponMenu(Player& player) {
 			if (player.ammo_count == 200) {
 				ammo_animation.current_frame = 19;
 			}
-			else {
+			else if (player.ammo_count >= 0) {
 				ammo_animation.current_frame = player.ammo_count / 10;
+			} else {
+				ammo_animation.current_frame = 0;
 			}
 			break;
 		case WeaponType::TOTAL_WEAPON_TYPES:

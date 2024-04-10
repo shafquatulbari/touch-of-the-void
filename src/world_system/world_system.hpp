@@ -16,31 +16,31 @@
 // deferred to the relative update() methods
 class WorldSystem
 {
-public:
-	WorldSystem();
-
-	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
-
-	// Creates a window
-	GLFWwindow* create_window();
-
-	// starts the game
-	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
-
-	// Releases all associated resources
-	~WorldSystem();
-
-	// Steps the game ahead by ms milliseconds
-	bool step(float elapsed_ms);
-
-
-	// Check for collisions
-	void handle_collisions(float elapsed_ms);
-
-	void bounce_back(Entity player, Entity obstacle);
-
-	// Should the game be over ?
-	bool is_over()const;
+//public:
+//	WorldSystem();
+//
+//	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
+//
+//	// Creates a window
+//	GLFWwindow* create_window();
+//
+//	// starts the game
+//	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
+//
+//	// Releases all associated resources
+//	~WorldSystem();
+//
+//	// Steps the game ahead by ms milliseconds
+//	bool step(float elapsed_ms);
+//
+//
+//	// Check for collisions
+//	void handle_collisions(float elapsed_ms);
+//
+//	void bounce_back(Entity player, Entity obstacle);
+//
+//	// Should the game be over ?
+//	bool is_over()const;
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -101,6 +101,7 @@ private:
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
 
+
 public:
 	WorldSystem();
 
@@ -110,7 +111,7 @@ public:
 	GLFWwindow* create_window();
 
 	// starts the game
-	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
+	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg, PowerupSystem* powerups_arg);
 
 	// Releases all associated resources
 	~WorldSystem();
@@ -131,5 +132,5 @@ public:
 	bool is_paused = false;
 
 	// function for switching game state
-	void switch_game_state(GAME_STATE new_state);
+	//void switch_game_state(GAME_STATE new_state);
 };

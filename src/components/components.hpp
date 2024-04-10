@@ -42,6 +42,8 @@ struct Level {
 	int num_rooms_until_boss = 3;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
+	// number of unique rooms the player has visited
+	int num_rooms_visited = 0;
 	
 	// number of rooms cleared since last shop is spawned
 	int num_shop_spawn_counter = 0;
