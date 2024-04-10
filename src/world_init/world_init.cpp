@@ -1012,8 +1012,9 @@ void render_room(RenderSystem* render, Level& level)
 		// - larger b -> smaller increase of chance per room cleared
 		std::knuth_b rnd_engine;
 		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 2.f)) );
-
-		if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
+		if (level.num_rooms_visited == 1) {
+			world_generator.generateTutorialRoomTwo(current_room, level);
+		} else if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
 			// Generate a shop room
 			current_room.room_type = ROOM_TYPE::SHOP_ROOM;
 			world_generator.generateNewRoom(current_room, level);
