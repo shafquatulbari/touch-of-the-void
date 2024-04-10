@@ -562,6 +562,10 @@ void WorldSystem::enter_room(vec2 player_pos) {
 			registry.remove_all_components_of(e);
 		}
 	}
+	for (Entity e : registry.onFireTimers.entities)
+	{
+		registry.onFireTimers.remove(e);
+	}
 }
 // Compute collisions between entities
 void WorldSystem::handle_collisions(float elapsed_ms) {
@@ -926,7 +930,6 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 						DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
 						damagedTimer.counter_ms = playerShield.recharge_delay;
 					}
-
 					if (playerShield.current_shield > 0) {
 						play_sound(player_hit_sound);
 						float damage = 10.f; // registry.deadlies.get(entity).damage; should probably be using this no?
@@ -961,7 +964,15 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 							play_sound(player_hit_sound);
 						}
 					}
-					
+					switch (projectile.weapon_type)
+					{
+					case WeaponType::FLAMETHROWER:
+						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
+						break;
+
+					default:
+						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
