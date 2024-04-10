@@ -869,6 +869,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			if (registry.players.has(projectileSource) && (registry.guidedMissiles.has(entity_other))) {
 				// destroy the boss projectile if the player projectile hits it, destroy player projectile too, show explosion effect and play sound
 				createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+				createExplosion(renderer, registry.motions.get(entity_other).position, 1.0, false);
 				play_sound(explosion_sound);
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 				registry.remove_all_components_of(entity_other); // Remove projectile after collision
@@ -970,7 +971,8 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				if (registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
 					assert(registry.shields.has(entity_other) && "Player should have a shield");
 					Shield& playerShield = registry.shields.get(entity_other);
-
+					createExplosion(renderer, registry.motions.get(entity).position, 1.0, false);
+					play_sound(explosion_sound);
 					if (registry.damagedTimers.has(entity_other)) {
 						DamagedTimer& damagedTimer = registry.damagedTimers.get(entity_other);
 						damagedTimer.counter_ms = playerShield.recharge_delay;
