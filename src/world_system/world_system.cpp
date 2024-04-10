@@ -127,15 +127,22 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 		if (counter.counter_ms < min_counter_ms) {
 			min_counter_ms = counter.counter_ms;
 		}
-
 		// restart the game once the death timer expired
-		if (counter.counter_ms < 0) {
+		if (counter.counter_ms < 0 && registry.players.has(entity)) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
 			game_state = GAME_STATE::GAME_OVER;
 			restart_game();
 			return true;
 		}
+		else if (counter.counter_ms < 0 && !registry.players.has(entity)) {
+			registry.deathTimers.remove(entity);
+			screen.darken_screen_factor = 0;
+			game_state = GAME_STATE::GAME_WIN;
+			restart_game();
+			return true;
+		}
+		
 	}
 	for (Entity entity : registry.roomTransitionTimers.entities) {
 		// progress timer
@@ -835,8 +842,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 						Deadly& deadly = registry.deadlies.get(entity);
 						Health& enemyHealth = registry.healths.get(entity_other);
 						enemyHealth.current_health -= deadly.damage;
-						play_sound(enemy_hit_sound);
-
+						play_sound(enemy_hit_sound);	
 						switch (projectile.weapon_type)
 						{
 						case WeaponType::ROCKET_LAUNCHER:
@@ -884,6 +890,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					if (registry.players.get(projectileSource).damage_boost) {
 						enemyHealth.current_health -= deadly.damage; // double damage if player has damage boost
 					}
+
 					play_sound(enemy_hit_sound);
 
 					switch (projectile.weapon_type) 
@@ -1117,11 +1124,13 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		if (boss_health.current_health <= 0 ) {
 			registry.remove_all_components_of(boss_e);
 			score += 1000;
+			if (!registry.deathTimers.has(boss_e)) {
+				registry.deathTimers.emplace(boss_e);
+			}
 			// UX Effects
-			createExplosion(renderer, boss_pos, 1.0f, false);
+			createExplosion(renderer, boss_pos, 3.0f, false);
 			play_sound(explosion_sound);
-			game_state = GAME_STATE::GAME_WIN;
-			restart_game();
+			
 		}
 	}
 
