@@ -841,7 +841,7 @@ void createWalls(RenderSystem* render, Room& room)
 		}
 	}
 	else {
-		top_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR;
+		top_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_NO_DOOR;
 	}
 	registry.renderRequests.insert(
 		topWall,
@@ -860,7 +860,7 @@ void createWalls(RenderSystem* render, Room& room)
 	if (room.has_bottom_door) {
 		if (room.enemy_count == 0) {
 			// create the door if room should have one
-			bottom_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR;
+			bottom_wall_texture = TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR;
 			auto bottom_door = Entity();
 			Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
 			bottom_door_motion.position = { x_mid, y_max };
@@ -870,11 +870,11 @@ void createWalls(RenderSystem* render, Room& room)
 			bottom_door_obstacle.is_bottom_door = true;
 		}
 		else {
-			bottom_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR;
+			bottom_wall_texture = TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR;
 		}
 	}
 	else {
-		bottom_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR;
+		bottom_wall_texture = TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_NO_DOOR;
 	}
 	registry.renderRequests.insert(
 		bottomWall,
@@ -910,7 +910,7 @@ void createWalls(RenderSystem* render, Room& room)
 		}
 	}
 	else {
-		left_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR_VERTICAL;
+		left_wall_texture = TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_NO_DOOR;
 	}
 	registry.renderRequests.insert(
 		leftWall,
@@ -944,7 +944,7 @@ void createWalls(RenderSystem* render, Room& room)
 		}
 	}
 	else {
-		right_wall_texture = TEXTURE_ASSET_ID::LEVEL1_FULL_WALL_NO_DOOR_VERTICAL;
+		right_wall_texture = TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_NO_DOOR;
 	}
 	registry.renderRequests.insert(
 		rightWall,
@@ -1516,6 +1516,164 @@ Entity createCursor(RenderSystem* render, vec2 position)
 				 EFFECT_ASSET_ID::TEXTURED,
 				 GEOMETRY_BUFFER_ID::SPRITE,
 				RENDER_LAYER::CURSOR });
+
+	return entity;
+}
+
+Entity createMoveTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INSTRUCTION_MOVE_ICON,
+						 EFFECT_ASSET_ID::TEXTURED,
+						 GEOMETRY_BUFFER_ID::SPRITE,
+						RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createAimTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INSTRUCTION_AIM_ICON,
+								 EFFECT_ASSET_ID::TEXTURED,
+								 GEOMETRY_BUFFER_ID::SPRITE,
+								RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createShootTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_SHOOT;
+	animation.total_frames = 8;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createReloadTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_RELOAD;
+	animation.total_frames = 18;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+				EFFECT_ASSET_ID::TEXTURED,
+				GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createScrollTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_SCROLL;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 250, 250, 250, 250 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+					EFFECT_ASSET_ID::TEXTURED,
+					GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createSwitchTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_SWITCH;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 250, 250, 250, 250 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+							EFFECT_ASSET_ID::TEXTURED,
+							GEOMETRY_BUFFER_ID::SPRITE,
+						RENDER_LAYER::MIDDLEGROUND });
 
 	return entity;
 }

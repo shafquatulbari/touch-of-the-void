@@ -39,6 +39,10 @@ class RenderSystem {
 		ivec2(12,1),
 		ivec2(6,1),
 		ivec2(20,16),
+		ivec2(18,1),
+		ivec2(4,1),
+		ivec2(8,1),
+		ivec2(4,1),
 		ivec2(12,1),
 		ivec2(17,1),
 		ivec2(20,16),
@@ -68,6 +72,10 @@ class RenderSystem {
 		textures_path("bullet_16x16.png"),
 		textures_path("custom_cursor_32x32.png"),
 
+		// INSTRUCTIONS TEXTURES
+		textures_path("instructions_aim_256x256.png"),
+		textures_path("instructions_move_256x256.png"),
+
 		// ENEMIES TEXTURES
 		textures_path("enemy_spitter_64x64.png"),
 		textures_path("enemy_turret_base_64x64.png"),
@@ -87,13 +95,11 @@ class RenderSystem {
 		textures_path("lvl1_full_right_wall_open_door_832x64.png"),
 		textures_path("lvl1_full_bottom_wall_open_door_960x64.png"),
 		textures_path("lvl1_full_left_wall_open_door_832x64.png"),
-		textures_path("lvl1_full_wall_no_door_832x64.png"),
-		textures_path("lvl1_full_wall_no_door_64x832.png"),
+		textures_path("lvl1_full_top_wall_no_door_960x64.png"),
+		textures_path("lvl1_full_right_wall_no_door_832x64.png"),
+		textures_path("lvl1_full_bottom_wall_no_door_960x64.png"),
+		textures_path("lvl1_full_left_wall_no_door_832x64.png"),
 		textures_path("lvl1_obstacle_64x64.png"),
-		textures_path("lvl1_wall_bottom_corner_64x64.png"),
-		textures_path("lvl1_wall_end_64x64.png"),
-		textures_path("lvl1_wall_top_corner_64x64.png"),
-		textures_path("lvl1_wall_128x64.png"),
 
 		// PLAYER TEXTURES
 		textures_path("player_status_hud_1920x1024.png"),
@@ -160,6 +166,10 @@ class RenderSystem {
 		sheets_path("explosion_192x192.png"),
 		sheets_path("exploding_skull_64x64.png"),
 		sheets_path("green_effect_bullet_impact_explosion_32x32.png"),
+		sheets_path("instructions_reload_256x256.png"),
+		sheets_path("instructions_scroll_256x256.png"),
+		sheets_path("instructions_shoot_256x256.png"),
+		sheets_path("instructions_switch_256x256.png"),
 		sheets_path("player_sprite_64x64.png"),
 		sheets_path("power_up_random_64x64.png"),
 		//sheets_path("purple_effect_bullet_impact_explosion_32x32.png"),

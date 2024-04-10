@@ -53,6 +53,9 @@ const float ICON_INFINITY_BB_HEIGHT = 54.0f;
 const float CURRENT_AMMO_ICON_BB_WIDTH = 160.0f;
 const float CURRENT_AMMO_ICON_BB_HEIGHT = 98.0f;
 
+const float TUTORIAL_WIDGET_BB_WIDTH = 256.0f;
+const float TUTORIAL_WIDGET_BB_HEIGHT = 256.0f;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
@@ -125,3 +128,15 @@ Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, fl
 Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target);
 // create the custom cursor
 Entity createCursor(RenderSystem* render, vec2 position);
+// create the move tutorial widget
+Entity createMoveTutorialWidget(RenderSystem* render, vec2 position);
+// create the aim tutorial widget
+Entity createAimTutorialWidget(RenderSystem* render, vec2 position);
+// create the shoot tutorial widget
+Entity createShootTutorialWidget(RenderSystem* render, vec2 position);
+// create the reload tutorial widget
+Entity createReloadTutorialWidget(RenderSystem* render, vec2 position);
+// create the scroll tutorial widget
+Entity createScrollTutorialWidget(RenderSystem* render, vec2 position);
+// create the switch tutorial widget
+Entity createSwitchTutorialWidget(RenderSystem* render, vec2 position);
