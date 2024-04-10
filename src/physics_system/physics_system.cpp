@@ -352,6 +352,15 @@ void update_motion(Motion &motion, float step_seconds)
 	{
 		motion.previous_position = motion.position;
 
+		motion.look_angle += motion.turn_speed * step_seconds;
+		if (motion.look_angle > M_PI)
+		{
+			motion.look_angle -= 2 * M_PI;
+		}
+		else if (motion.look_angle < -M_PI)
+		{
+			motion.look_angle += 2 * M_PI;
+		}
 		motion.position.x += motion.velocity.x * step_seconds;
 		motion.position.y += motion.velocity.y * step_seconds;
 

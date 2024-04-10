@@ -36,11 +36,17 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	health.current_health = 32.0f;
 	health.max_health = 32.0f;
 
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::PLAYER;
+	animation.total_frames = 12;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0} };
+
 	// Create and (empty) Player component
 	registry.players.emplace(entity);
 	registry.renderRequests.insert(
 			entity,
-			{TEXTURE_ASSET_ID::PLAYER,
+			{TEXTURE_ASSET_ID::TEXTURE_COUNT,
 			 EFFECT_ASSET_ID::TEXTURED,
 			 GEOMETRY_BUFFER_ID::SPRITE,
 			RENDER_LAYER::FOREGROUND});
@@ -48,7 +54,7 @@ Entity createPlayer(RenderSystem *renderer, vec2 pos)
 	return entity;
 }
 
-Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType)
+Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, AI::AIType aiType, float in_boss_room)
 {
 	// Reserve en entity
 	auto entity = Entity();
@@ -62,6 +68,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	motion.position = position;
 	motion.complex = false;
 	motion.scale = vec2({ ENEMY_BB_WIDTH, ENEMY_BB_HEIGHT });
+	ai.in_boss_room = in_boss_room;
 
 	Health& health = registry.healths.emplace(entity);
 	health.current_health = health_points;
@@ -77,16 +84,15 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	//registry.obstacles.emplace(entity);
 	if (aiType == AI::AIType::MELEE) {
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
-		animation.total_frames = 6;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_DRILL;
+		animation.total_frames = 5;
 		animation.current_frame = 0;
-		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
-		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100 };
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100 };
 		animation.loop = true;
 
 		AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
 		animation_timer.counter_ms = animation.frame_durations_ms[0];
-
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
@@ -144,7 +150,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 	}
 	else if (aiType == AI::AIType::ROCKET) {
 		Animation& animation = registry.animations.emplace(entity);
-		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_EXPLODER;
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_DROID;
 		animation.total_frames = 6;
 		animation.current_frame = 0;
 		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
@@ -181,6 +187,73 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			RENDER_LAYER::FOREGROUND });
 	}
 
+
+	return entity;
+}
+
+Entity createBoss(RenderSystem* renderer, vec2 position, float health_points, BossAI::BossState state)
+{
+	// Reserve en entity
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	BossAI& boss = registry.bosses.emplace(entity);
+	boss.state = BossAI::BossState::DEFENSIVE;
+	motion.position = position;
+	motion.complex = false;
+	motion.scale = vec2({ BOSS_BB_WIDTH, BOSS_BB_HEIGHT });
+
+	Health& health = registry.healths.emplace(entity);
+	health.current_health = health_points;
+	health.max_health = health_points;
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 10.0f;
+
+	//Mesh& mesh = renderer->getMesh(GEOMETRY_BUFFER_ID::ENEMY_SPITTER_CH);
+	//registry.meshPtrs.emplace(entity, &mesh);
+
+	registry.obstacles.emplace(entity);
+	// Set initial animation based on the initial state
+	Animation& animation = registry.animations.emplace(entity);
+	switch (state) {
+	case BossAI::BossState::DEFENSIVE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SHIELD;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, INFINITY };
+		// Add frames and durations for DEFENSIVE state
+		break;
+	case BossAI::BossState::OFFENSIVE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_SPAWN;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {20, 0}, {21, 0}, {22, 0}, {23, 0}, {24, 0}, {25, 0}, {26, 0}, {27, 0}, {28, 0}, {29, 0}, {30, 0}, {31, 0}, {32, 0}, {33, 0}, {34, 0}, {35, 0}, {36, 0}, {37, 0} };
+		animation.frame_durations_ms = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 };
+		// Add frames and durations for OFFENSIVE state
+		break;
+	case BossAI::BossState::GUIDED_MISSILE:
+		animation.sheet_id = SPRITE_SHEET_ID::ENEMY_BOSS_IDLE;
+		animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0} };
+		animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+		// Add frames and durations for GUIDED_MISSILE state
+		break;
+	default:
+		// Handle unknown state if necessary
+		break;
+	}
+	animation.total_frames = 19; // Adjust accordingly
+	animation.current_frame = 0;
+	animation.loop = true;
+	// Remember to set sprites and frame_durations_ms according to the state
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+	
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // Adjust if you have a specific texture for the initial state
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		  RENDER_LAYER::FOREGROUND });
 
 	return entity;
 }
@@ -529,7 +602,7 @@ Entity createEnemyRocketProjectile(RenderSystem* render, vec2 position, float an
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
-	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+	deadly.damage = 50.f; // tune this for damage
 
 	Animation& animation = registry.animations.emplace(entity);
 	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
@@ -558,7 +631,7 @@ Entity createFlamethrowerProjectile(RenderSystem* render, vec2 position, float a
 
 	// Actual firing angle is randomly perturbed based off the accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
-	angle += (rng - 0.5f) * accuracy;
+	angle += (rng - 0.5f) * accuracy; 
 
 	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
 	registry.meshPtrs.emplace(entity, &mesh);
@@ -668,7 +741,7 @@ Entity createEnemyFlamethrowerProjectile(RenderSystem* render, vec2 position, fl
 	Deadly& deadly = registry.deadlies.emplace(entity);
 	projectile.weapon_type = WeaponType::FLAMETHROWER;
 	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime * 4;
-	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+	deadly.damage = 0.5f; // tune this for damage
 
 	Animation& animation = registry.animations.emplace(entity);
 	animation.sheet_id = SPRITE_SHEET_ID::RED_EFFECT;
@@ -728,6 +801,24 @@ Entity createDeathScreen(RenderSystem* renderer) {
 	return entity;
 
 }
+Entity createWinScreen(RenderSystem* renderer) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = vec2({ window_width_px, window_height_px });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::WIN_SCREEN,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::BACKGROUND });
+
+	return entity;
+
+}
 
 // TODO: figure out whether invidiual components are smart and whether this should be moved to a separate file
 void createWalls(RenderSystem* render, Room& room)
@@ -746,6 +837,7 @@ void createWalls(RenderSystem* render, Room& room)
 	float y_max = y_mid + y_delta;
 	float y_min = y_mid - y_delta;
 
+	bool cleared_room = room.enemy_count == 0;
 	// top wall
 	Motion& top_motion = registry.motions.emplace(topWall);
 	top_motion.position = vec2({ x_mid, y_min });
@@ -753,23 +845,32 @@ void createWalls(RenderSystem* render, Room& room)
 
 	registry.obstacles.emplace(topWall);
 	registry.obstacles.get(topWall).is_wall = true;
+	TEXTURE_ASSET_ID top_wall_texture;
+	if (room.has_top_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			top_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto top_door = Entity();
+			Motion& top_door_motion = registry.motions.emplace(top_door);
+			top_door_motion.position = { x_mid, y_min };
+			top_door_motion.scale = { 64,64 };
+			Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
+			top_door_obstacle.is_passable = true;
+			top_door_obstacle.is_top_door = true;
+		}
+		else {
+			top_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		top_wall_texture = TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_NO_DOOR;
+	}
 	registry.renderRequests.insert(
 		topWall,
-		{ room.has_top_door ? TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::TOP_LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{ top_wall_texture,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
-	// create the door if room should have one
-	if (room.has_top_door) {
-		auto top_door = Entity();
-		Motion& top_door_motion = registry.motions.emplace(top_door);
-		top_door_motion.position = { x_mid, y_min };
-		top_door_motion.scale = { 64,64 };
-		Obstacle& top_door_obstacle = registry.obstacles.emplace(top_door);
-		top_door_obstacle.is_passable = true;
-		top_door_obstacle.is_top_door = true;
-	}
 
 	// bottom wall
 	Motion& bottom_motion = registry.motions.emplace(bottomWall);
@@ -777,24 +878,34 @@ void createWalls(RenderSystem* render, Room& room)
 	bottom_motion.scale = vec2({ HORIZONTAL_WALL_BB_WIDTH, HORIZONTAL_WALL_BB_HEIGHT });
 
 	registry.obstacles.emplace(bottomWall);
+	TEXTURE_ASSET_ID bottom_wall_texture;
+	if (room.has_bottom_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			bottom_wall_texture = TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto bottom_door = Entity();
+			Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
+			bottom_door_motion.position = { x_mid, y_max };
+			bottom_door_motion.scale = { 64,64 };
+			Obstacle& bottom_door_obstacle = registry.obstacles.emplace(bottom_door);
+			bottom_door_obstacle.is_passable = true;
+			bottom_door_obstacle.is_bottom_door = true;
+		}
+		else {
+			bottom_wall_texture = TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		bottom_wall_texture = TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_NO_DOOR;
+	}
 	registry.renderRequests.insert(
 		bottomWall,
-		{ room.has_bottom_door ? TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR,
+		{bottom_wall_texture,
 					EFFECT_ASSET_ID::TEXTURED,
 					GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND});
 	registry.obstacles.get(bottomWall).is_wall = true;
 
-	if (room.has_bottom_door) {
-		auto bottom_door = Entity();
-		Motion& bottom_door_motion = registry.motions.emplace(bottom_door);
-		bottom_door_motion.position = { x_mid, y_max };
-		bottom_door_motion.scale = { 64,64 };
-		Obstacle& bottom_door_obstacle = registry.obstacles.emplace(bottom_door);
-		bottom_door_obstacle.is_passable = true;
-		bottom_door_obstacle.is_bottom_door = true;
-	}
 	// player can pass through the door if it exists
 	// left wall
 	Motion& left_motion = registry.motions.emplace(leftWall);
@@ -803,23 +914,32 @@ void createWalls(RenderSystem* render, Room& room)
 
 	registry.obstacles.emplace(leftWall);
 	registry.obstacles.get(leftWall).is_wall = true;
-
+	TEXTURE_ASSET_ID left_wall_texture;
+	if (room.has_left_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			left_wall_texture = TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto left_door = Entity();
+			Motion& left_door_motion = registry.motions.emplace(left_door);
+			left_door_motion.position = { x_min, y_mid };
+			left_door_motion.scale = { 64,64 };
+			Obstacle& left_door_obstacle = registry.obstacles.emplace(left_door);
+			left_door_obstacle.is_passable = true;
+			left_door_obstacle.is_left_door = true;
+		}
+		else {
+			left_wall_texture = TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		left_wall_texture = TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_NO_DOOR;
+	}
 	registry.renderRequests.insert(
 		leftWall,
-		{ room.has_left_door ? TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::LEFT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
+		{ left_wall_texture ,
 							EFFECT_ASSET_ID::TEXTURED,
 							GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
-	if (room.has_left_door) {
-		auto left_door = Entity();
-		Motion& left_door_motion = registry.motions.emplace(left_door);
-		left_door_motion.position = { x_min, y_mid };
-		left_door_motion.scale = { 64,64 };
-		Obstacle& left_door_obstacle = registry.obstacles.emplace(left_door);
-		left_door_obstacle.is_passable = true;
-		left_door_obstacle.is_left_door = true;
-	}
 
 	// right wall
 	Motion& right_motion = registry.motions.emplace(rightWall);
@@ -828,24 +948,32 @@ void createWalls(RenderSystem* render, Room& room)
 
 	registry.obstacles.emplace(rightWall);
 	registry.obstacles.get(rightWall).is_wall = true;
-
+	TEXTURE_ASSET_ID right_wall_texture;
+	if (room.has_right_door) {
+		if (room.enemy_count == 0) {
+			// create the door if room should have one
+			right_wall_texture = TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR;
+			auto right_door = Entity();
+			Motion& right_door_motion = registry.motions.emplace(right_door);
+			right_door_motion.position = { x_max, y_mid };
+			right_door_motion.scale = { 64,64 };
+			Obstacle& right_door_obstacle = registry.obstacles.emplace(right_door);
+			right_door_obstacle.is_passable = true;
+			right_door_obstacle.is_right_door = true;
+		}
+		else {
+			right_wall_texture = TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR;
+		}
+	}
+	else {
+		right_wall_texture = TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_NO_DOOR;
+	}
 	registry.renderRequests.insert(
 		rightWall,
-		{ room.has_right_door ? TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR
-			: TEXTURE_ASSET_ID::RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR ,
+		{ right_wall_texture ,
 			EFFECT_ASSET_ID::TEXTURED,
 			GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::MIDDLEGROUND });
-
-	if (room.has_right_door) {
-		auto right_door = Entity();
-		Motion& right_door_motion = registry.motions.emplace(right_door);
-		right_door_motion.position = { x_max, y_mid };
-		right_door_motion.scale = { 64,64 };
-		Obstacle& right_door_obstacle = registry.obstacles.emplace(right_door);
-		right_door_obstacle.is_passable = true;
-		right_door_obstacle.is_right_door = true;
-	}
 }
 
 void clearExistingWalls()
@@ -869,6 +997,7 @@ void render_room(RenderSystem* render, Level& level)
 	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
 	if (!current_room.is_visited) {
+		level.num_rooms_visited++;
 		// set the room to visited
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
@@ -914,6 +1043,9 @@ void render_room(RenderSystem* render, Level& level)
 			std::cout << "shop room generated" << '\n';
 		} else if (level.num_rooms_until_boss <= 0) {
 			// Generate a boss room
+			stop_music();
+			play_music(boss_music);
+
 			current_room.room_type = ROOM_TYPE::BOSS_ROOM;
 			world_generator.generateNewRoom(current_room, level);
 
@@ -925,6 +1057,8 @@ void render_room(RenderSystem* render, Level& level)
 			current_room.room_type = ROOM_TYPE::NORMAL_ROOM;
 			world_generator.generateNewRoom(current_room, level);
 		}
+		
+		
 	} else {
 		std::cout << "revisiting room!" << std::endl;
 	}
@@ -939,7 +1073,12 @@ void render_room(RenderSystem* render, Level& level)
 	{
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createObstacle(render, vec2(x, y));
+		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
+			//do nothing, no obstacles
+		}
+		else {
+			createObstacle(render, vec2(x, y));
+		}
 	}
 
 	// Specify types for each enemy, later need to find a way to assign types randomly now its 2 ranged 1 melee
@@ -950,7 +1089,12 @@ void render_room(RenderSystem* render, Level& level)
 		//enemy positions is a set of vec2
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
-		createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()]);
+		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
+			createBoss(render, vec2(x, y), 4000.0f, BossAI::BossState::DEFENSIVE);
+		}
+		else {
+			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], false);
+		}
 	}
 
 	// Create a shop panel if a shop room is encountered
@@ -1154,7 +1298,7 @@ Entity createFire(RenderSystem* render, vec2 pos, float scale, bool repeat)
 		TEXTURE_ASSET_ID::TEXTURE_COUNT,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
-		RENDER_LAYER::FOREGROUND });
+		RENDER_LAYER::UI });
 
 	return entity;
 }
@@ -1263,8 +1407,428 @@ Entity createLevel(RenderSystem* render)
 	WorldGenerator world_generator;
 
 	// modifies Room component using pointer to Room component
-	world_generator.generateStartingRoom(starting_room, level);
-
+	world_generator.generateTutorialRoomOne(starting_room, level);
 	render_room(render, level);
+	return entity;
+}
+
+Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
+{
+	auto entity = Entity();
+
+	// Actual firing angle is randomly perturbed based on accuracy and how long the fire button has been held
+	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
+	float perturbedAngle = angle + (rng - 0.5f) * accuracy;
+
+	float coneWidth = 0.5f;
+
+	// Calculate the angle for each shotgun projectile in a cone
+	float coneAngle = perturbedAngle - coneWidth / 2 + i * coneWidth / 10;
+
+	// Setting initial motion values
+	/*
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = angle;
+	motion.scale = vec2({ 64.f , 64.f });
+	motion.velocity = vec2({ 400.0f * cos(angle), 400.0f * sin(angle) });
+	*/
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::BLUE_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 1}, {12, 1}, {13, 1}, {14, 1} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	motion.position = position;
+	motion.look_angle = coneAngle;
+	motion.scale = vec2({ 90.0f, 90.0f });
+	motion.velocity = vec2({ 250.0f * cos(coneAngle), 250.0f * sin(coneAngle) });
+
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+
+	// Set damage and projectile properties
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER;
+	projectile.lifetime = weapon_stats[projectile.weapon_type].lifetime;
+	deadly.damage = weapon_stats[projectile.weapon_type].damage;
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createBossGuidedMissile(RenderSystem* render, vec2 startPosition, Entity source, Entity target) {
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	Projectile& projectile = registry.projectiles.emplace(entity);
+	projectile.weapon_type = WeaponType::ROCKET_LAUNCHER; // Assume you add this type to your WeaponType enum
+	motion.position = startPosition;
+	motion.scale = vec2({ 128.f, 128.f }); // Adjust size as needed
+
+	// Initial velocity pointing straight towards the player, you can adjust this logic to make it start with a curve
+	vec2 targetPosition = registry.motions.get(target).position;
+	vec2 direction = normalize(targetPosition - startPosition);
+	motion.velocity = direction * 250.0f; // Adjust speed as needed
+	Projectile& guidedMissile = registry.guidedMissiles.emplace(entity);
+	// Set the source of the projectile
+	registry.projectiles.get(entity).source = source;
+	projectile.lifetime = 5000.0f; // Adjust lifetime as needed
+
+	Deadly& deadly = registry.deadlies.emplace(entity);
+	deadly.damage = 50.0f; // Adjust damage as needed
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::GREEN_EFFECT;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {11, 5}, {12, 5}, {13, 5}, {14, 5} };
+	animation.frame_durations_ms = { 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT, // You might want to create a specific texture for this missile
+		  EFFECT_ASSET_ID::TEXTURED,
+		  GEOMETRY_BUFFER_ID::SPRITE,
+		  RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createPowerup(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ OBSTACLE_BB_WIDTH, OBSTACLE_BB_HEIGHT });
+
+	registry.obstacles.emplace(entity);
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::POWERUP;
+	animation.total_frames = 17;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0} };
+	animation.frame_durations_ms = { 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f, 50.f };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.powerups.emplace(entity);
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::FOREGROUND });
+
+	return entity;
+}
+
+Entity createCurrentAmmoIcon(RenderSystem* render, vec2 position, Player& player)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ CURRENT_AMMO_ICON_BB_WIDTH, CURRENT_AMMO_ICON_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.current_frame = player.ammo_count;
+	switch (player.weapon_type)
+	{
+	case WeaponType::GATLING_GUN:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_GATLING_GUN;
+		break;
+	case WeaponType::SNIPER:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_SNIPER;
+		break;
+	case WeaponType::SHOTGUN:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_SHOTGUN;
+		break;
+	case WeaponType::ROCKET_LAUNCHER:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_ROCKET_LAUNCHER;
+		break;
+	case WeaponType::FLAMETHROWER:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_FLAMETHROWER;
+		if (player.ammo_count == 200) {
+			animation.current_frame = 19;
+		}
+		else {
+			animation.current_frame = player.ammo_count / 10;
+		}
+		break;
+	case WeaponType::ENERGY_HALO:
+		animation.sheet_id = SPRITE_SHEET_ID::AMMO_ENERGY_HALO;
+		break;
+	default:
+		break;
+	}
+
+	// sprite' coords are only used in relation to the sheet, 
+	// so as long as we don't go below the minimum number of sprites 
+	// from any of the sheets that we will be swapping through
+	// we can use the same sprite sheet data for all weapons
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0}, {18, 0}, {19, 0}, {20, 0}, {21, 0}, {22, 0}, {23, 0}, {24, 0}, {25, 0}, {26, 0}, {27, 0}, {28, 0}, {29, 0}, {30, 0}, {31, 0}, {32, 0}, {33, 0}, {34, 0}, {35, 0}, {36, 0}, {37, 0}, {38, 0}, {39, 0}, {40, 0}, {41, 0}, {42, 0}, {43, 0}, {44, 0}, {45, 0}, {46, 0}, {47, 0}, {48, 0}, {49, 0}, {50, 0}, {51, 0}, {52, 0}, {53, 0}, {54, 0}, {55, 0}, {56, 0}, {57, 0}, {58, 0}, {59, 0}, {60, 0}, {61, 0}, {62, 0}, {63, 0}, {64, 0}, {65, 0}, {66, 0}, {67, 0}, {68, 0}, {69, 0}, {70, 0}, {71, 0}, {72, 0}, {73, 0}, {74, 0}, {75, 0}, {76, 0}, {77, 0}, {78, 0}, {79, 0}, {80, 0}, {81, 0}, {82, 0} };
+
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+		 EFFECT_ASSET_ID::TEXTURED,
+		 GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::UI });
+
+	return entity;
+}
+
+Entity createCursor(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ CURSOR_BB_WIDTH, CURSOR_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::CURSOR,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::CURSOR });
+
+	return entity;
+}
+
+Entity createMoveTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INSTRUCTION_MOVE_ICON,
+						 EFFECT_ASSET_ID::TEXTURED,
+						 GEOMETRY_BUFFER_ID::SPRITE,
+						RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createAimTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::INSTRUCTION_AIM_ICON,
+								 EFFECT_ASSET_ID::TEXTURED,
+								 GEOMETRY_BUFFER_ID::SPRITE,
+								RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createShootTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_SHOOT;
+	animation.total_frames = 8;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+			EFFECT_ASSET_ID::TEXTURED,
+			GEOMETRY_BUFFER_ID::SPRITE,
+		RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createReloadTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_RELOAD;
+	animation.total_frames = 18;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}, {7, 0}, {8, 0}, {9, 0}, {10, 0}, {11, 0}, {12, 0}, {13, 0}, {14, 0}, {15, 0}, {16, 0}, {17, 0} };
+	animation.frame_durations_ms = { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+				EFFECT_ASSET_ID::TEXTURED,
+				GEOMETRY_BUFFER_ID::SPRITE,
+			RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createScrollTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_SCROLL;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 250, 250, 250, 250 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+					EFFECT_ASSET_ID::TEXTURED,
+					GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createSwitchTutorialWidget(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ TUTORIAL_WIDGET_BB_WIDTH, TUTORIAL_WIDGET_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::INSTRUCTION_SWITCH;
+	animation.total_frames = 4;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0}, {2, 0}, {3, 0} };
+	animation.frame_durations_ms = { 250, 250, 250, 250 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+							EFFECT_ASSET_ID::TEXTURED,
+							GEOMETRY_BUFFER_ID::SPRITE,
+						RENDER_LAYER::MIDDLEGROUND });
+
+	return entity;
+}
+
+Entity createPowerupPopup(RenderSystem* render, vec2 position)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ POWERUP_POPUP_BB_WIDTH, POWERUP_POPUP_BB_HEIGHT });
+
+	Animation& animation = registry.animations.emplace(entity);
+	animation.sheet_id = SPRITE_SHEET_ID::POWERUP_POPUP;
+	animation.total_frames = 2;
+	animation.current_frame = 0;
+	animation.sprites = { {0, 0}, {1, 0} };
+	animation.frame_durations_ms = { 100, 100 };
+	animation.loop = true;
+
+	AnimationTimer& animation_timer = registry.animationTimers.emplace(entity);
+	animation_timer.counter_ms = animation.frame_durations_ms[0];
+
+	registry.renderRequests.insert(
+		entity,
+		{ TEXTURE_ASSET_ID::TEXTURE_COUNT,
+				 EFFECT_ASSET_ID::TEXTURED,
+				 GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::FOREGROUND });
+
+	return entity;
+}
+
+Entity createPowerupIcon(RenderSystem* render, vec2 position, TEXTURE_ASSET_ID powerup_texture)
+{
+	auto entity = Entity();
+
+	// Setting initial motion values
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = position;
+	motion.scale = vec2({ POWERUP_ICON_BB_WIDTH, POWERUP_ICON_BB_HEIGHT });
+
+	registry.renderRequests.insert(
+		entity,
+		{ powerup_texture,
+					EFFECT_ASSET_ID::TEXTURED,
+					GEOMETRY_BUFFER_ID::SPRITE,
+				RENDER_LAYER::UI });
+
 	return entity;
 }

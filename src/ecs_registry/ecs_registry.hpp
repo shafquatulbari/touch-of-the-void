@@ -38,6 +38,11 @@ public:
 	ComponentContainer<ShopPanel> shopPanels;
 	ComponentContainer<Level> levels;
 	ComponentContainer<Button> buttons;
+	ComponentContainer<PowerupRandom> powerups;
+	ComponentContainer<BossAI>bosses;
+	ComponentContainer<Projectile> guidedMissiles;
+	ComponentContainer<TutorialOnly> tutorialOnlys;
+	ComponentContainer<PowerupPopUp> powerupPopUps;
 
 	// constructor that adds all containers for looping over them
 	// IMPORTANT: Don't forget to add any newly added containers!
@@ -69,6 +74,9 @@ public:
 		registry_list.push_back(&levels);
 		registry_list.push_back(&buttons);
 		registry_list.push_back(&shopPanels);
+		registry_list.push_back(&bosses);
+		registry_list.push_back(&guidedMissiles);
+		registry_list.push_back(&tutorialOnlys);
 	}
 
 	void clear_all_components() {

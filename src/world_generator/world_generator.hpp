@@ -7,7 +7,13 @@ class WorldGenerator
 public:
 	WorldGenerator() {}
 
-	void generateStartingRoom(Room& room, Level& level);
+	void populateFirstRoom(Room& room);
+
+	void populateTutorialRoom(Room& room);
+
+	void generateTutorialRoomOne(Room& room, Level& level);
+
+	void generateTutorialRoomTwo(Room& room, Level& level);
 
 	void generateNewRoom(Room& room, Level& level);
 

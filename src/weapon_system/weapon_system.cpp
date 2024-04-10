@@ -25,7 +25,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 	if (p.is_reloading) {
 		p.reload_timer_ms -= elapsed_ms;
 
-		if (p.reload_timer_ms < 0) {
+		if (p.instant_ammo_reload || p.reload_timer_ms < 0) {
 			// Reload complete, refill ammo
 			p.is_reloading = false;
 			p.reload_timer_ms = weapon_stats[p.weapon_type].reload_time;
@@ -45,32 +45,37 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 		if (p.fire_rate_timer_ms <= 0) {
 			createMuzzleFlash(renderer, player);
 			p.fire_rate_timer_ms = weapon_stats[p.weapon_type].fire_rate;
+			float rng_gen = uniform_dist(rng);
+			if (p.accuracy_boost) {
+				// Reduce the spread of the bullets
+				rng_gen = uniform_dist(rng) * 0.5f;
+			}
 			switch (p.weapon_type)
 			{
 			case WeaponType::GATLING_GUN:
-				createProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				createProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, rng_gen, p.fire_length_ms, player);
 				play_sound(gatling_gun_sound);
 				break;
 
 			case WeaponType::SNIPER:
-				createSniperProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				createSniperProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, rng_gen, p.fire_length_ms, player);
 				play_sound(sniper_sound);
 				break;
 
 			case WeaponType::SHOTGUN:
 				for (int i = 0; i < 10; i++) {
-					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, i, player);
+					createShotgunProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, rng_gen, p.fire_length_ms, i, player);
 				}
 				play_sound(shotgun_sound);
 				break;
 
 			case WeaponType::ROCKET_LAUNCHER:
-				createRocketProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				createRocketProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, rng_gen, p.fire_length_ms, player);
 				play_sound(rocket_launcher_sound);
 				break;
 
 			case WeaponType::FLAMETHROWER:
-				createFlamethrowerProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, uniform_dist(rng), p.fire_length_ms, player);
+				createFlamethrowerProjectile(renderer, p_m.position, p_m.look_angle - M_PI / 2, rng_gen, p.fire_length_ms, player);
 				play_sound(flamethrower_sound);
 				break;
 
@@ -145,10 +150,10 @@ void WeaponSystem::step_weapon_timers(float elapsed_ms)
 
 		// move the fire
 		registry.motions.get(timer.fire).position = registry.motions.get(entity).position;
-		registry.motions.get(timer.fire).look_angle = registry.motions.get(entity).look_angle;
+		// registry.motions.get(timer.fire).look_angle = registry.motions.get(entity).look_angle;
 
 		// deal dot damage
-		if (registry.healths.has(entity)) {
+		if (registry.healths.has(entity) && !registry.players.has(entity)) {
 			float dot_damage = 0.0f;
 			if (timer.total_time_ms - timer.counter_ms > 0) {
 				dot_damage = (timer.total_damage / timer.total_time_ms) * elapsed_ms;

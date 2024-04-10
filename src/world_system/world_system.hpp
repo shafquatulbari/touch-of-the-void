@@ -6,6 +6,7 @@
 #include "render_system/render_system.hpp"
 #include "ui_system/ui_system.hpp"
 #include "weapon_system/weapon_system.hpp"
+#include "powerup_system/powerup_system.hpp"
 
 // stlib
 #include <vector>
@@ -15,6 +16,31 @@
 // deferred to the relative update() methods
 class WorldSystem
 {
+public:
+	WorldSystem();
+
+	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
+
+	// Creates a window
+	GLFWwindow* create_window();
+
+	// starts the game
+	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
+
+	// Releases all associated resources
+	~WorldSystem();
+
+	// Steps the game ahead by ms milliseconds
+	bool step(float elapsed_ms);
+
+
+	// Check for collisions
+	void handle_collisions(float elapsed_ms);
+
+	void bounce_back(Entity player, Entity obstacle);
+
+	// Should the game be over ?
+	bool is_over()const;
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -35,10 +61,12 @@ private:
 
 	// OpenGL window handle
 	GLFWwindow* window;
+	Entity cursor; // custom cursor
 
 	// Game state
 	RenderSystem* renderer;
 	UISystem* ui;
+	PowerupSystem* powerups;
 	WeaponSystem* weapons;
 	Entity player;
 
@@ -53,6 +81,7 @@ private:
 		SHOP_MENU,
 		PAUSE_MENU,
 		GAME_OVER,
+		GAME_WIN,
 		TOTAL_GAME_STATES // Keep this as the last element
 	};
 

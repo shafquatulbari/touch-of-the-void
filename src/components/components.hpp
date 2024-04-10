@@ -9,6 +9,28 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
+enum class PowerupType {
+	MAX_HEALTH,
+	HEALTH_REGEN,
+	MAX_SHIELD,
+	INSTANT_AMMO_RELOAD,
+	DAMAGE_BOOST,
+	DEFENSE_BOOST,
+	SPEED_BOOST,
+	MULTIPLIER_BOOST,
+	ACCURACY_BOOST,
+	MAX_AMMO,
+	TIME_SLOW,
+	INSTANT_KILL,
+	MORE_ENEMIES,
+	MORE_OBSTACLES,
+	MORE_POWERUPS,
+	BLEED,
+	BIGGER_BULLETS,
+	BOOST,
+	SHUFFLER
+};
+
 struct Level {
 	// the current level of the game
 	int current_level = 1;
@@ -17,7 +39,7 @@ struct Level {
 	// the current room the player is in
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
-	int num_rooms_until_boss = 4;
+	int num_rooms_until_boss = 3;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 	
@@ -62,6 +84,7 @@ struct Room {
 
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
+	bool is_boss_room = false; // if the room contains a boss
 	// The number of enemies in the room
 	int enemy_count = 0;
 
@@ -88,6 +111,8 @@ struct Room {
 	bool has_right_door = false;
 	bool has_top_door = false;
 	bool has_bottom_door = false;
+
+	bool is_tutorial_room = false;
 };
 
 // access panel to the shop
@@ -120,7 +145,7 @@ struct Player
 	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
 		{WeaponType::GATLING_GUN, 100},
-		{WeaponType::SNIPER, 1},
+		{WeaponType::SNIPER, 4},
 		{WeaponType::SHOTGUN, 6},
 		{WeaponType::ROCKET_LAUNCHER, 1},
 		{WeaponType::FLAMETHROWER, 200},
@@ -149,7 +174,14 @@ struct Player
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
 
+	float rotation_factor = 0.0f; // used to choose frame of sprite to display
 
+	std::vector<PowerupType> powerups;
+	int powerups_collected = 0;
+	bool instant_ammo_reload = false;
+	bool damage_boost = false;
+	bool defense_boost = false; // only makes shield stronger, not health at the moment
+	bool accuracy_boost = false;
 	// Constructor to set the initial values
 	Player() : 
 		max_ammo_count(weapon_stats[weapon_type].magazine_size),
@@ -193,6 +225,8 @@ struct Obstacle
 	bool is_left_door = false;
 	bool is_right_door = false;
 
+	// if this is a door, is it locked
+	bool is_locked_door = true;
 	// if this is a wall
 	bool is_wall = false;
 };
@@ -214,6 +248,26 @@ struct AI
 	float shootingCooldown = 0.0f; // time in seconds before the next shot can be made for ranged enemies
 	int frequency = 0; // frequency of think cycles
 	int counter = 0; // counter for think cycles
+	bool in_boss_room = false; // if the AI is in a boss room
+};
+
+struct BossAI
+{
+	enum class BossState {DEFENSIVE, OFFENSIVE,GUIDED_MISSILE};
+	BossState state = BossState::DEFENSIVE;
+	float shootTimer = 0.0f; // Timer to control shooting rate
+	float shootCooldown = 1.0f; // Cooldown in seconds between shots
+	float missileTimer = 0.0f; // Timer to control missile creation rate
+	float missileCooldown = 2.0f; // Cooldown in seconds between missile creation
+	float stateTimer = 0.0f; // Timer to track time in the current state
+	float stateDuration = 10.0f; // Duration to spend in each state before switching
+	int aliveEnemyCount = 0; // New member to track the number of alive enemies
+	float enemyCreationTimer = 0.0f; // Timer for enemy creation in the offensive state
+	float enemyCreationCooldown = 1.5f; // Cooldown for enemy creation
+	int totalSpawnedEnemies = 0; // New member to track the number of alive enemies
+	float zigzagTimer = 0.0f; // Timer to track when to switch directions
+	float zigzagInterval = 4.0f; // Interval in seconds between direction changes
+	glm::vec2 zigzagDirection = glm::vec2(50.0f, 50.0f); // Initial direction and speed
 };
 
 // Harmful collision component
@@ -227,6 +281,7 @@ struct Health
 {
 	float current_health = 100.0f; // health points of an entity
 	float max_health = 100.0f; // maximum health points of an entity
+	float regen_rate = 0.0f; // rate at which the health regenerates
 };
 
 // Shield component 
@@ -259,6 +314,7 @@ struct Motion {
 	float deceleration_rate = 0.0f; // amount to be shaved off velocity if moving in direction
 	float max_velocity = 0.0f; 	// maximum velocity in any direction
 	float turn_rate = 0.0f;		// how fast the entity can turn
+	float turn_speed = 0.0f;		// how fast the entity is currently turning
 
 	bool is_passable = false; // if the entity is passable (cannot be collided with)
 };
@@ -311,6 +367,12 @@ struct DeathTimer
 struct RoomTransitionTimer
 {
 	float counter_ms = 0;
+};
+
+struct EarnedGoldTimer {
+	float counter_ms = 0;
+	float duration_ms = 1000;
+	float gold_earned = 0;
 };
 
 // Single Vertex Buffer element for non-textured meshes (coloured.vs.glsl & chicken.vs.glsl)
@@ -371,6 +433,18 @@ struct Sprite {
 	vec2 maxTexCoords;
 };
 
+// Empty shell for powerup pickup
+struct PowerupRandom {
+};
+
+struct MultiplierBoostPowerupTimer {
+	float counter_ms = 500.0f; 
+};
+
+struct PowerupPopUp {
+	float counter_ms = 0.0f; // the counter until destruction of the pop-up
+};
+
 /**
  * The following enumerators represent global identifiers refering to graphic
  * assets. For example TEXTURE_ASSET_ID are the identifiers of each texture
@@ -396,11 +470,17 @@ struct Sprite {
  */
 
 enum class TEXTURE_ASSET_ID {
+	AMMO_PLACEMENT_HELPER = 0,
 	// Projectile textures
-	BULLET = 0,
+	BULLET = AMMO_PLACEMENT_HELPER + 1, // 0,
+	CURSOR = BULLET + 1,
 
+	// Instructional widget icons
+	INSTRUCTION_AIM_ICON = CURSOR + 1,
+	INSTRUCTION_MOVE_ICON = INSTRUCTION_AIM_ICON + 1,
+	
 	// Enemy textures
-	ENEMY_SPITTER = BULLET + 1,
+	ENEMY_SPITTER = INSTRUCTION_MOVE_ICON + 1,
 	ENEMY_TURRET_BASE = ENEMY_SPITTER + 1,
 	ENEMY_TURRET_GUN = ENEMY_TURRET_BASE + 1,
 
@@ -418,15 +498,18 @@ enum class TEXTURE_ASSET_ID {
 	RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR = TOP_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR = RIGHT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
 	LEFT_LEVEL1_FULL_WALL_OPEN_DOOR = BOTTOM_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
-	LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
-	LEVEL1_OBSTACLE = LEVEL1_FULL_WALL_NO_DOOR + 1,
-	LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
-	LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
-	LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
-	LEVEL1_WALL = LEVEL1_WALL_TOP_CORNER + 1,
+	TOP_LEVEL1_FULL_WALL_NO_DOOR = LEFT_LEVEL1_FULL_WALL_OPEN_DOOR + 1,
+	RIGHT_LEVEL1_FULL_WALL_NO_DOOR = TOP_LEVEL1_FULL_WALL_NO_DOOR + 1,
+	BOTTOM_LEVEL1_FULL_WALL_NO_DOOR = RIGHT_LEVEL1_FULL_WALL_NO_DOOR + 1,
+	LEFT_LEVEL1_FULL_WALL_NO_DOOR = BOTTOM_LEVEL1_FULL_WALL_NO_DOOR + 1,
+	LEVEL1_OBSTACLE = LEFT_LEVEL1_FULL_WALL_NO_DOOR + 1,
+	//LEVEL1_WALL_BOTTOM_CORNER = LEVEL1_OBSTACLE + 1,
+	//LEVEL1_WALL_END = LEVEL1_WALL_BOTTOM_CORNER + 1,
+	//LEVEL1_WALL_TOP_CORNER = LEVEL1_WALL_END + 1,
+	//LEVEL1_WALL = LEVEL1_WALL_TOP_CORNER + 1,
 
 	// Player textures
-	PLAYER_STATUS_HUD = LEVEL1_WALL + 1,
+	PLAYER_STATUS_HUD = LEVEL1_OBSTACLE + 1,
 	PLAYER = PLAYER_STATUS_HUD + 1,
 
 	// SCREEN TEXTURES
@@ -453,8 +536,28 @@ enum class TEXTURE_ASSET_ID {
 	ENERGY_HALO_EQUIPPED = SNIPER_UNEQUIPPED + 1,
 	ENERGY_HALO_UNEQUIPPED = ENERGY_HALO_EQUIPPED + 1,
 
+	// Powerup icon textures
+	POWERUP_BOOST = ENERGY_HALO_UNEQUIPPED + 1,
+	POWERUP_ACCURACY = POWERUP_BOOST + 1,
+	POWERUP_BIGGER_BULLETS = POWERUP_ACCURACY + 1,
+	POWERUP_BLEED = POWERUP_BIGGER_BULLETS + 1,
+	POWERUP_DEFENSE = POWERUP_BLEED + 1,
+	POWERUP_DAMAGE = POWERUP_DEFENSE + 1,
+	POWERUP_HEALTH = POWERUP_DAMAGE + 1,
+	POWERUP_REGEN = POWERUP_HEALTH + 1,
+	POWERUP_RELOAD = POWERUP_REGEN + 1,
+	POWERUP_INSTANT_KILL = POWERUP_RELOAD + 1,
+	POWERUP_AMMO = POWERUP_INSTANT_KILL + 1,
+	POWERUP_SHIELD = POWERUP_AMMO + 1,
+	POWERUP_MORE_ENEMIES = POWERUP_SHIELD + 1,
+	POWERUP_MULTIPLIER = POWERUP_MORE_ENEMIES + 1,
+	POWERUP_SHUFFLER = POWERUP_MULTIPLIER + 1,
+	POWERUP_SPEED_BOOST = POWERUP_SHUFFLER + 1,
+	POWERUP_TIME_SLOW = POWERUP_SPEED_BOOST + 1,
+	WIN_SCREEN = POWERUP_TIME_SLOW + 1,
+	
 	// Generic UI textures
-	START_BUTTON = ENERGY_HALO_UNEQUIPPED + 1,
+	START_BUTTON = WIN_SCREEN + 1,
 	ACTIVE_UP_BUTTON = START_BUTTON + 1,
 	INACTIVE_UP_BUTTON = ACTIVE_UP_BUTTON + 1,
 	ACTIVE_DOWN_BUTTON = INACTIVE_UP_BUTTON + 1,
@@ -491,13 +594,32 @@ enum class GEOMETRY_BUFFER_ID {
 const int geometry_count = (int)GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 
 enum class SPRITE_SHEET_ID {
-	BLUE_EFFECT = 0,
-	ENEMY_SCARAB = BLUE_EFFECT + 1,
+	AMMO_ENERGY_HALO = 0,
+	AMMO_FLAMETHROWER = AMMO_ENERGY_HALO + 1,
+	AMMO_GATLING_GUN = AMMO_FLAMETHROWER + 1,
+	AMMO_ROCKET_LAUNCHER = AMMO_GATLING_GUN + 1,
+	AMMO_SHOTGUN = AMMO_ROCKET_LAUNCHER + 1,
+	AMMO_SNIPER = AMMO_SHOTGUN + 1,
+	BLUE_EFFECT = AMMO_SNIPER + 1,
+	ENEMY_BOSS_IDLE = BLUE_EFFECT + 1,
+	ENEMY_BOSS_SHIELD = ENEMY_BOSS_IDLE + 1,
+	ENEMY_BOSS_SPAWN = ENEMY_BOSS_SHIELD + 1,
+	ENEMY_DRILL = ENEMY_BOSS_SPAWN + 1,
+	ENEMY_DROID = ENEMY_DRILL + 1,
+	ENEMY_DRONE = ENEMY_DROID + 1,
+	ENEMY_SCARAB = ENEMY_DRONE + 1,
 	EXPLOSION = ENEMY_SCARAB + 1,
 	ENEMY_EXPLODER = EXPLOSION + 1,
 	GREEN_EFFECT = ENEMY_EXPLODER + 1,
+	INSTRUCTION_RELOAD = GREEN_EFFECT + 1,
+	INSTRUCTION_SCROLL = INSTRUCTION_RELOAD + 1,
+	INSTRUCTION_SHOOT = INSTRUCTION_SCROLL + 1,
+	INSTRUCTION_SWITCH = INSTRUCTION_SHOOT + 1,
+	PLAYER = INSTRUCTION_SWITCH + 1,
+	POWERUP_POPUP = PLAYER + 1,
+	POWERUP = POWERUP_POPUP + 1,
 	//PURPLE_EFFECT = GREEN_EFFECT + 1,
-	RED_EFFECT = GREEN_EFFECT + 1,
+	RED_EFFECT = POWERUP + 1,
 	YELLOW_EFFECT = RED_EFFECT + 1,
 	SPRITE_SHEET_COUNT = YELLOW_EFFECT + 1
 };
@@ -509,7 +631,8 @@ enum class RENDER_LAYER {
 	FOREGROUND = MIDDLEGROUND + 1,
 	UI = FOREGROUND + 1,
 	GAME_MENU = UI + 1,
-	RENDER_LAYER_COUNT = GAME_MENU + 1
+	CURSOR = GAME_MENU + 1,
+	RENDER_LAYER_COUNT = CURSOR + 1
 };
 const int render_layer_count = (int)RENDER_LAYER::RENDER_LAYER_COUNT;
 
@@ -519,7 +642,6 @@ struct RenderRequest {
 	GEOMETRY_BUFFER_ID used_geometry = GEOMETRY_BUFFER_ID::GEOMETRY_COUNT;
 	RENDER_LAYER used_render_layer = RENDER_LAYER::RENDER_LAYER_COUNT;
 };
-
 
 // A structure to store the data concerning a animation where each frame is a sprite, and the time to display each frame is variable
 struct Animation {
@@ -534,4 +656,9 @@ struct Animation {
 struct AnimationTimer
 {
 	float counter_ms = 0.0f;
+};
+
+// A struct to store data that should only exist in tutorial room.
+struct TutorialOnly {
+
 };
