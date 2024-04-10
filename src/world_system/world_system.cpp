@@ -1140,6 +1140,16 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			if (!registry.deathTimers.has(boss_e)) {
 				registry.deathTimers.emplace(boss_e);
 			}
+			//stop motion for all ais 
+			for (Entity e : registry.ais.entities) {
+				Motion& motion = registry.motions.get(e);
+				motion.velocity = { 0, 0 };
+				motion.is_moving_up = false;
+				motion.is_moving_down = false;
+				motion.is_moving_left = false;
+				motion.is_moving_right = false;
+				registry.remove_all_components_of(e);
+			}
 			// UX Effects
 			createExplosion(renderer, boss_pos, 3.0f, false);
 			play_sound(explosion_sound);
