@@ -1251,14 +1251,14 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 				weapons->reload_weapon();
 			}
-			//if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-			//	weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
-			//}
-			//if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-			//	weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
-			//}
+			if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+				weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
+			}
+			if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+				weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
+			}
 
-			if (key == GLFW_KEY_E && action == GLFW_PRESS && registry.shopPanels.entities.size() > 0) {
+			if (key == GLFW_KEY_Z && action == GLFW_PRESS && registry.shopPanels.entities.size() > 0) {
 				vec2& player_pos = registry.motions.get(player).position;
 				vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
 
@@ -1294,6 +1294,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 						is_paused = false;
 						
 						registry.screenStates.components[0].darken_screen_factor = 1.f;
+						
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 						glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 						
 						ShopMenu::close();
