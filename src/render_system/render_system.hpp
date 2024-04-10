@@ -148,6 +148,7 @@ class RenderSystem {
 		textures_path("upgrades/power_up_shuffler_64x64.png"),
 		textures_path("upgrades/power_up_speed_boost_64x64.png"),
 		textures_path("upgrades/power_up_time_slow_64x64.png"),
+		textures_path("end_screen.png"),
 	};
 
 	std::array<GLuint, effect_count> effects;

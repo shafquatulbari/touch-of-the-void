@@ -148,7 +148,7 @@ void WeaponSystem::step_weapon_timers(float elapsed_ms)
 		// registry.motions.get(timer.fire).look_angle = registry.motions.get(entity).look_angle;
 
 		// deal dot damage
-		if (registry.healths.has(entity)) {
+		if (registry.healths.has(entity) && !registry.players.has(entity)) {
 			float dot_damage = 0.0f;
 			if (timer.total_time_ms - timer.counter_ms > 0) {
 				dot_damage = (timer.total_damage / timer.total_time_ms) * elapsed_ms;

@@ -129,15 +129,22 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 		if (counter.counter_ms < min_counter_ms) {
 			min_counter_ms = counter.counter_ms;
 		}
-
 		// restart the game once the death timer expired
-		if (counter.counter_ms < 0) {
+		if (counter.counter_ms < 0 && registry.players.has(entity)) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
 			game_state = GAME_STATE::GAME_OVER;
 			restart_game();
 			return true;
 		}
+		else if (counter.counter_ms < 0 && !registry.players.has(entity)) {
+			registry.deathTimers.remove(entity);
+			screen.darken_screen_factor = 0;
+			game_state = GAME_STATE::GAME_WIN;
+			restart_game();
+			return true;
+		}
+		
 	}
 	for (Entity entity : registry.roomTransitionTimers.entities) {
 		// progress timer
@@ -526,8 +533,8 @@ void WorldSystem::restart_game() {
 	
 	case GAME_STATE::GAME_WIN: {
 		play_music(game_win_music);
-		createStartScreen(renderer);
-		createText(renderer, "Congrats! You escaped!", { 960.0f, 664.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
+		createWinScreen(renderer);
+		createText(renderer, "Press Enter to Start Again", { 960.0f, 664.0f }, 2.f, COLOR_RED, TextAlignment::CENTER);
 		break;
 	}
 
@@ -571,6 +578,10 @@ void WorldSystem::enter_room(vec2 player_pos) {
 		{
 			registry.remove_all_components_of(e);
 		}
+	}
+	for (Entity e : registry.onFireTimers.entities)
+	{
+		registry.onFireTimers.remove(e);
 	}
 }
 // Compute collisions between entities
@@ -723,8 +734,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 						Deadly& deadly = registry.deadlies.get(entity);
 						Health& enemyHealth = registry.healths.get(entity_other);
 						enemyHealth.current_health -= deadly.damage;
-						play_sound(enemy_hit_sound);
-
+						play_sound(enemy_hit_sound);	
 						switch (projectile.weapon_type)
 						{
 						case WeaponType::ROCKET_LAUNCHER:
@@ -751,6 +761,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			if (registry.players.has(projectileSource) && (registry.guidedMissiles.has(entity_other))) {
 				// destroy the boss projectile if the player projectile hits it, destroy player projectile too, show explosion effect and play sound
 				createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+				createExplosion(renderer, registry.motions.get(entity_other).position, 1.0, false);
 				play_sound(explosion_sound);
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 				registry.remove_all_components_of(entity_other); // Remove projectile after collision
@@ -772,6 +783,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					if (registry.players.get(projectileSource).damage_boost) {
 						enemyHealth.current_health -= deadly.damage; // double damage if player has damage boost
 					}
+
 					play_sound(enemy_hit_sound);
 
 					switch (projectile.weapon_type) 
@@ -806,7 +818,6 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 						DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
 						damagedTimer.counter_ms = playerShield.recharge_delay;
 					}
-
 					if (playerShield.current_shield > 0) {
 						play_sound(player_hit_sound);
 						float damage = 10.f; // registry.deadlies.get(entity).damage; should probably be using this no?
@@ -841,7 +852,15 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 							play_sound(player_hit_sound);
 						}
 					}
-					
+					switch (projectile.weapon_type)
+					{
+					case WeaponType::FLAMETHROWER:
+						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
+						break;
+
+					default:
+						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
+					}
 				}
 				registry.remove_all_components_of(entity); // Remove projectile after collision
 			}
@@ -851,7 +870,8 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				if (registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
 					assert(registry.shields.has(entity_other) && "Player should have a shield");
 					Shield& playerShield = registry.shields.get(entity_other);
-
+					createExplosion(renderer, registry.motions.get(entity).position, 1.0, false);
+					play_sound(explosion_sound);
 					if (registry.damagedTimers.has(entity_other)) {
 						DamagedTimer& damagedTimer = registry.damagedTimers.get(entity_other);
 						damagedTimer.counter_ms = playerShield.recharge_delay;
@@ -1011,11 +1031,23 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 		if (boss_health.current_health <= 0 ) {
 			registry.remove_all_components_of(boss_e);
 			score += 1000;
+			if (!registry.deathTimers.has(boss_e)) {
+				registry.deathTimers.emplace(boss_e);
+			}
+			//stop motion for all ais 
+			for (Entity e : registry.ais.entities) {
+				Motion& motion = registry.motions.get(e);
+				motion.velocity = { 0, 0 };
+				motion.is_moving_up = false;
+				motion.is_moving_down = false;
+				motion.is_moving_left = false;
+				motion.is_moving_right = false;
+				registry.remove_all_components_of(e);
+			}
 			// UX Effects
-			createExplosion(renderer, boss_pos, 1.0f, false);
+			createExplosion(renderer, boss_pos, 3.0f, false);
 			play_sound(explosion_sound);
-			game_state = GAME_STATE::GAME_WIN;
-			restart_game();
+			
 		}
 	}
 

@@ -151,3 +151,5 @@ Entity createPowerupPopup(RenderSystem* render, vec2 position);
 // create the powerup icon
 Entity createPowerupIcon(RenderSystem* render, vec2 position, TEXTURE_ASSET_ID powerup_texture);
 
+// create the win screen
+Entity createWinScreen(RenderSystem* render);
