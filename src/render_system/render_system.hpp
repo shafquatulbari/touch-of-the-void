@@ -106,7 +106,12 @@ class RenderSystem {
 		textures_path("weapon_icon_energy_halo_unequipped_128x128.png"),
 
 		// Generic UI textures
-		textures_path("start_button.png")
+		textures_path("start_button_640x128.png"),
+		textures_path("active_up_button_64x64.png"),
+		textures_path("inactive_up_button_64x64.png"),
+		textures_path("active_down_button_64x64.png"),
+		textures_path("inactive_down_button_64x64.png")
+
 	};
 
 	std::array<GLuint, effect_count> effects;

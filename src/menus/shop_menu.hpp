@@ -19,7 +19,11 @@ class ShopMenu {
 private:
 	static RenderSystem* renderer;
 
+	static int items_per_list;
+
+	static int quantity;
 	static ITEM_TYPE current_page;
+	static int current_list_index;
 	static WeaponType current_item;
 	static std::vector<WeaponType> unlocked_weapons;
 
@@ -28,7 +32,6 @@ private:
 
 	static std::vector<Entity> button_entities;
 	static std::vector<Entity> text_entities;
-
 
 	static void render_weapons_page();
 	static void render_ammo_page();
