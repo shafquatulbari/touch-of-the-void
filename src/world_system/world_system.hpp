@@ -69,6 +69,7 @@ private:
 	PowerupSystem* powerups;
 	WeaponSystem* weapons;
 	Entity player;
+	Entity background;
 
 	std::vector<Entity> p_mesh_lines; // for debug
 

@@ -547,8 +547,8 @@ void WorldSystem::restart_game() {
 		invincibilityTime = 0;
 
 		// Create a level
-		createBackground(renderer);
-		level = createLevel(renderer);
+		background = createBackground(renderer);
+		level = createLevel(renderer, background);
 
 		//// Create HUD
 		score = 0;
@@ -607,7 +607,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 
 	// Render the room
 	Level& level_struct = registry.levels.get(level);
-	render_room(renderer, level_struct);
+	render_room(renderer, level_struct, background);
 	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, level_struct);
 
 	// Move the player to position
