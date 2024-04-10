@@ -40,6 +40,8 @@ bool RenderSystem::init(GLFWwindow* window_arg)
 	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
 	gl_has_errors();
 
+	// Create a second frame buffer
+
 	// For some high DPI displays (ex. Retina Display on Macbooks)
 	// https://stackoverflow.com/questions/36672935/why-retina-screen-coordinate-value-is-twice-the-value-of-pixel-value
 	int frame_buffer_width_px, frame_buffer_height_px;
@@ -404,7 +406,7 @@ bool RenderSystem::initializeFonts() {
 		// Initialize each font
 		FONT_ASSET_ID font_index = (FONT_ASSET_ID)i;
 		const std::string& name = font_paths[i];
-		bool is_valid = loadFontFromFile(name, 48);
+		bool is_valid = loadFontFromFile(name, default_font_size);
 		assert(is_valid);
 		fprintf(stderr, "Loaded font %s\n", name.c_str());
 	}

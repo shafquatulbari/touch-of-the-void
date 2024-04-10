@@ -23,3 +23,4 @@ struct WeaponStats {
 };
 
 extern std::unordered_map<WeaponType, WeaponStats> weapon_stats;
+extern std::unordered_map<WeaponType, int> new_weapon_ammo_counts;

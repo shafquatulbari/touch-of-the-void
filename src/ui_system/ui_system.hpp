@@ -20,6 +20,7 @@ private:
 
 	// Score
 	Entity score_text;
+	Entity funds_text;
 	Entity multiplier_text;
 
 	// Weapon slots

@@ -87,6 +87,7 @@ class RenderSystem {
 
 		// LEVEL 1 TEXTURES
 		textures_path("lvl1_background_960x960.png"),
+		textures_path("shop_background_960x960.png"),
 		textures_path("lvl1_doors_192x56.png"),
 		textures_path("lvl1_full_top_wall_closed_door_960x64.png"),
 		textures_path("lvl1_full_right_wall_closed_door_832x64.png"),
@@ -111,9 +112,13 @@ class RenderSystem {
 		textures_path("screen_start_1920x1024.png"),
 
 		// MAP TEXTURES
-		textures_path("map_icon_cleared_36x36.png"),
+		textures_path("map_icon_boss_unvisited_36x36.png"),
+		textures_path("map_icon_boss_visited_36x36.png"),
 		textures_path("map_icon_current_36x36.png"),
+		textures_path("map_icon_shop_unvisited_36x36.png"),
+		textures_path("map_icon_shop_visited_36x36.png"),
 		textures_path("map_icon_unvisited_36x36.png"),
+		textures_path("map_icon_visited_36x36.png"),
 		textures_path("placement_helper_map.png"),
 
 		// WEAPON TEXTURES
@@ -149,6 +154,14 @@ class RenderSystem {
 		textures_path("upgrades/power_up_speed_boost_64x64.png"),
 		textures_path("upgrades/power_up_time_slow_64x64.png"),
 		textures_path("end_screen.png"),
+
+		// Generic UI textures
+		textures_path("start_button_640x128.png"),
+		textures_path("active_up_button_64x64.png"),
+		textures_path("inactive_up_button_64x64.png"),
+		textures_path("active_down_button_64x64.png"),
+		textures_path("inactive_down_button_64x64.png")
+
 	};
 
 	std::array<GLuint, effect_count> effects;
@@ -236,7 +249,7 @@ public:
 	void draw();
 
 	// Draw all text entities
-	void drawText(const mat3& projection);
+	void drawText(const mat3& projection, bool use_framebuffer);
 
 	mat3 createProjectionMatrix();
 
@@ -246,11 +259,13 @@ public:
 	bool loadFontFromFile(
 		const std::string& font_path, unsigned int font_default_size);
 
+	std::map<char, Character> m_ftCharacters;
+	float default_font_size = 48.f;
+
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
 	void drawToScreen(const mat3& projection);
-	void drawLine(Line& line);
 
 	// Window handle
 	GLFWwindow* window;
@@ -266,7 +281,6 @@ private:
 	GLuint vbo;
 
 	// Fonts
-	std::map<char, Character> m_ftCharacters;
 	GLuint m_font_shaderProgram;
 	GLuint m_font_VAO;
 	GLuint m_font_VBO;

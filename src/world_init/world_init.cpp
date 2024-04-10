@@ -1,10 +1,14 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
+#include "weapon_system/weapon_system.hpp"
 #include "world_generator/world_generator.hpp"
-#include <world_system/world_system.hpp>
+#include "world_system/world_system.hpp"
+
+#include <cmath>
+#include <random>
 #include <glm/gtc/random.hpp>
 
-const int NUM_ROOMS_UNTIL_BOSS = 4;
+
 Entity createPlayer(RenderSystem *renderer, vec2 pos)
 {
 	auto entity = Entity();
@@ -311,7 +315,7 @@ Entity createBackground(RenderSystem *renderer)
 
 	// return the starting room entity
 	//return createLevel(renderer);
-	return Entity();
+	return entity;
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -1003,7 +1007,7 @@ void clearExistingWalls()
 	}
 }
 
-void render_room(RenderSystem* render, Level& level)
+void render_room(RenderSystem* render, Level& level, Entity background)
 {
 	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
@@ -1012,23 +1016,63 @@ void render_room(RenderSystem* render, Level& level)
 		// set the room to visited
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
-
-
+		
+		// After clearing each room, player has a higher chance of encountering a shop room.
+		// Using the logistic function to determine whether to spawn a shop room or an enemy room.
+		// Logistic function is defined as:
+		//		
+		//			f(x) = 1 / 1 + exp(-ax + b)
+		//
+		// - larger a -> larger increase of chance per room cleared
+		// - larger b -> smaller increase of chance per room cleared
+		std::knuth_b rnd_engine;
+		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 2.f)) );
 		if (level.num_rooms_visited == 1) {
-			// second tutorial room
 			world_generator.generateTutorialRoomTwo(current_room, level);
-		}
-		else if (level.num_rooms_until_boss <= 0) {
+		} else if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
+			// Generate a shop room
+			current_room.room_type = ROOM_TYPE::SHOP_ROOM;
+			world_generator.generateNewRoom(current_room, level);
+			
+			Player& player = registry.players.components.back();
+			std::vector<WeaponType> locked_weapons;
+			
+			for (int i = 0; i < (int)WeaponType::TOTAL_WEAPON_TYPES; i++) {
+				// total_ammo_count of the smallest integer value implies locked weapons
+				if (is_weapon_locked((WeaponType)i)) {
+					locked_weapons.push_back((WeaponType)i);
+				}
+			}
+
+			if (locked_weapons.size() > 0) {
+				std::default_random_engine rng = std::default_random_engine(std::random_device()());
+				std::uniform_int_distribution<int> weapon_idx_selector(0, locked_weapons.size() - 1);
+				
+				current_room.weapon_on_sale = locked_weapons[weapon_idx_selector(rng)];
+			} else {
+				current_room.weapon_on_sale = WeaponType::TOTAL_WEAPON_TYPES;
+			}
+
+			level.num_shop_spawned++;
+			level.num_shop_spawn_counter = 0;
+
+			std::cout << "shop room generated" << '\n';
+		} else if (level.num_rooms_until_boss <= 0) {
+			// Generate a boss room
 			stop_music();
 			play_music(boss_music);
-			world_generator.generateNewRoom(current_room, level, true);
+
+			current_room.room_type = ROOM_TYPE::BOSS_ROOM;
+			world_generator.generateNewRoom(current_room, level);
+
 			std::cout << "boss room generated, back to rendering" << std::endl;
+			
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
-		} else
-		{
-			world_generator.generateNewRoom(current_room, level, false);
+		} else {
+			// Generate a normal room
+			current_room.room_type = ROOM_TYPE::NORMAL_ROOM;
+			world_generator.generateNewRoom(current_room, level);
 		}
-		// have seen both tutorial rooms
 		
 		
 	} else {
@@ -1036,7 +1080,7 @@ void render_room(RenderSystem* render, Level& level)
 	}
 
 	// in case current room was not visited, re-retrieve current room 
-	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
+	Room& room_to_render = registry.rooms.get(level.rooms[level.current_room]);
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
@@ -1069,7 +1113,37 @@ void render_room(RenderSystem* render, Level& level)
 		}
 	}
 
+	// Create a shop panel if a shop room is encountered
+	if (room_to_render.room_type == ROOM_TYPE::SHOP_ROOM) {
+		createShopPanel(render, current_room.weapon_on_sale);
+		registry.renderRequests.get(background).used_texture = TEXTURE_ASSET_ID::SHOP_BACKGROUND;
+	}
+	else {
+		registry.renderRequests.get(background).used_texture = TEXTURE_ASSET_ID::LEVEL1_BACKGROUND;
+	}
+
 	createWalls(render, room_to_render);
+}
+
+Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
+	auto entity = Entity();
+
+	Motion& motion = registry.motions.emplace(entity);
+	motion.position = { window_width_px / 2, window_height_px / 2 };
+	motion.scale = { game_window_block_size, game_window_block_size };
+
+	ShopPanel& shop = registry.shopPanels.emplace(entity);
+	shop.weapon_on_sale = weapon_on_sale;
+
+	return entity;
+}
+
+Entity createShopIndicator(RenderSystem* renderer, vec2 position) {
+	Entity text_e = createText(renderer, "Z", position, 0.75f, { 1.f, 1.f, 1.f }, TextAlignment::CENTER);
+	registry.renderRequests.emplace(text_e).used_render_layer = RENDER_LAYER::FOREGROUND;
+	registry.debugComponents.emplace(text_e);
+
+	return text_e;
 }
 
 Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
@@ -1098,6 +1172,21 @@ Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 	return entity;
 }
 
+vec2 getTextRectSize(RenderSystem* renderer, std::string& text, float font_size_scale) {
+	std::map<char, Character> ftChars = renderer->m_ftCharacters;
+
+	float str_w = 0.f;
+	float str_h = 0.f;
+
+	for (int i = 0; i < text.length(); i++) {
+		const Character ch = ftChars[text[i]];
+		str_w += (ch.Advance >> 6) * font_size_scale;
+		str_h = max(str_h, ch.Size.y * font_size_scale);
+	}
+
+	return vec2(str_w, str_h);
+}
+
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)
 {
 	auto entity = Entity();
@@ -1106,6 +1195,8 @@ Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float s
 	text.content = content;
 	text.color = color;
 	text.alignment = alignment;
+
+	text.rect_size = getTextRectSize(renderer, content, scale);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = { pos.x, window_height_px - pos.y }; // flip y axis as text is rendered from top to bottom, but we use bottom to top everywhere else
@@ -1320,7 +1411,7 @@ Entity createIconInfinity(RenderSystem* render, vec2 pos)
 	return entity;
 }
 
-Entity createLevel(RenderSystem* render)
+Entity createLevel(RenderSystem* render, Entity background)
 {
 	auto entity = Entity();
 
@@ -1337,7 +1428,7 @@ Entity createLevel(RenderSystem* render)
 
 	// modifies Room component using pointer to Room component
 	world_generator.generateTutorialRoomOne(starting_room, level);
-	render_room(render, level);
+	render_room(render, level, background);
 	return entity;
 }
 

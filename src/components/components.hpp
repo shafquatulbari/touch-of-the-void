@@ -4,6 +4,7 @@
 
 #include "common/common.hpp"
 #include "weapon_system/weapon_constants.hpp"
+
 #include <vector>
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
@@ -38,11 +39,16 @@ struct Level {
 	// the current room the player is in
 	std::pair<int, int> current_room;
 	// the number of rooms the player needs to clear until the boss appears
-	int num_rooms_until_boss = 3;
+	int num_rooms_until_boss = 10;
 	// number of rooms the player has cleared
 	int num_rooms_cleared = 0;
 	// number of unique rooms the player has visited
 	int num_rooms_visited = 0;
+	
+	// number of rooms cleared since last shop is spawned
+	int num_shop_spawn_counter = 0;
+	// number of shop levels spawned in
+	int num_shop_spawned = 0;
 };
 
 struct vec2comp {
@@ -54,6 +60,14 @@ struct vec2comp {
 	}
 };
 
+
+// Room type
+enum class ROOM_TYPE {
+	UNDEFINED_ROOM = 0,
+	NORMAL_ROOM = UNDEFINED_ROOM + 1,
+	BOSS_ROOM = NORMAL_ROOM + 1,
+	SHOP_ROOM = BOSS_ROOM + 1
+};
 
 // All data relevant to the contents of a game room
 struct Room {
@@ -67,6 +81,8 @@ struct Room {
 	{
 		//std::cout << "Room deconstructor:" << std::addressof(this->is_cleared) << std::endl;
 	}
+
+	ROOM_TYPE room_type = ROOM_TYPE::UNDEFINED_ROOM;
 
 	bool is_cleared = false; // if the room has been cleared of enemies, can contain upgrade
 	bool is_visited = false; // if the room has been visited
@@ -85,6 +101,8 @@ struct Room {
 	// the positions of the obstacles in the room
 	std::set<vec2, vec2comp> obstacle_positions;
 
+	WeaponType weapon_on_sale = WeaponType::TOTAL_WEAPON_TYPES;
+
 	// The number of powerups in the room
 	//int powerup_count = 0;
 	// the positions of the powerups in the room
@@ -99,6 +117,11 @@ struct Room {
 	bool is_tutorial_room = false;
 };
 
+// access panel to the shop
+struct ShopPanel {
+	WeaponType weapon_on_sale;
+};
+
 // Player component
 struct Player
 {
@@ -107,20 +130,38 @@ struct Player
 		{WeaponType::GATLING_GUN, INT_MAX},
 		{WeaponType::SNIPER, 20},
 		{WeaponType::SHOTGUN, 60},
-		{WeaponType::ROCKET_LAUNCHER, 5},
+		{WeaponType::ROCKET_LAUNCHER, INT_MIN}, // 5
 		{WeaponType::FLAMETHROWER, 400},
 		{WeaponType::ENERGY_HALO, 8},
 	};
+
+	//std::unordered_map<WeaponType, int> total_ammo_count = {
+	//	{WeaponType::GATLING_GUN, INT_MAX},
+	//	{WeaponType::SNIPER, INT_MIN},
+	//	{WeaponType::SHOTGUN, INT_MIN},
+	//	{WeaponType::ROCKET_LAUNCHER, INT_MIN},
+	//	{WeaponType::FLAMETHROWER, INT_MIN},
+	//	{WeaponType::ENERGY_HALO, INT_MIN},
+	//};
 
 	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
 		{WeaponType::GATLING_GUN, 100},
 		{WeaponType::SNIPER, 4},
 		{WeaponType::SHOTGUN, 6},
-		{WeaponType::ROCKET_LAUNCHER, 1},
+		{WeaponType::ROCKET_LAUNCHER, INT_MIN}, // 1
 		{WeaponType::FLAMETHROWER, 200},
 		{WeaponType::ENERGY_HALO, 2},
 	};
+
+	//std::unordered_map<WeaponType, int> magazine_ammo_count = {
+	//	{WeaponType::GATLING_GUN, 100},
+	//	{WeaponType::SNIPER, INT_MIN},
+	//	{WeaponType::SHOTGUN, INT_MIN},
+	//	{WeaponType::ROCKET_LAUNCHER, INT_MIN},
+	//	{WeaponType::FLAMETHROWER, INT_MIN},
+	//	{WeaponType::ENERGY_HALO, INT_MIN},
+	//};
 
 	bool is_firing = false; // player is currently firing projectiles
 	float fire_length_ms = 0.0f; // time the player has been firing
@@ -130,6 +171,7 @@ struct Player
 	int ammo_count;
 	bool is_reloading = false; // player is currently reloading and cannot fire
 	float reload_timer_ms = 0.0f;
+	int gold_balance = 0;
 
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
@@ -199,9 +241,9 @@ struct NoCollisionCheck
 
 struct AI
 {
-	enum class AIType {MELEE, RANGED, TURRET, SHOTGUN, ROCKET, FLAMETHROWER};
+	enum class AIType { MELEE, RANGED, TURRET, SHOTGUN, ROCKET, FLAMETHROWER };
 	AIType type = AIType::MELEE;
-	enum class AIState {IDLE, ACTIVE};
+	enum class AIState { IDLE, ACTIVE };
 	AIState state = AIState::ACTIVE;
 	float safe_distance = 150.0f; // the distance that the AI will start behaving from the player
 	float attack_distance = 100.0f; // the distance that the AI will start attacking the player
@@ -360,18 +402,11 @@ struct Mesh
 
 enum class TextAlignment { LEFT, RIGHT, CENTER };
 
-struct Line 
-{
-	float width;
-	ColoredVertex from;
-	ColoredVertex to;
-	mat3 trans;
-};
-
 struct Text
 {
 	std::string content;
 	vec3 color;
+	vec2 rect_size;
 	TextAlignment alignment = TextAlignment::LEFT;
 };
 
@@ -382,6 +417,15 @@ struct Character {
 	glm::ivec2   Bearing;    // Offset from baseline to left/top of glyph
 	unsigned int Advance;    // Offset to advance to next glyph
 	char character;
+};
+
+struct Button {
+	Entity text_entity;
+	bool hover = false;	
+	bool disabled = false;
+	std::function<void()> on_click = []() {};
+	std::function<void(void)> on_mouse_in = []() {};
+	std::function<void(void)> on_mouse_out = []() {};
 };
 
 // A structure to store the data concerning a single sprite sheet texture
@@ -447,7 +491,8 @@ enum class TEXTURE_ASSET_ID {
 
 	// Level 1 textures
 	LEVEL1_BACKGROUND = INFINITY_AMMO + 1,
-	LEVEL1_DOORS = LEVEL1_BACKGROUND + 1,
+	SHOP_BACKGROUND = LEVEL1_BACKGROUND + 1,
+	LEVEL1_DOORS = SHOP_BACKGROUND + 1,
 	TOP_LEVEL1_FULL_WALL_CLOSED_DOOR = LEVEL1_DOORS + 1,
 	RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR = TOP_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
 	BOTTOM_LEVEL1_FULL_WALL_CLOSED_DOOR = RIGHT_LEVEL1_FULL_WALL_CLOSED_DOOR + 1,
@@ -475,10 +520,14 @@ enum class TEXTURE_ASSET_ID {
 	START_SCREEN = DEATH_SCREEN + 1,
 
 	// Map icon textures
-	CLEARED_ROOM = START_SCREEN + 1,
-	CURRENT_ROOM = CLEARED_ROOM + 1,
-	UNVISITED_ROOM = CURRENT_ROOM + 1,
-	MAP_PLACEMENT_HELPER = UNVISITED_ROOM + 1,
+	BOSS_ROOM_UNVISITED = START_SCREEN + 1,
+	BOSS_ROOM_VISITED = BOSS_ROOM_UNVISITED + 1,
+	CURRENT_ROOM = BOSS_ROOM_VISITED + 1,
+	SHOP_ROOM_UNVISITED = CURRENT_ROOM + 1,
+	SHOP_ROOM_VISITED = SHOP_ROOM_UNVISITED + 1,
+	UNVISITED_ROOM = SHOP_ROOM_VISITED + 1,
+	VISITED_ROOM = UNVISITED_ROOM + 1,
+	MAP_PLACEMENT_HELPER = VISITED_ROOM + 1,
 
 	// Weapon icon textures
 	FLAME_THROWER_EQUIPPED = MAP_PLACEMENT_HELPER + 1,
@@ -513,8 +562,15 @@ enum class TEXTURE_ASSET_ID {
 	POWERUP_SPEED_BOOST = POWERUP_SHUFFLER + 1,
 	POWERUP_TIME_SLOW = POWERUP_SPEED_BOOST + 1,
 	WIN_SCREEN = POWERUP_TIME_SLOW + 1,
-	TEXTURE_COUNT = WIN_SCREEN + 1,
 	
+	// Generic UI textures
+	START_BUTTON = WIN_SCREEN + 1,
+	ACTIVE_UP_BUTTON = START_BUTTON + 1,
+	INACTIVE_UP_BUTTON = ACTIVE_UP_BUTTON + 1,
+	ACTIVE_DOWN_BUTTON = INACTIVE_UP_BUTTON + 1,
+	INACTIVE_DOWN_BUTTON = ACTIVE_DOWN_BUTTON + 1,
+
+	TEXTURE_COUNT = INACTIVE_DOWN_BUTTON + 1
 };
 const int texture_count = (int)TEXTURE_ASSET_ID::TEXTURE_COUNT;
 
@@ -581,7 +637,8 @@ enum class RENDER_LAYER {
 	MIDDLEGROUND = BACKGROUND + 1,
 	FOREGROUND = MIDDLEGROUND + 1,
 	UI = FOREGROUND + 1,
-	CURSOR = UI + 1,
+	GAME_MENU = UI + 1,
+	CURSOR = GAME_MENU + 1,
 	RENDER_LAYER_COUNT = CURSOR + 1
 };
 const int render_layer_count = (int)RENDER_LAYER::RENDER_LAYER_COUNT;

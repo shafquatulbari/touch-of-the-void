@@ -18,10 +18,11 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			play_sound(reload_start_sound);
 			p.is_reloading = true;
 		}
-		else {
+		else if (p.total_ammo_count[p.weapon_type] != INT_MIN) {
 			play_sound(no_ammo_sound);
 		}
 	}
+	
 	if (p.is_reloading) {
 		p.reload_timer_ms -= elapsed_ms;
 
@@ -31,7 +32,9 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			p.reload_timer_ms = weapon_stats[p.weapon_type].reload_time;
 			int ammo_to_refill = std::min(weapon_stats[p.weapon_type].magazine_size - p.ammo_count, p.total_ammo_count[p.weapon_type]);
 			p.ammo_count += ammo_to_refill; // Refill ammo after reload
+			
 			p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
+			
 			play_sound(reload_end_sound);
 		}
 	}
@@ -99,6 +102,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 	}
 	p.fire_rate_timer_ms -= elapsed_ms;
 }
+
 
 void WeaponSystem::step_projectile_lifetime(float elapsed_ms) 
 {
@@ -193,7 +197,7 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 	WeaponType currentWeapon = player.weapon_type;
 
 	// Store the current ammo count
-	player.magazine_ammo_count[player.weapon_type] = player.ammo_count;
+	player.magazine_ammo_count[player.weapon_type] = max(player.ammo_count, 0);
 
 	// Get the total number of weapon types
 	int numWeapons = static_cast<int>(WeaponType::TOTAL_WEAPON_TYPES);
@@ -300,4 +304,27 @@ void WeaponSystem::handle_flamethrower_collision(RenderSystem* renderer, Entity 
 		OnFireTimer& timer = registry.onFireTimers.emplace(enemy);
 		timer.fire = createFire(renderer, registry.motions.get(enemy).position, 2.0, true);
 	}
+}
+
+// Check if the player hasn't unlocked a weapon type
+bool is_weapon_locked(WeaponType weapon_type) {
+	if (weapon_type == WeaponType::GATLING_GUN || weapon_type == WeaponType::TOTAL_WEAPON_TYPES) {
+		return false;
+	}
+
+	Player& player = registry.players.components[0];
+	return player.total_ammo_count[weapon_type] == INT_MIN;
+}
+
+// Unlock a weapon
+bool unlock_weapon(WeaponType weapon_type) {
+	if (!is_weapon_locked(weapon_type)) {
+		return false;
+	}
+
+	Player& player = registry.players.components.back();
+	player.total_ammo_count[weapon_type] = new_weapon_ammo_counts[weapon_type];
+	player.magazine_ammo_count[weapon_type] = weapon_stats[weapon_type].magazine_size;
+
+	return true;
 }

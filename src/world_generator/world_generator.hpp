@@ -5,8 +5,7 @@
 class WorldGenerator
 {
 public:
-	// populates the fields of a Room
-	void populateRoom(Room& room);
+	WorldGenerator() {}
 
 	void populateFirstRoom(Room& room);
 
@@ -16,11 +15,14 @@ public:
 
 	void generateTutorialRoomTwo(Room& room, Level& level);
 
-	void generateNewRoom(Room& room, Level& level, bool is_boss_room);
+	void generateNewRoom(Room& room, Level& level);
+
+	// populates the fields of a Room
+	void populateRoom(Room& room);
 
 	// populates the fields of a Boss Room
 	void populateBossRoom(Room& room);
-	WorldGenerator()
-	{
-	}
+
+	// populates a shop Room with their objects
+	void populateShopRoom(Room& room);
 };

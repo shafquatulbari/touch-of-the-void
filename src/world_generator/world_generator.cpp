@@ -161,7 +161,7 @@ void WorldGenerator::generateTutorialRoomTwo(Room& room, Level& level)
 
 }
 
-void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room)
+void WorldGenerator::generateNewRoom(Room& room, Level& level)
 {
 	// find neighbours if they exist
 	// if we should, generate a new room and add it to the level
@@ -173,7 +173,6 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	Entity current_room_entity = level.rooms[level.current_room];
 	Room* current_room_pointer = &room;
-
 
 
 	std::default_random_engine rng = std::default_random_engine(std::random_device()());
@@ -188,7 +187,9 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(left_room_coords) > 0 && registry.rooms.get(level.rooms[left_room_coords]).is_visited)
 	{
-		current_room_pointer->has_left_door = true;
+		if (registry.rooms.get(level.rooms[left_room_coords]).has_right_door) {
+			current_room_pointer->has_left_door = true;
+		}
 		// remove for M3
 	}
 	else if (left_room_rng == 0) {
@@ -203,7 +204,9 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(right_room_coords) > 0 && registry.rooms.get(level.rooms[right_room_coords]).is_visited)
 	{
-		current_room_pointer->has_right_door = true;
+		if (registry.rooms.get(level.rooms[right_room_coords]).has_left_door) {
+			current_room_pointer->has_right_door = true;
+		}
 	}
 	else if (right_room_rng == 0) {
 			// generate a new room
@@ -217,10 +220,12 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 	}
 
 
-
 	if (level.rooms.count(top_room_coords) > 0 && registry.rooms.get(level.rooms[top_room_coords]).is_visited)
 	{
-		current_room_pointer->has_top_door = true;
+		if (registry.rooms.get(level.rooms[top_room_coords]).has_bottom_door) {
+			current_room_pointer->has_top_door = true;
+		}
+		
 	}
 	else if (top_room_rng == 0) {
 			// generate a new room
@@ -235,7 +240,9 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 
 	if (level.rooms.count(bottom_room_coords) > 0 && registry.rooms.get(level.rooms[bottom_room_coords]).is_visited)
 	{
-		current_room_pointer->has_bottom_door = true;
+		if (registry.rooms.get(level.rooms[bottom_room_coords]).has_top_door) {
+			current_room_pointer->has_bottom_door = true;
+		}
 	}
 	else if (bot_room_rng == 0) {
 		// generate a new room
@@ -247,21 +254,22 @@ void WorldGenerator::generateNewRoom(Room& room, Level& level, bool is_boss_room
 	}
 
 	Room& current_room = registry.rooms.get(current_room_entity);
-	if (is_boss_room)
-	{
+	if (current_room.room_type == ROOM_TYPE::BOSS_ROOM) {
 		populateBossRoom(current_room);
 		
 	} else if (level.num_rooms_cleared == 0) {
-			populateFirstRoom(current_room); // make first room easy 
-	}
-	else {
+		populateFirstRoom(current_room); // make first room easy 
+	} else if (current_room.room_type == ROOM_TYPE::SHOP_ROOM) {
+		populateShopRoom(current_room);
+	} else {
 		populateRoom(current_room);
 	}
+	current_room.is_visited = true;
 	level.num_rooms_visited++;
 }
 void WorldGenerator::populateBossRoom(Room& room)
 {
-	// space is effectively 15x15 since 480/32 = 30 
+	// space is effectively 15x15 since 480/32 = 30 -> range: x = [1..15], y = [1..15]
 	room.is_cleared = false;
 	room.is_boss_room = true; // this is the boss room
 
@@ -276,4 +284,8 @@ void WorldGenerator::populateBossRoom(Room& room)
 	room.has_bottom_door = false;
 	room.enemy_positions.insert(vec2(7.0f, 7.0f));
 	room.all_positions.insert(vec2(7.0f, 7.0f));
+}
+
+void WorldGenerator::populateShopRoom(Room& room) {
+	room.is_cleared = true;
 }

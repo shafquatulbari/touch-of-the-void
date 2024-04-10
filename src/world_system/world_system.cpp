@@ -3,7 +3,10 @@
 #include "world_init/world_init.hpp"
 #include "physics_system/physics_system.hpp"
 #include "ui_system/ui_system.hpp"
+#include "ui_init/ui_init.hpp"
 #include "weapon_system/weapon_system.hpp"
+#include "menus/pause_menu.hpp"
+#include "menus/shop_menu.hpp"
 #include "components/components.hpp"
 #include "powerup_system/powerup_system.hpp"
 
@@ -73,7 +76,6 @@ GLFWwindow* WorldSystem::create_window() {
 	#endif
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
-
 	// Create the main window (for rendering, keyboard, and mouse input) FULLSCREEN
 	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
 
@@ -136,7 +138,10 @@ bool WorldSystem::progress_timers(Player& player, float elapsed_ms_since_last_up
 		if (counter.counter_ms < 0 && registry.players.has(entity)) {
 			registry.deathTimers.remove(entity);
 			screen.darken_screen_factor = 0;
+			
+			is_paused = false;
 			game_state = GAME_STATE::GAME_OVER;
+			
 			restart_game();
 			return true;
 		}
@@ -265,6 +270,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	case GAME_STATE::START_MENU:
 		return true;
 		break;
+	
 	case GAME_STATE::GAME:
 		break;
 
@@ -436,6 +442,15 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 		}
 	}
 
+	// Check if the player is in close proximity to a shop
+	vec2& player_pos = p_m.position;
+	if (registry.shopPanels.entities.size() > 0) {
+		vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
+		if (glm::distance(shop_pos, player_pos) <= 1.5f * game_window_block_size) {
+			createShopIndicator(renderer, player_pos + vec2({ game_window_block_size / 2, -game_window_block_size / 2 }));
+		}
+	}
+
 	/////////////////////////////////////////////////////////////////////////////////
 	//std::vector<ColoredVertex>& m_vertices = registry.meshPtrs.get(player)->vertices;
 	//Motion& p_motion = registry.motions.get(player);
@@ -481,7 +496,7 @@ void WorldSystem::restart_game() {
 	// All that have a motion, we could also iterate over all bug, eagles, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
-
+	
 	// Debugging for memory/component leaks
 	registry.list_all_components();
 
@@ -532,8 +547,8 @@ void WorldSystem::restart_game() {
 		invincibilityTime = 0;
 
 		// Create a level
-		createBackground(renderer);
-		level = createLevel(renderer);
+		background = createBackground(renderer);
+		level = createLevel(renderer, background);
 
 		//// Create HUD
 		score = 0;
@@ -542,6 +557,9 @@ void WorldSystem::restart_game() {
 		powerups->init(renderer);
 		break;
 	}
+
+	case GAME_STATE::PAUSE_MENU:
+		break;
 
 	case GAME_STATE::GAME_OVER: {
 		high_score = std::max(high_score, score);
@@ -589,7 +607,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 
 	// Render the room
 	Level& level_struct = registry.levels.get(level);
-	render_room(renderer, level_struct);
+	render_room(renderer, level_struct, background);
 	ui->reinit(registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, 0, level_struct);
 
 	// Move the player to position
@@ -607,7 +625,8 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	for (Entity e : registry.motions.entities)
 	{
 		// remove all enemies, obstacles, animations
-		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.tutorialOnlys.has(e) || (registry.animations.has(e) && !registry.players.has(e)))
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.tutorialOnlys.has(e) 
+			|| registry.animations.has(e) && !registry.players.has(e) || registry.shopPanels.has(e))
 		{
 			registry.remove_all_components_of(e);
 		}
@@ -1025,12 +1044,16 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			current_room.enemy_count--;
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
+
 			multiplier += 0.25;
 			score += 10 * multiplier;
+			registry.players.get(player).gold_balance += 10 * multiplier;
+			
 			if (current_room.enemy_count == 0)
 			{
 				registry.levels.get(level).num_rooms_until_boss--;
 				registry.levels.get(level).num_rooms_cleared++;
+				registry.levels.get(level).num_shop_spawn_counter++;
 				// tear down existing walls
 				clearExistingWalls();
 				// re-render walls with doors
@@ -1081,6 +1104,13 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				motion.is_moving_right = false;
 				registry.remove_all_components_of(e);
 			}
+			// stop motion for player
+			Motion& player_motion = registry.motions.get(player);
+			player_motion.velocity = { 0, 0 };
+			player_motion.is_moving_up = false;
+			player_motion.is_moving_down = false;
+			player_motion.is_moving_left = false;
+			player_motion.is_moving_right = false;
 			// UX Effects
 			createExplosion(renderer, boss_pos, 3.0f, false);
 			play_sound(explosion_sound);
@@ -1122,10 +1152,87 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		break;
 
 	case GAME_STATE::GAME:
+		if (registry.deathTimers.size() > 0) {
+			break;
+		}
+
 		// Exit the game on escape
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
 			// TODO: Change to different screen or close depending on the game state
-			glfwSetWindowShouldClose(window, GL_TRUE);
+			//glfwSetWindowShouldClose(window, GL_TRUE);
+			is_paused = true;
+			game_state = GAME_STATE::PAUSE_MENU;
+
+			Motion& p_motion = registry.motions.get(player);
+			p_motion.is_moving_down = false;
+			p_motion.is_moving_up = false;
+			p_motion.is_moving_left = false;
+			p_motion.is_moving_right = false;
+			
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			registry.remove_all_components_of(cursor);
+
+			PauseMenu::init(renderer,
+				[this]() {
+					game_state = GAME_STATE::GAME;
+					is_paused = false;
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+					PauseMenu::close();
+				},
+				[this]() {
+					game_state = GAME_STATE::START_MENU;
+					is_paused = false;
+					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+					PauseMenu::close();
+
+					restart_game();
+				},
+				[this]() {
+					is_paused = false;
+					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+					glfwSetWindowShouldClose(window, GL_TRUE);
+					PauseMenu::close();
+				}
+			);
+
+			/*
+			Button& resume_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::RESUME_BUTTON]);
+			Button& exit_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::EXIT_BUTTON]);
+			Button& quit_btn = registry.buttons.get(PauseMenu::button_entities[(int)PauseMenu::BUTTON_ID::CLOSE_MENU_BUTTON]);
+
+			// Setup the callback functions
+			resume_btn.on_click = [this]() {
+				PauseMenu::close();
+
+				game_state = GAME_STATE::GAME;
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+			};
+
+			exit_btn.on_click = [this]() {
+				PauseMenu::close();
+
+				game_state = GAME_STATE::START_MENU;
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				restart_game();
+			};
+
+			quit_btn.on_click = [this]() {
+				PauseMenu::close();
+
+				is_paused = false;
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+
+				glfwSetWindowShouldClose(window, GL_TRUE);
+			};
+			*/
+
+			registry.screenStates.components[0].darken_screen_factor = 0.95f;
+			break;
 		}
 
 		// Resetting game
@@ -1145,16 +1252,61 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// Player keyboard controls
 		if (!registry.deathTimers.has(player)) {
 			// WEAPON CONTROLS
-			if (!invincible) {
-				if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-					weapons->reload_weapon();
+			if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+				weapons->reload_weapon();
+			}
+			if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+				weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
+			}
+			if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+				weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
+			}
+
+			if (key == GLFW_KEY_Z && action == GLFW_PRESS && registry.shopPanels.entities.size() > 0) {
+				vec2& player_pos = registry.motions.get(player).position;
+				vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
+
+				if (
+					glm::distance(shop_pos, player_pos) > 1.5f * game_window_block_size || 
+					game_state != GAME_STATE::GAME
+				) {
+					break;
 				}
-				if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-					weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
-				}
-				if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-					weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
-				}
+
+				Level& current_level = registry.levels.get(level);
+				Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
+				
+				registry.screenStates.components[0].darken_screen_factor = 0.95f;
+				game_state = GAME_STATE::SHOP_MENU;
+				is_paused = true;
+
+				Motion& p_motion = registry.motions.get(player);
+				p_motion.is_moving_down = false;
+				p_motion.is_moving_up = false;
+				p_motion.is_moving_left = false;
+				p_motion.is_moving_right = false;
+
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				registry.remove_all_components_of(cursor);
+
+				ShopMenu::init(
+					renderer, 
+					registry.shopPanels.components.back().weapon_on_sale,
+					[this]() mutable {
+						
+						game_state = GAME_STATE::GAME;
+						is_paused = false;
+						
+						registry.screenStates.components[0].darken_screen_factor = 1.f;
+						
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+						glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+						
+						ShopMenu::close();
+					}
+				);
+
+				break;
 			}
 
 			// MOVEMENT CONTROLS
@@ -1191,6 +1343,35 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				}
 			}
 		}
+
+		break;
+
+	case GAME_STATE::PAUSE_MENU:
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
+			PauseMenu::close();
+			game_state = GAME_STATE::GAME;
+			is_paused = false;
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+			break;
+		}
+
+		if (action == GLFW_RELEASE && key == GLFW_KEY_BACKSPACE) {
+			glfwSetWindowShouldClose(window, GL_TRUE);
+			break;
+		}
+
+		break;
+
+	case GAME_STATE::SHOP_MENU:
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
+			game_state = GAME_STATE::GAME;
+			is_paused = false;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+			ShopMenu::close();
+			break;
+		}
+
 		break;
 
 	case GAME_STATE::GAME_OVER:
@@ -1284,19 +1465,19 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 
 {
-	if (!registry.motions.has(cursor)) {
-		cursor = createCursor(renderer, mouse_position);
-	}
-	else {
-		registry.motions.get(cursor).position = mouse_position;
-	}
+	int cursor_;
+
 	switch (game_state) 
 	{
-
 	case GAME_STATE::START_MENU:
 		break;
-	
 	case GAME_STATE::GAME:
+		if (!registry.motions.has(cursor)) {
+			cursor = createCursor(renderer, mouse_position);
+		} else {
+			registry.motions.get(cursor).position = mouse_position;
+		}
+
 		if (registry.deathTimers.has(player)) {
 			return;
 		}
@@ -1305,6 +1486,60 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		registry.motions.get(player).look_angle = atan2(direction.y, direction.x) + M_PI/2;
 		break;
 	
+	case GAME_STATE::PAUSE_MENU:
+		/*PauseMenu::has_state_changed = false;
+
+		PauseMenu::previous_entity = PauseMenu::current_entity;
+		for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
+			Entity& e = PauseMenu::button_entities[i];
+
+			Motion& motion = registry.motions.get(e);
+			Button& button = registry.buttons.get(e);
+
+			if (
+				mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
+				mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
+				mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
+				mouse_position.y >= motion.position.y - motion.scale.y / 2
+			) {
+				PauseMenu::has_state_changed = true;
+				PauseMenu::is_hovering = true;
+				PauseMenu::current_entity = e;
+
+				Text& text = registry.texts.get(PauseMenu::text_entities[i]);
+				text.color = { 0.047, 0.639, 0.18 };
+
+				glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
+				break;
+			}
+		}
+
+		if (!PauseMenu::has_state_changed || PauseMenu::previous_entity != PauseMenu::current_entity) {
+			PauseMenu::is_hovering = false;
+
+			if (registry.buttons.has(PauseMenu::previous_entity)) {
+				for (int i = 0; i < PauseMenu::button_entities.size(); i++) {
+					if (PauseMenu::previous_entity == PauseMenu::button_entities[i]) {
+						Text& text = registry.texts.get(PauseMenu::text_entities[i]);
+						text.color = { 0.682, 0.18, 0.18 };
+						break;
+					}
+				}
+			}
+
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+		}*/
+		
+		cursor_ = PauseMenu::on_mouse_move(mouse_position);
+		glfwSetCursor(window, glfwCreateStandardCursor(cursor_));
+
+		break;
+
+	case GAME_STATE::SHOP_MENU:
+		cursor_ = ShopMenu::on_mouse_move(mouse_position);
+		glfwSetCursor(window, glfwCreateStandardCursor(cursor_));
+
+		break;
 	case GAME_STATE::GAME_OVER:
 		break;
 
@@ -1362,6 +1597,16 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		}
 		break;
 
+	case GAME_STATE::PAUSE_MENU:
+		
+		PauseMenu::on_mouse_click();
+		break;
+
+	case GAME_STATE::SHOP_MENU:
+		
+		ShopMenu::on_mouse_click(button, action, mods);
+		break;
+	
 	case GAME_STATE::GAME_OVER:
 		break;
 

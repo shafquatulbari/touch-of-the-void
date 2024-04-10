@@ -62,6 +62,8 @@ const float POWERUP_POPUP_BB_HEIGHT = 232.0f;
 const float POWERUP_ICON_BB_WIDTH = 64.0f;
 const float POWERUP_ICON_BB_HEIGHT = 64.0f;
 
+const int NUM_ROOMS_UNTIL_BOSS = 4;
+
 // the player
 Entity createPlayer(RenderSystem* renderer, vec2 pos);
 // the enemy
@@ -95,7 +97,7 @@ Entity createDeathScreen(RenderSystem* renderer);
 // a text object
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment);
 // render the room
-void render_room(RenderSystem* renderer, Level& level);
+void render_room(RenderSystem* render, Level& level, Entity background);
 // a muzzle flash
 Entity createMuzzleFlash(RenderSystem* render, Entity source);
 // an explosion animation
@@ -113,7 +115,13 @@ Entity createWeaponUnequippedIcon(RenderSystem* render, vec2 pos, TEXTURE_ASSET_
 // an infinity icon
 Entity createIconInfinity(RenderSystem* render, vec2 pos);
 // a game level
-Entity createLevel(RenderSystem* render);
+Entity createLevel(RenderSystem* render, Entity background);
+// create shop access panel
+Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale);
+// create a toggleable hint when close to a shop panel
+Entity createShopIndicator(RenderSystem* renderer, vec2 position);
+
+
 // clear walls
 void clearExistingWalls();
 // create walls
@@ -150,6 +158,5 @@ Entity createSwitchTutorialWidget(RenderSystem* render, vec2 position);
 Entity createPowerupPopup(RenderSystem* render, vec2 position);
 // create the powerup icon
 Entity createPowerupIcon(RenderSystem* render, vec2 position, TEXTURE_ASSET_ID powerup_texture);
-
 // create the win screen
 Entity createWinScreen(RenderSystem* render);

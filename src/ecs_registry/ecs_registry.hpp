@@ -35,8 +35,10 @@ public:
 	ComponentContainer<OnFireTimer> onFireTimers;
 	ComponentContainer<MuzzleFlashTimer> muzzleFlashTimers;
 	ComponentContainer<DamagedTimer> damagedTimers;
-	ComponentContainer<MultiplierBoostPowerupTimer> multiplierBoostPowerupTimers;
+	ComponentContainer<ShopPanel> shopPanels;
 	ComponentContainer<Level> levels;
+	ComponentContainer<Button> buttons;
+	ComponentContainer<MultiplierBoostPowerupTimer> multiplierBoostPowerupTimers;
 	ComponentContainer<PowerupRandom> powerups;
 	ComponentContainer<BossAI>bosses;
 	ComponentContainer<Projectile> guidedMissiles;
@@ -71,9 +73,12 @@ public:
 		registry_list.push_back(&onFireTimers);
 		registry_list.push_back(&damagedTimers);
 		registry_list.push_back(&levels);
+		registry_list.push_back(&buttons);
+		registry_list.push_back(&shopPanels);
 		registry_list.push_back(&bosses);
 		registry_list.push_back(&guidedMissiles);
 		registry_list.push_back(&tutorialOnlys);
+		registry_list.push_back(&multiplierBoostPowerupTimers);
 	}
 
 	void clear_all_components() {
