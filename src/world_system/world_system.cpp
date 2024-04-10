@@ -16,6 +16,8 @@
 // TODO: set hard coded game configuration values here
 bool fullscreen;
 int invincibilityTime;
+bool invincible;
+int initial_delay_ms;
 
 // Create the world
 WorldSystem::WorldSystem()
@@ -258,6 +260,23 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	while (registry.debugComponents.entities.size() > 0)
 		registry.remove_all_components_of(registry.debugComponents.entities.back());
 
+
+	// updating time for invincibility
+		// Check if initial delay time has not elapsed
+	if (initial_delay_ms > 0) {
+		// Reduce the initial delay time by elapsed time since last update
+		initial_delay_ms -= elapsed_ms_since_last_update;
+
+		// If the delay time is still positive, return true to indicate the game should not progress yet
+		if (initial_delay_ms > 0) {
+			return true;
+		}
+		else {
+			// If the delay time has elapsed, reset it to zero and allow the game to progress
+			initial_delay_ms = 0;
+			invincible = false;
+		}
+	}
 
 	auto& motions_registry = registry.motions;
     
