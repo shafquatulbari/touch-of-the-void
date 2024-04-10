@@ -224,11 +224,11 @@ void UISystem::createFirstTutorialRoomText() {
 	registry.tutorialOnlys.emplace(reloadWidget);
 }
 void UISystem::createSecondTutorialRoomText() {
-	Entity switchWidget = createSwitchTutorialWidget(renderer, { x_origin + (3 * 64), y_origin + (3 * 64) });
-	registry.tutorialOnlys.emplace(switchWidget);
-
-	Entity scrollWidget = createScrollTutorialWidget(renderer, { x_max - (3 * 64), y_origin + (3 * 64) });
+	Entity scrollWidget = createScrollTutorialWidget(renderer, { x_origin + (3 * 64), y_origin + (3 * 64) });
 	registry.tutorialOnlys.emplace(scrollWidget);
+
+	Entity switchWidget = createSwitchTutorialWidget(renderer, { x_max - (3 * 64), y_origin + (3 * 64) });
+	registry.tutorialOnlys.emplace(switchWidget);
 }
 
 // Weapon slots
