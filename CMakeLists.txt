@@ -59,6 +59,8 @@ src/weapon_system/*.cpp
 src/weapon_system/*.hpp
 src/audio_manager/*.cpp
 src/audio_manager/*.hpp
+src/powerup_system/*.cpp
+src/powerup_system/*.hpp
 )
 
 # external libraries will be installed into /usr/local/include and /usr/local/lib but that folder is not automatically included in the search on MACs
