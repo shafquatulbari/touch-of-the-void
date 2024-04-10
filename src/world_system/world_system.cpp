@@ -625,47 +625,55 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 			// Apply damage to the player
 			else if (registry.deadlies.has(entity_other)) {
-				assert(registry.shields.has(entity) && "Player should have a shield");
-				Shield& playerShield = registry.shields.get(player);
+				if (invincibilityTime <= 0) {
 
-				if (registry.damagedTimers.has(player)) {
-					DamagedTimer& damagedTimer = registry.damagedTimers.get(player);
-					damagedTimer.counter_ms = playerShield.recharge_delay;
-				}
-				else {
-					DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
-					damagedTimer.counter_ms = playerShield.recharge_delay;
-				}
+					assert(registry.shields.has(entity) && "Player should have a shield");
+					Shield& playerShield = registry.shields.get(player);
 
-				if (playerShield.current_shield > 0) {
-					play_sound(player_hit_sound);
-					playerShield.current_shield -= registry.deadlies.get(entity_other).damage;
-					playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
-				}
-				else {
-					assert(registry.healths.has(player) && "Player should have health");
-					assert(registry.deadlies.has(entity_other) && "Entity should have a deadly component");
-					Deadly& deadly = registry.deadlies.get(entity_other);
-					Health& playerHealth = registry.healths.get(player);
-					playerHealth.current_health -= 1; //hardcoded damage
-					if (playerHealth.current_health <= 0) {
-						// Trigger darkening immediately, but actual effect is controlled in step
-						if (!registry.deathTimers.has(player)) {
-							// cease motion
-							assert(registry.motions.has(player) && "Player should have a motion");
-							Motion& motion = registry.motions.get(player);
-							motion.velocity = { 0, 0 };
-							motion.is_moving_up = false;
-							motion.is_moving_down = false;
-							motion.is_moving_left = false;
-							motion.is_moving_right = false;
-							registry.deathTimers.emplace(player);
-							play_sound(game_over_sound);
-						}
+					if (registry.damagedTimers.has(player)) {
+						DamagedTimer& damagedTimer = registry.damagedTimers.get(player);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
 					}
 					else {
-						play_sound(player_hit_sound);
+						DamagedTimer& damagedTimer = registry.damagedTimers.emplace(player);
+						damagedTimer.counter_ms = playerShield.recharge_delay;
 					}
+
+					if (playerShield.current_shield > 0) {
+						play_sound(player_hit_sound);
+						playerShield.current_shield -= registry.deadlies.get(entity_other).damage;
+						playerShield.current_shield = std::max(playerShield.current_shield, 0.0f);
+						invincibilityTime = 250; //
+					}
+					else {
+						assert(registry.healths.has(player) && "Player should have health");
+						assert(registry.deadlies.has(entity_other) && "Entity should have a deadly component");
+						Deadly& deadly = registry.deadlies.get(entity_other);
+						Health& playerHealth = registry.healths.get(player);
+						playerHealth.current_health -= 1; //hardcoded damage
+						invincibilityTime = 250;//tick between the player taking damage for health
+						if (playerHealth.current_health <= 0) {
+							// Trigger darkening immediately, but actual effect is controlled in step
+							if (!registry.deathTimers.has(player)) {
+								// cease motion
+								assert(registry.motions.has(player) && "Player should have a motion");
+								Motion& motion = registry.motions.get(player);
+								motion.velocity = { 0, 0 };
+								motion.is_moving_up = false;
+								motion.is_moving_down = false;
+								motion.is_moving_left = false;
+								motion.is_moving_right = false;
+								registry.deathTimers.emplace(player);
+								play_sound(game_over_sound);
+							}
+						}
+						else {
+							play_sound(player_hit_sound);
+						}
+					}
+				}
+				else {
+					invincibilityTime -= elapsed_ms;
 				}
 			}
 			else if (registry.powerups.has(entity_other)) {
