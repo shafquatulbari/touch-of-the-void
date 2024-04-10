@@ -345,6 +345,11 @@ bool collides(const Entity entity1, const Entity entity2, float& displacement)
 	//return sat_collision_check(entity1, entity2, displacement);
 }
 
+
+const float xMin = 480.0f;
+const float yMin = 32.0f;
+const float xMax = 1440.0f;
+const float yMax = 992.0f;
 void update_motion(Motion &motion, float step_seconds)
 {
 	// TODO: Update position with motion here
@@ -363,6 +368,12 @@ void update_motion(Motion &motion, float step_seconds)
 		}
 		motion.position.x += motion.velocity.x * step_seconds;
 		motion.position.y += motion.velocity.y * step_seconds;
+
+		// Clamp position to game window for safety reasons (collision resolution can push entities out of bounds)
+		std::min(motion.position.x, xMax);
+		std::max(motion.position.x, xMin);
+		std::min(motion.position.y, yMax);
+		std::max(motion.position.y, yMin);
 
 		return;
 	}

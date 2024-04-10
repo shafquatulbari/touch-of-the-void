@@ -292,48 +292,6 @@ void rotateTowardsPlayer(Motion& motion, const vec2& playerPosition, float viewT
     }
 }
 
-void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
-    float speed = 100.0f; // Tune this value as needed
-    float maxTurnSpeed = 3.f; // Maximum turn speed
-    float turnSpeed = 0.1f; // Turn acceleration
-    float viewThreshold = .5f; // Threshold for angle difference
-    // Check for line of sight
-    if (lineOfSightClear(motion.position, playerPosition)) {
-        // Rotate towards player if in line of sight
-        rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, M_PI/2);
-        
-        // Generate path using A* if the line of sight is clear
-        std::vector<vec2> path = findPathAStar(motion.position, playerPosition);
-        // Ensure there is a path and it has more than one point (start point is always included)
-        if (path.size() > 1) {
-            // Consider the next step in the path
-            vec2 nextStep = path[1]; // Assuming path[0] is the current position
-            vec2 direction = normalize(nextStep - motion.position);
-
-            // Update velocity towards the next step in the path
-            motion.velocity = direction * speed;
-
-            // If the AI is close to the next step, consider moving to the subsequent step
-            // This prevents stopping at each path point and smoothens movement
-            if (length(motion.position - nextStep) < speed * elapsed_ms / 1000.0f) {
-                if (path.size() > 2) { // Check if there is a next step
-                    nextStep = path[2]; // Move to the next step
-                }
-            }
-        }
-    }
-    else {
-        // If line of sight is not clear, stop the entity or handle accordingly
-        if (length(motion.velocity) > 0.1) {
-			motion.velocity *= 0.9f; // Slow down the entity
-        }
-        else {
-            motion.velocity = vec2(0.0f);
-        }
-        motion.turn_speed = 0.0f;
-    }
-}
-
 // https://vanhunteradams.com/Pico/Animal_Movement/Boids-algorithm.html
 // Algorithm adapted from the above link
 void AISystem::handleBoidMovement(Entity entity, Motion& motion, float elapsed_ms, const vec2& playerPosition, float separationForce, float separationWeight, float friendlyAvoidanceDistance, float obstacleAvoidanceDistance, float projectileAvoidanceDistance, float playerAvoidanceDistance, float alignmentForce, float alignmentDistance, float alignmentWeight, float cohesionForce, float cohesionWeight, float cohesionDistance, float playerFollowDistance, float maxSpeed, float forceWeight) {
@@ -468,6 +426,45 @@ void AISystem::handleBoidMovement(Entity entity, Motion& motion, float elapsed_m
 
     motion.velocity += steer * forceWeight;
     motion.velocity = limit(motion.velocity, maxSpeed);
+}
+
+void AISystem::handleMeleeAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
+    float speed = 100.0f; // Tune this value as needed
+    float maxTurnSpeed = 3.f; // Maximum turn speed
+    float turnSpeed = 0.1f; // Turn acceleration
+    float viewThreshold = .5f; // Threshold for angle difference
+
+    float separationForce = 1.0f; // base separation force
+    float separationWeight = .5f; // separation weight when combined with other forces
+    float friendlyAvoidanceDistance = 150.0f; // Distance to avoid other entities
+    float obstacleAvoidanceDistance = 50.0f; // Distance to avoid obstacles
+    float projectileAvoidanceDistance = 150.0f; // Distance to avoid projectiles
+    float playerAvoidanceDistance = 0.0f; // Distance to avoid player
+
+    float alignmentForce = 1.f; // base alignment force
+    float alignmentWeight = .5; // alignment weight when combined with other forces
+    float alignmentDistance = 200.0f; // Distance to consider for alignment
+
+    float cohesionForce = 10.f; // base cohesion force
+    float cohesionWeight = 10.5f; // cohesion weight when combined with other forces
+    float cohesionDistance = 0.0f; // Distance to consider for cohesion
+    float playerFollowDistance = 0.0f; // Distance to follow the player
+
+    float maxSpeed = 200.0f; // Adjust as needed
+    float forceWeight = 1.f; // Overall weight for steering force
+
+    float distanceToPlayer = length(playerPosition - motion.position);
+
+    handleBoidMovement(entity, motion, elapsed_ms, playerPosition, separationForce, separationWeight, friendlyAvoidanceDistance, obstacleAvoidanceDistance, projectileAvoidanceDistance, playerAvoidanceDistance, alignmentForce, alignmentDistance, alignmentWeight, cohesionForce, cohesionWeight, cohesionDistance, playerFollowDistance, maxSpeed, forceWeight);
+
+    // Check for line of sight
+    if (lineOfSightClear(motion.position, playerPosition)) {
+        // Rotate towards player if in line of sight
+        rotateTowardsPlayer(motion, playerPosition, viewThreshold, turnSpeed, maxTurnSpeed, M_PI / 2);
+    }
+    else {
+        motion.turn_speed = 0.0f;
+    }
 }
 
 void AISystem::handleRangedAI(Entity entity, Motion& motion, AI& ai, float elapsed_ms, const vec2& playerPosition) {
