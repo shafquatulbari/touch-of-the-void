@@ -52,7 +52,6 @@ private:
 	void createScoreboard(int score, float multiplier);
 	void updateScoreboard(int score, float multiplier, int deltaScore);
 	void createWeaponMenu(Player& player);
-	void createTutorialText();
 	void createFirstTutorialRoomText();
 	void createSecondTutorialRoomText();
 	void updateWeaponMenu(Player& player);
