@@ -1106,7 +1106,7 @@ void render_room(RenderSystem* render, Level& level, Entity background)
 		float x = x_origin + pos.x * game_window_block_size;
 		float y = y_origin + pos.y * game_window_block_size;
 		if (registry.rooms.get(level.rooms[level.current_room]).is_boss_room) {
-			createBoss(render, vec2(x, y), 4000.0f, BossAI::BossState::DEFENSIVE);
+			createBoss(render, vec2(x, y), 10000.0f, BossAI::BossState::DEFENSIVE);
 		}
 		else {
 			createEnemy(render, vec2(x, y), 500.0f, enemy_types[rand() % enemy_types.size()], false);
