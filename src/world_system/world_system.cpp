@@ -898,6 +898,9 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					case WeaponType::FLAMETHROWER:
 						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
 						break;
+					case WeaponType::ROCKET_LAUNCHER:
+						weapons->handle_rocket_collision(renderer, entity, player);
+						break;
 
 					default:
 						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
@@ -974,6 +977,9 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					}
 				}
 				if (projectile.source != entity_other && !registry.noCollisionChecks.has(entity_other)) {
+					if (projectile.weapon_type == WeaponType::ROCKET_LAUNCHER) {
+						weapons->handle_rocket_collision(renderer, entity, player);
+					}
 					// Remove the projectile, it hit an obstacle
 					registry.remove_all_components_of(entity);
 				}
