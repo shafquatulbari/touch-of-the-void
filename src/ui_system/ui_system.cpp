@@ -54,31 +54,67 @@ void UISystem::createMap(Level& level) {
 				assert(registry.rooms.has(level.rooms[room_coords]) && "Room does not exist in registry");
 				Room& room = registry.rooms.get(level.rooms[room_coords]);
 				auto entity = Entity();
-				if (room.is_visited) {
+				Motion& motion = registry.motions.emplace(entity);
+				motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
+				motion.scale = vec2({ box_width, box_height });
 
-					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
-					motion.scale = vec2({ box_width, box_height });
-
-					registry.renderRequests.insert(
-						entity,
-						{ TEXTURE_ASSET_ID::CLEARED_ROOM,
-											EFFECT_ASSET_ID::TEXTURED,
-											GEOMETRY_BUFFER_ID::SPRITE,
-										RENDER_LAYER::UI });
+				switch (room.room_type) {
+					case ROOM_TYPE::UNDEFINED_ROOM:
+					case ROOM_TYPE::NORMAL_ROOM:
+						if (room.is_visited) {
+							registry.renderRequests.insert(
+								entity,
+								{ TEXTURE_ASSET_ID::VISITED_ROOM,
+													EFFECT_ASSET_ID::TEXTURED,
+													GEOMETRY_BUFFER_ID::SPRITE,
+												RENDER_LAYER::UI });
+						}
+						else {
+							registry.renderRequests.insert(
+								entity,
+								{ TEXTURE_ASSET_ID::UNVISITED_ROOM,
+													EFFECT_ASSET_ID::TEXTURED,
+													GEOMETRY_BUFFER_ID::SPRITE,
+												RENDER_LAYER::UI });
+						}
+						break;
+					case ROOM_TYPE::BOSS_ROOM:
+						if (room.is_visited) {
+							registry.renderRequests.insert(
+								entity,
+								{ TEXTURE_ASSET_ID::BOSS_ROOM_VISITED,
+																					EFFECT_ASSET_ID::TEXTURED,
+																					GEOMETRY_BUFFER_ID::SPRITE,
+																				RENDER_LAYER::UI });
+						}
+						else {
+							registry.renderRequests.insert(
+								entity,
+								{ TEXTURE_ASSET_ID::BOSS_ROOM_UNVISITED,
+																					EFFECT_ASSET_ID::TEXTURED,
+																					GEOMETRY_BUFFER_ID::SPRITE,
+																				RENDER_LAYER::UI });
+						}
+						break;
+					case ROOM_TYPE::SHOP_ROOM:
+						if (room.is_visited) {
+							registry.renderRequests.insert(
+								entity,
+								{ TEXTURE_ASSET_ID::SHOP_ROOM_VISITED,
+																													EFFECT_ASSET_ID::TEXTURED,
+																													GEOMETRY_BUFFER_ID::SPRITE,
+																												RENDER_LAYER::UI });
+						}
+						else {
+							registry.renderRequests.insert(
+								entity,
+								{ TEXTURE_ASSET_ID::SHOP_ROOM_UNVISITED,
+																													EFFECT_ASSET_ID::TEXTURED,
+																													GEOMETRY_BUFFER_ID::SPRITE,
+																												RENDER_LAYER::UI });
+						}
 				}
-				else {
-					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
-					motion.scale = vec2({ box_width, box_height });
 
-					registry.renderRequests.insert(
-						entity,
-						{ TEXTURE_ASSET_ID::UNVISITED_ROOM,
-											EFFECT_ASSET_ID::TEXTURED,
-											GEOMETRY_BUFFER_ID::SPRITE,
-										RENDER_LAYER::UI });
-				}
 				drawn_rooms.push_back(entity);
 			}
 		}
@@ -111,32 +147,65 @@ void UISystem::updateMap(Level& level) {
 				Room& room = registry.rooms.get(level.rooms[room_coords]);
 				auto entity = Entity();
 
+				Motion& motion = registry.motions.emplace(entity);
+				motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
+				motion.scale = vec2({ box_width, box_height });
 
-				if (room.is_visited) {
-					Motion& motion = registry.motions.emplace(entity);
-					
-					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
-					motion.scale = vec2({ box_width, box_height });
-
-					registry.renderRequests.insert(
-						entity,
-						{ TEXTURE_ASSET_ID::CLEARED_ROOM,
-											EFFECT_ASSET_ID::TEXTURED,
-											GEOMETRY_BUFFER_ID::SPRITE,
-										RENDER_LAYER::UI });
-				}
-				else {
-
-					Motion& motion = registry.motions.emplace(entity);
-					motion.position = { top_left_corner_x + (x * box_width), top_left_corner_y - (y * box_height) };
-					motion.scale = vec2({ box_width, box_height });
-
-					registry.renderRequests.insert(
-						entity,
-						{ TEXTURE_ASSET_ID::UNVISITED_ROOM,
-											EFFECT_ASSET_ID::TEXTURED,
-											GEOMETRY_BUFFER_ID::SPRITE,
-										RENDER_LAYER::UI });
+				switch (room.room_type) {
+				case ROOM_TYPE::UNDEFINED_ROOM:
+				case ROOM_TYPE::NORMAL_ROOM:
+					if (room.is_visited) {
+						registry.renderRequests.insert(
+							entity,
+							{ TEXTURE_ASSET_ID::VISITED_ROOM,
+												EFFECT_ASSET_ID::TEXTURED,
+												GEOMETRY_BUFFER_ID::SPRITE,
+											RENDER_LAYER::UI });
+					}
+					else {
+						registry.renderRequests.insert(
+							entity,
+							{ TEXTURE_ASSET_ID::UNVISITED_ROOM,
+												EFFECT_ASSET_ID::TEXTURED,
+												GEOMETRY_BUFFER_ID::SPRITE,
+											RENDER_LAYER::UI });
+					}
+					break;
+				case ROOM_TYPE::BOSS_ROOM:
+					if (room.is_visited) {
+						registry.renderRequests.insert(
+							entity,
+							{ TEXTURE_ASSET_ID::BOSS_ROOM_VISITED,
+																				EFFECT_ASSET_ID::TEXTURED,
+																				GEOMETRY_BUFFER_ID::SPRITE,
+																			RENDER_LAYER::UI });
+					}
+					else {
+						registry.renderRequests.insert(
+							entity,
+							{ TEXTURE_ASSET_ID::BOSS_ROOM_UNVISITED,
+																				EFFECT_ASSET_ID::TEXTURED,
+																				GEOMETRY_BUFFER_ID::SPRITE,
+																			RENDER_LAYER::UI });
+					}
+					break;
+				case ROOM_TYPE::SHOP_ROOM:
+					if (room.is_visited) {
+						registry.renderRequests.insert(
+							entity,
+							{ TEXTURE_ASSET_ID::SHOP_ROOM_VISITED,
+																												EFFECT_ASSET_ID::TEXTURED,
+																												GEOMETRY_BUFFER_ID::SPRITE,
+																											RENDER_LAYER::UI });
+					}
+					else {
+						registry.renderRequests.insert(
+							entity,
+							{ TEXTURE_ASSET_ID::SHOP_ROOM_UNVISITED,
+																												EFFECT_ASSET_ID::TEXTURED,
+																												GEOMETRY_BUFFER_ID::SPRITE,
+																											RENDER_LAYER::UI });
+					}
 				}
 
 				drawn_rooms.push_back(entity);

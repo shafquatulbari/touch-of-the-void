@@ -111,9 +111,13 @@ class RenderSystem {
 		textures_path("screen_start_1920x1024.png"),
 
 		// MAP TEXTURES
-		textures_path("map_icon_cleared_36x36.png"),
+		textures_path("map_icon_boss_unvisited_36x36.png"),
+		textures_path("map_icon_boss_visited_36x36.png"),
 		textures_path("map_icon_current_36x36.png"),
+		textures_path("map_icon_shop_unvisited_36x36.png"),
+		textures_path("map_icon_shop_visited_36x36.png"),
 		textures_path("map_icon_unvisited_36x36.png"),
+		textures_path("map_icon_visited_36x36.png"),
 		textures_path("placement_helper_map.png"),
 
 		// WEAPON TEXTURES

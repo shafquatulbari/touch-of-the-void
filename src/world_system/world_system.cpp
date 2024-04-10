@@ -1108,6 +1108,13 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 				motion.is_moving_right = false;
 				registry.remove_all_components_of(e);
 			}
+			// stop motion for player
+			Motion& player_motion = registry.motions.get(player);
+			player_motion.velocity = { 0, 0 };
+			player_motion.is_moving_up = false;
+			player_motion.is_moving_down = false;
+			player_motion.is_moving_left = false;
+			player_motion.is_moving_right = false;
 			// UX Effects
 			createExplosion(renderer, boss_pos, 3.0f, false);
 			play_sound(explosion_sound);
