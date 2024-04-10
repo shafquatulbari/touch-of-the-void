@@ -32,9 +32,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			int ammo_to_refill = std::min(weapon_stats[p.weapon_type].magazine_size - p.ammo_count, p.total_ammo_count[p.weapon_type]);
 			p.ammo_count += ammo_to_refill; // Refill ammo after reload
 			
-			if (p.weapon_type != WeaponType::GATLING_GUN) {
-				p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
-			}
+			p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
 			
 			play_sound(reload_end_sound);
 		}

@@ -1294,6 +1294,8 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 						is_paused = false;
 						
 						registry.screenStates.components[0].darken_screen_factor = 1.f;
+						
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 						glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 						
 						ShopMenu::close();
