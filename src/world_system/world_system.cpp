@@ -891,6 +891,9 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 					case WeaponType::FLAMETHROWER:
 						weapons->handle_flamethrower_collision(renderer, entity, entity_other);
 						break;
+					case WeaponType::ROCKET_LAUNCHER:
+						weapons->handle_rocket_collision(renderer, entity, player);
+						break;
 
 					default:
 						createBulletImpact(renderer, registry.motions.get(entity).position, 1.0, false);
