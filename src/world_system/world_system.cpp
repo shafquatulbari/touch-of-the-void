@@ -506,7 +506,7 @@ void WorldSystem::restart_game() {
 	}
 	
 	case GAME_STATE::GAME_WIN: {
-		
+		play_music(game_win_music);
 		createStartScreen(renderer);
 		createText(renderer, "Congrats! You escaped!", { 960.0f, 664.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
 		break;

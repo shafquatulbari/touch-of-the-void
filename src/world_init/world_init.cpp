@@ -944,6 +944,8 @@ void render_room(RenderSystem* render, Level& level)
 
 		if (level.num_rooms_until_boss <= 0)
 		{
+			stop_music();
+			play_music(boss_music);
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
