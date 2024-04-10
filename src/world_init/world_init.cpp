@@ -300,7 +300,7 @@ Entity createBackground(RenderSystem *renderer)
 
 	// return the starting room entity
 	//return createLevel(renderer);
-	return Entity();
+	return entity;
 }
 
 Entity createProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, Entity source)
@@ -992,7 +992,7 @@ void clearExistingWalls()
 	}
 }
 
-void render_room(RenderSystem* render, Level& level)
+void render_room(RenderSystem* render, Level& level, Entity background)
 {
 	Room& current_room = registry.rooms.get(level.rooms[level.current_room]);
 	
@@ -1101,6 +1101,10 @@ void render_room(RenderSystem* render, Level& level)
 	// Create a shop panel if a shop room is encountered
 	if (room_to_render.room_type == ROOM_TYPE::SHOP_ROOM) {
 		createShopPanel(render, current_room.weapon_on_sale);
+		registry.renderRequests.get(background).used_texture = TEXTURE_ASSET_ID::SHOP_BACKGROUND;
+	}
+	else {
+		registry.renderRequests.get(background).used_texture = TEXTURE_ASSET_ID::LEVEL1_BACKGROUND;
 	}
 
 	createWalls(render, room_to_render);
@@ -1392,7 +1396,7 @@ Entity createIconInfinity(RenderSystem* render, vec2 pos)
 	return entity;
 }
 
-Entity createLevel(RenderSystem* render)
+Entity createLevel(RenderSystem* render, Entity background)
 {
 	auto entity = Entity();
 
@@ -1409,7 +1413,7 @@ Entity createLevel(RenderSystem* render)
 
 	// modifies Room component using pointer to Room component
 	world_generator.generateTutorialRoomOne(starting_room, level);
-	render_room(render, level);
+	render_room(render, level, background);
 	return entity;
 }
 

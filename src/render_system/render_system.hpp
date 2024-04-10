@@ -87,6 +87,7 @@ class RenderSystem {
 
 		// LEVEL 1 TEXTURES
 		textures_path("lvl1_background_960x960.png"),
+		textures_path("shop_background_960x960.png"),
 		textures_path("lvl1_doors_192x56.png"),
 		textures_path("lvl1_full_top_wall_closed_door_960x64.png"),
 		textures_path("lvl1_full_right_wall_closed_door_832x64.png"),
