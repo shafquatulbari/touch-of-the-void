@@ -99,6 +99,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 	p.fire_rate_timer_ms -= elapsed_ms;
 }
 
+
 void WeaponSystem::step_projectile_lifetime(float elapsed_ms) 
 {
 	for (auto e : registry.projectiles.entities) {
@@ -299,4 +300,27 @@ void WeaponSystem::handle_flamethrower_collision(RenderSystem* renderer, Entity 
 		OnFireTimer& timer = registry.onFireTimers.emplace(enemy);
 		timer.fire = createFire(renderer, registry.motions.get(enemy).position, 2.0, true);
 	}
+}
+
+// Check if the player hasn't unlocked a weapon type
+bool is_weapon_locked(WeaponType weapon_type) {
+	if (weapon_type == WeaponType::GATLING_GUN || weapon_type == WeaponType::TOTAL_WEAPON_TYPES) {
+		return false;
+	}
+
+	Player& player = registry.players.components[0];
+	return player.total_ammo_count[weapon_type] == INT_MIN;
+}
+
+// Unlock a weapon
+bool unlock_weapon(WeaponType weapon_type) {
+	if (!is_weapon_locked(weapon_type)) {
+		return false;
+	}
+
+	Player& player = registry.players.components.back();
+	player.total_ammo_count[weapon_type] = new_weapon_ammo_counts[weapon_type];
+	player.magazine_ammo_count[weapon_type] = weapon_stats[weapon_type].magazine_size;
+
+	return true;
 }

@@ -71,12 +71,11 @@ GLFWwindow* WorldSystem::create_window() {
 	#endif
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
-
 	// Create the main window (for rendering, keyboard, and mouse input) FULLSCREEN
-	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
+	//window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", glfwGetPrimaryMonitor(), nullptr);
 
 	//main window.  bordered screen
-	//window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
+	window = glfwCreateWindow(window_width_px, window_height_px, "Touch of the Void", nullptr, nullptr);
 
 
 	if (window == nullptr) {
@@ -416,7 +415,6 @@ void WorldSystem::restart_game() {
 		}
 		break;
 	}
-		
 
 	default:
 		break;
@@ -454,7 +452,7 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	for (Entity e : registry.motions.entities)
 	{
 		// remove all enemies, obstacles, animations
-		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e))
+		if (registry.obstacles.has(e) || registry.deadlies.has(e) || registry.animations.has(e) || registry.shopPanels.has(e))
 		{
 			registry.remove_all_components_of(e);
 		}
@@ -726,7 +724,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// remove the first element in enemy set 
 			current_room.enemy_positions.erase(*current_room.enemy_positions.rbegin());
 			score++;
-			registry.players.get(player).funds++;
+			registry.players.get(player).gold_balance++;
 
 			if (current_room.enemy_count == 0)
 			{
@@ -794,30 +792,35 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			//glfwSetWindowShouldClose(window, GL_TRUE);
 			is_paused = true;
 			game_state = GAME_STATE::PAUSE_MENU;
+
+			Motion& p_motion = registry.motions.get(player);
+			p_motion.is_moving_down = false;
+			p_motion.is_moving_up = false;
+			p_motion.is_moving_left = false;
+			p_motion.is_moving_right = false;
+
 			PauseMenu::init(renderer,
 				[this]() {
-					PauseMenu::close();
-
 					game_state = GAME_STATE::GAME;
 					is_paused = false;
 					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+					PauseMenu::close();
 				},
 				[this]() {
-					PauseMenu::close();
-
 					game_state = GAME_STATE::START_MENU;
 					is_paused = false;
 					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+					PauseMenu::close();
 
 					restart_game();
 				},
 				[this]() {
-					PauseMenu::close();
 
 					is_paused = false;
 					glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 
 					glfwSetWindowShouldClose(window, GL_TRUE);
+					PauseMenu::close();
 				}
 			);
 
@@ -855,7 +858,7 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 			};
 			*/
 
-			registry.screenStates.components[0].darken_screen_factor = 0.875f;
+			registry.screenStates.components[0].darken_screen_factor = 0.95f;
 			break;
 		}
 
@@ -890,24 +893,40 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 				vec2& player_pos = registry.motions.get(player).position;
 				vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
 
-				if (glm::distance(shop_pos, player_pos) > 1.5f * game_window_block_size) {
+				if (
+					glm::distance(shop_pos, player_pos) > 1.5f * game_window_block_size || 
+					game_state != GAME_STATE::GAME
+				) {
 					break;
 				}
 
 				Level& current_level = registry.levels.get(level);
 				Room& current_room = registry.rooms.get(current_level.rooms[current_level.current_room]);
 				
-				registry.screenStates.components[0].darken_screen_factor = 0.875f;
+				registry.screenStates.components[0].darken_screen_factor = 0.95f;
 				game_state = GAME_STATE::SHOP_MENU;
 				is_paused = true;
 
-				ShopMenu::init(renderer, current_room.weapon_on_sale);
-				registry.buttons.get(ShopMenu::button_entities[0]).on_click = [this]() {
-					registry.screenStates.components[0].darken_screen_factor = 1.f;
-					game_state = GAME_STATE::GAME;
-					is_paused = false;
-					ShopMenu::close();
-				};
+				Motion& p_motion = registry.motions.get(player);
+				p_motion.is_moving_down = false;
+				p_motion.is_moving_up = false;
+				p_motion.is_moving_left = false;
+				p_motion.is_moving_right = false;
+
+				ShopMenu::init(
+					renderer, 
+					registry.shopPanels.components.back().weapon_on_sale,
+					[this]() mutable {
+						
+						game_state = GAME_STATE::GAME;
+						is_paused = false;
+						
+						registry.screenStates.components[0].darken_screen_factor = 1.f;
+						glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+						
+						ShopMenu::close();
+					}
+				);
 
 				break;
 			}
@@ -960,6 +979,17 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 
 		if (action == GLFW_RELEASE && key == GLFW_KEY_BACKSPACE) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
+			break;
+		}
+
+		break;
+
+	case GAME_STATE::SHOP_MENU:
+		if (action == GLFW_RELEASE && key == GLFW_KEY_ESCAPE) {
+			game_state = GAME_STATE::GAME;
+			is_paused = false;
+			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
+			ShopMenu::close();
 			break;
 		}
 
@@ -1040,6 +1070,8 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 
 void WorldSystem::on_mouse_move(vec2 mouse_position) 
 {
+	int cursor;
+
 	switch (game_state) 
 	{
 	case GAME_STATE::START_MENU:
@@ -1097,18 +1129,16 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
 		}*/
 
-		int cursor; 
 		cursor = PauseMenu::on_mouse_move(mouse_position);
 		glfwSetCursor(window, glfwCreateStandardCursor(cursor));
 
 		break;
 
 	case GAME_STATE::SHOP_MENU:
-		if (ShopMenu::on_mouse_move(mouse_position)) {
-			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HAND_CURSOR));
-		} else {
-			glfwSetCursor(window, glfwCreateStandardCursor(GLFW_ARROW_CURSOR));
-		}
+		
+		cursor = ShopMenu::on_mouse_move(mouse_position);
+		glfwSetCursor(window, glfwCreateStandardCursor(cursor));
+
 		break;
 	case GAME_STATE::GAME_OVER:
 		break;
@@ -1170,8 +1200,10 @@ void WorldSystem::on_mouse_click(int button, int action, int mods)
 		break;
 
 	case GAME_STATE::SHOP_MENU:
+		
 		ShopMenu::on_mouse_click(button, action, mods);
 		break;
+	
 	case GAME_STATE::GAME_OVER:
 		break;
 

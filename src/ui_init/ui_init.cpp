@@ -45,7 +45,6 @@ Entity createTextureButton(
 	RenderSystem* renderer,
 	vec2 position,
 	vec2 size,
-	vec3 color,
 	TEXTURE_ASSET_ID texture,
 	std::function<void(void)> on_click
 ) {
@@ -78,4 +77,30 @@ Entity createButton(
 	motion.scale = size;
 
 	return entity;
+}
+
+std::function<void()> create_button_on_enter_callback(Entity button_e, Entity text_e, vec3 enter_color) {
+	return [button_e, text_e, enter_color]() {
+		assert(registry.texts.has(text_e));
+		assert(registry.buttons.has(button_e));
+
+		registry.buttons.get(button_e).hover = true;
+		registry.texts.get(text_e).color = enter_color; // GREEN
+	};
+}
+
+std::function<void()> create_button_on_exit_callback(Entity button_e, Entity text_e, vec3 exit_color) {
+	return [button_e, text_e, exit_color]() {
+		assert(registry.texts.has(text_e));
+		assert(registry.buttons.has(button_e));
+
+		registry.texts.get(text_e).color = exit_color; // RED
+		registry.buttons.get(button_e).hover = false;
+	};
+}
+
+void bind_button_hover(Entity button_e, Entity text_e, vec3 idle_color, vec3 active_color) {
+	Button& btn = registry.buttons.get(button_e);
+	btn.on_mouse_in = create_button_on_enter_callback(button_e, text_e, active_color);
+	btn.on_mouse_out = create_button_on_exit_callback(button_e, text_e, idle_color);
 }

@@ -185,6 +185,9 @@ public:
 	bool loadFontFromFile(
 		const std::string& font_path, unsigned int font_default_size);
 
+	std::map<char, Character> m_ftCharacters;
+	float default_font_size = 48.f;
+
 private:
 	// Internal drawing functions for each entity type
 	void drawTexturedMesh(Entity entity, const mat3& projection);
@@ -204,7 +207,6 @@ private:
 	GLuint vbo;
 
 	// Fonts
-	std::map<char, Character> m_ftCharacters;
 	GLuint m_font_shaderProgram;
 	GLuint m_font_VAO;
 	GLuint m_font_VBO;

@@ -1,5 +1,6 @@
 #include "world_init/world_init.hpp"
 #include "ecs_registry/ecs_registry.hpp"
+#include "weapon_system/weapon_system.hpp"
 #include "world_generator/world_generator.hpp"
 #include "world_system/world_system.hpp"
 
@@ -885,12 +886,19 @@ void render_room(RenderSystem* render, Level& level)
 			
 			for (int i = 0; i < (int)WeaponType::TOTAL_WEAPON_TYPES; i++) {
 				// total_ammo_count of the smallest integer value implies locked weapons
-				if (player.total_ammo_count[(WeaponType)i] == INT_MIN) {
+				if (is_weapon_locked((WeaponType)i)) {
 					locked_weapons.push_back((WeaponType)i);
 				}
 			}
 
-			current_room.weapon_on_sale = locked_weapons[rand() % locked_weapons.size()];
+			if (locked_weapons.size() > 0) {
+				std::default_random_engine rng = std::default_random_engine(std::random_device()());
+				std::uniform_int_distribution<int> weapon_idx_selector(0, locked_weapons.size() - 1);
+				
+				current_room.weapon_on_sale = locked_weapons[weapon_idx_selector(rng)];
+			} else {
+				current_room.weapon_on_sale = WeaponType::TOTAL_WEAPON_TYPES;
+			}
 
 			level.num_shop_spawned++;
 			level.num_shop_spawn_counter = 0;
@@ -914,8 +922,7 @@ void render_room(RenderSystem* render, Level& level)
 	}
 
 	// in case current room was not visited, re-retrieve current room 
-	Room room_to_render = registry.rooms.get(level.rooms[level.current_room]);
-
+	Room& room_to_render = registry.rooms.get(level.rooms[level.current_room]);
 
 	float x_origin = (window_width_px / 2) - (game_window_size_px / 2) + 32;
 	float y_origin = (window_height_px / 2) - (game_window_size_px / 2) + 32;
@@ -954,6 +961,7 @@ Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
 	motion.scale = { game_window_block_size, game_window_block_size };
 
 	ShopPanel& shop = registry.shopPanels.emplace(entity);
+	shop.weapon_on_sale = weapon_on_sale;
 
 	return entity;
 }
@@ -992,6 +1000,21 @@ Entity createLine(vec2 position, vec2 scale, float angle, vec3 color)
 	return entity;
 }
 
+vec2 getTextRectSize(RenderSystem* renderer, std::string& text, float font_size_scale) {
+	std::map<char, Character> ftChars = renderer->m_ftCharacters;
+
+	float str_w = 0.f;
+	float str_h = 0.f;
+
+	for (int i = 0; i < text.length(); i++) {
+		const Character ch = ftChars[text[i]];
+		str_w += (ch.Advance >> 6) * font_size_scale;
+		str_h = max(str_h, ch.Size.y * font_size_scale);
+	}
+
+	return vec2(str_w, str_h);
+}
+
 Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float scale, vec3 color, TextAlignment alignment)
 {
 	auto entity = Entity();
@@ -1000,6 +1023,8 @@ Entity createText(RenderSystem* renderer, std::string content, vec2 pos, float s
 	text.content = content;
 	text.color = color;
 	text.alignment = alignment;
+
+	text.rect_size = getTextRectSize(renderer, content, scale);
 
 	Motion& motion = registry.motions.emplace(entity);
 	motion.position = { pos.x, window_height_px - pos.y }; // flip y axis as text is rendered from top to bottom, but we use bottom to top everywhere else

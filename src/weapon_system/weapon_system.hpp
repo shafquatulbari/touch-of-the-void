@@ -32,3 +32,6 @@ public:
 	void handle_rocket_collision(RenderSystem* renderer, Entity projectile, Entity player);
 	void handle_flamethrower_collision(RenderSystem* renderer, Entity projectile, Entity enemy);
 };
+
+bool is_weapon_locked(WeaponType weapon_type);
+bool unlock_weapon(WeaponType weapon_type);

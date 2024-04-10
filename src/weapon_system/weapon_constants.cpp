@@ -1,8 +1,9 @@
 #include "weapon_system/weapon_constants.hpp"
+#include "components/components.hpp"
 
 // Weapon Stats Mapping (damage, lifetime, magazine_size, reload_time, fire_rate)
 std::unordered_map<WeaponType, WeaponStats> weapon_stats = {
-	{WeaponType::GATLING_GUN, {20.0f, 600.0f, 100, 2000.0f, 40.0f}},
+	{WeaponType::GATLING_GUN, {2000.0f, 600.0f, 100, 2000.0f, 40.0f}},
 	{WeaponType::SNIPER, {500.0f, 1000.0f, 1, 1500.0f, 0.0f}},
 	{WeaponType::SHOTGUN, {20.0f, 400.0f, 6, 1500.0f, 300.0f}},
 	{WeaponType::ROCKET_LAUNCHER, {1000.0f, 3000.0f, 1, 2500.0f, 0.0f}},
@@ -11,11 +12,11 @@ std::unordered_map<WeaponType, WeaponStats> weapon_stats = {
 	// Add more weapons as needed
 };
 
-// Weapon price mapping (base weapon price, ammo price per ammo
-std::unordered_map<WeaponType, WeaponPrice> weapon_pricelist {
-	{WeaponType::SNIPER, {5, 1}},
-	{WeaponType::SHOTGUN, {3, 1}},
-	{WeaponType::ROCKET_LAUNCHER, {10, 2}},
-	{WeaponType::FLAMETHROWER, {3, 1}},
-	{WeaponType::ENERGY_HALO, {5, 1}}
+// Default weapon ammo count when weapon is first unlocked
+std::unordered_map<WeaponType, int> new_weapon_ammo_counts = {
+	{WeaponType::SNIPER, 20},
+	{WeaponType::SHOTGUN, 60},
+	{WeaponType::ROCKET_LAUNCHER, 5},
+	{WeaponType::FLAMETHROWER, 400},
+	{WeaponType::ENERGY_HALO, 8},
 };

@@ -214,7 +214,7 @@ void UISystem::init(RenderSystem* renderer_arg, Health& player_health, Shield& p
 	score_text = createText(renderer, scoreText, { 1750.0f, 886.0f }, 1.5f, COLOR_GREEN, TextAlignment::RIGHT);
 
 	// funds
-	std::string fundsText = std::to_string(player.funds);
+	std::string fundsText = std::to_string(player.gold_balance);
 	funds_text = createText(renderer, fundsText, {1750.f, 932.0f }, 1.5f, COLOR_GREEN, TextAlignment::RIGHT);
 
 	// multiplier
@@ -320,7 +320,7 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 	registry.texts.get(score_text).content = scoreText;
 
 	// Update Funds
-	std::string fundsText = std::to_string(player.funds);
+	std::string fundsText = std::to_string(player.gold_balance);
 	registry.texts.get(funds_text).content = fundsText;
 
 	// Update Multiplier
@@ -444,7 +444,7 @@ void UISystem::reinit(Health& player_health, Shield& player_shield, Player& play
 	registry.texts.get(score_text).content = scoreText;
 
 	// Update Funds
-	std::string fundsText = std::to_string(player.funds);
+	std::string fundsText = std::to_string(player.gold_balance);
 	registry.texts.get(funds_text).content = fundsText;
 
 	// Update Multiplier

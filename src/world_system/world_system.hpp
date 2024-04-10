@@ -15,34 +15,6 @@
 // deferred to the relative update() methods
 class WorldSystem
 {
-public:
-	WorldSystem();
-
-	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
-
-	// Creates a window
-	GLFWwindow* create_window();
-
-	// starts the game
-	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
-
-	// Releases all associated resources
-	~WorldSystem();
-
-	// Steps the game ahead by ms milliseconds
-	bool step(float elapsed_ms);
-
-
-	// Check for collisions
-	void handle_collisions(float elapsed_ms);
-
-	void bounce_back(Entity player, Entity obstacle);
-
-	// Should the game be over ?
-	bool is_over()const;
-
-	// is the game paused
-	bool is_paused = false;
 private:
 	// Input callback functions
 	void on_key(int key, int, int action, int mod);
@@ -73,8 +45,8 @@ private:
 	std::vector<Entity> p_mesh_lines; // for debug
 
 	// the current level 
-	Entity level; 
-  
+	Entity level;
+
 	enum class GAME_STATE {
 		START_MENU,
 		GAME,
@@ -85,7 +57,7 @@ private:
 	};
 
 	GAME_STATE game_state = GAME_STATE::START_MENU;
-	
+
 	// HUD
 	// Entity player_hp_text;
 	// Entity weapon_text;
@@ -99,4 +71,36 @@ private:
 	// C++ random number generator
 	std::default_random_engine rng;
 	std::uniform_real_distribution<float> uniform_dist; // number between 0..1
+
+public:
+	WorldSystem();
+
+	float restart_delay_timer = 0.0f; // Delay before restarting the game after death
+
+	// Creates a window
+	GLFWwindow* create_window();
+
+	// starts the game
+	void init(RenderSystem* renderer_arg, UISystem* ui_arg, WeaponSystem* weapon_arg);
+
+	// Releases all associated resources
+	~WorldSystem();
+
+	// Steps the game ahead by ms milliseconds
+	bool step(float elapsed_ms);
+
+
+	// Check for collisions
+	void handle_collisions(float elapsed_ms);
+
+	void bounce_back(Entity player, Entity obstacle);
+
+	// Should the game be over ?
+	bool is_over()const;
+
+	// is the game paused
+	bool is_paused = false;
+
+	// function for switching game state
+	void switch_game_state(GAME_STATE new_state);
 };

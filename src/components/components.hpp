@@ -9,7 +9,6 @@
 #include <unordered_map>
 #include "../ext/stb_image/stb_image.h"
 
-
 struct Level {
 	// the current level of the game
 	int current_level = 1;
@@ -145,7 +144,7 @@ struct Player
 	int ammo_count;
 	bool is_reloading = false; // player is currently reloading and cannot fire
 	float reload_timer_ms = 0.0f;
-	int funds = 0;
+	int gold_balance = 0;
 
 	// if the player is moving between rooms
 	bool is_moving_rooms = false;
@@ -343,6 +342,7 @@ struct Text
 {
 	std::string content;
 	vec3 color;
+	vec2 rect_size;
 	TextAlignment alignment = TextAlignment::LEFT;
 };
 
@@ -359,9 +359,9 @@ struct Button {
 	Entity text_entity;
 	bool hover = false;	
 	bool disabled = false;
-	std::function<void()> on_click;
-	std::function<void(void)> on_mouse_in;
-	std::function<void(void)> on_mouse_out;
+	std::function<void()> on_click = []() {};
+	std::function<void(void)> on_mouse_in = []() {};
+	std::function<void(void)> on_mouse_out = []() {};
 };
 
 // A structure to store the data concerning a single sprite sheet texture

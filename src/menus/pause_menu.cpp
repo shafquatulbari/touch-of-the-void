@@ -14,32 +14,6 @@ bool	PauseMenu::has_state_changed = false;
 Entity	PauseMenu::current_entity;
 Entity	PauseMenu::previous_entity;
 
-std::function<void()> create_button_on_enter_callback(Entity button_e, Entity text_e) {
-	return [button_e, text_e]() {
-		assert(registry.texts.has(text_e));
-		assert(registry.buttons.has(button_e));
-		
-		registry.buttons.get(button_e).hover = true;
-		registry.texts.get(text_e).color = COLOR_GREEN;
-	};
-}
-
-std::function<void()> create_button_on_exit_callback(Entity button_e, Entity text_e) {
-	return [button_e, text_e]() {
-		assert(registry.texts.has(text_e));
-		assert(registry.buttons.has(button_e));
-
-		registry.texts.get(text_e).color = COLOR_RED;
-		registry.buttons.get(button_e).hover = false;
-	};
-}
-
-void bind_button(Entity button_e, Entity text_e) {
-	Button& btn = registry.buttons.get(button_e);
-	btn.on_mouse_in = create_button_on_enter_callback(button_e, text_e);
-	btn.on_mouse_out = create_button_on_exit_callback(button_e, text_e);
-}
-
 void PauseMenu::init(
 	RenderSystem* renderer,
 	std::function<void()> resume_callback,
@@ -80,14 +54,14 @@ void PauseMenu::init(
 	
 	registry.renderRequests.emplace(resume_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 	registry.buttons.get(resume_btn_e).on_click = resume_callback;
-	bind_button(resume_btn_e, resume_e);
+	bind_button_hover(resume_btn_e, resume_e, COLOR_RED, COLOR_GREEN);
 
 	offset_multiplier++;
-	
+
 	// Exit game button
-	
+
 	Entity exit_btn_e = createButton(
-		renderer, 
+		renderer,
 		{ left_padding + button_size.x / 2, top_padding + offset_multiplier * button_offset },
 		button_size
 	);
@@ -103,13 +77,13 @@ void PauseMenu::init(
 
 	registry.renderRequests.emplace(exit_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 	registry.buttons.get(exit_btn_e).on_click = exit_callback;
-	bind_button(exit_btn_e, exit_e);
+	bind_button_hover(exit_btn_e, exit_e, COLOR_RED, COLOR_GREEN);
 
 	offset_multiplier++;
 
 	// Close window button
 	Entity close_btn_e = createButton(
-		renderer, 
+		renderer,
 		{ left_padding + button_size.x / 2, top_padding + offset_multiplier * button_offset },
 		button_size
 	);
@@ -125,7 +99,7 @@ void PauseMenu::init(
 
 	registry.renderRequests.emplace(close_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 	registry.buttons.get(close_btn_e).on_click = close_window_callback;
-	bind_button(close_btn_e, close_e);
+	bind_button_hover(close_btn_e, close_e, COLOR_RED, COLOR_GREEN);
 
 	title_entity = title_e;
 	text_entities = { resume_e, exit_e, close_e };
