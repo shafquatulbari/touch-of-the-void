@@ -249,7 +249,6 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 {
 	Deadly& deadly = registry.deadlies.get(projectile);
 	vec2 rocket_position = registry.motions.get(projectile).position;
-	Projectile& rocket = registry.projectiles.get(projectile);
 	Player& p = registry.players.get(player);
 	int EXPLOSION_RADIUS = 50;
 
@@ -258,7 +257,7 @@ void WeaponSystem::handle_rocket_collision(RenderSystem* renderer, Entity projec
 
 	// Look for other enemies in radius and apply damage
 	for (Entity e : registry.ais.entities) {
-		if (registry.healths.has(e) && rocket.source != e) {
+		if (registry.healths.has(e)) {
 			vec2 e_position = registry.motions.get(e).position;
 
 			// Calculate the distance between rocket and enemy and apply damage if within
