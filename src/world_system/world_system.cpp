@@ -480,6 +480,10 @@ void WorldSystem::restart_game() {
 		// Create a new player
 		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
+
+		// Set collision invincibility time
+		invincibilityTime = 0;
+
 		// Create a level
 		createBackground(renderer);
 		level = createLevel(renderer);
@@ -650,7 +654,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 						assert(registry.deadlies.has(entity_other) && "Entity should have a deadly component");
 						Deadly& deadly = registry.deadlies.get(entity_other);
 						Health& playerHealth = registry.healths.get(player);
-						playerHealth.current_health -= 1; //hardcoded damage
+						playerHealth.current_health -= 3; //hardcoded damage
 						invincibilityTime = 250;//tick between the player taking damage for health
 						if (playerHealth.current_health <= 0) {
 							// Trigger darkening immediately, but actual effect is controlled in step
