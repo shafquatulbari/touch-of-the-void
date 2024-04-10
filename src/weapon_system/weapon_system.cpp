@@ -22,6 +22,7 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 			play_sound(no_ammo_sound);
 		}
 	}
+	
 	if (p.is_reloading) {
 		p.reload_timer_ms -= elapsed_ms;
 
@@ -196,7 +197,7 @@ void WeaponSystem::cycle_weapon(int direction, Player& player)
 	WeaponType currentWeapon = player.weapon_type;
 
 	// Store the current ammo count
-	player.magazine_ammo_count[player.weapon_type] = player.ammo_count;
+	player.magazine_ammo_count[player.weapon_type] = max(player.ammo_count, 0);
 
 	// Get the total number of weapon types
 	int numWeapons = static_cast<int>(WeaponType::TOTAL_WEAPON_TYPES);

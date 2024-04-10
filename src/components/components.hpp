@@ -130,7 +130,7 @@ struct Player
 		{WeaponType::GATLING_GUN, INT_MAX},
 		{WeaponType::SNIPER, 20},
 		{WeaponType::SHOTGUN, 60},
-		{WeaponType::ROCKET_LAUNCHER, 5},
+		{WeaponType::ROCKET_LAUNCHER, INT_MIN}, // 5
 		{WeaponType::FLAMETHROWER, 400},
 		{WeaponType::ENERGY_HALO, 8},
 	};
@@ -149,7 +149,7 @@ struct Player
 		{WeaponType::GATLING_GUN, 100},
 		{WeaponType::SNIPER, 4},
 		{WeaponType::SHOTGUN, 6},
-		{WeaponType::ROCKET_LAUNCHER, 1},
+		{WeaponType::ROCKET_LAUNCHER, INT_MIN}, // 1
 		{WeaponType::FLAMETHROWER, 200},
 		{WeaponType::ENERGY_HALO, 2},
 	};

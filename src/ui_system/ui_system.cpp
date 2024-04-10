@@ -298,9 +298,17 @@ void UISystem::createWeaponMenu(Player& player) {
 }
 
 void UISystem::updateWeaponMenu(Player& player) {
+	std::string total_ammo_count_content;
+	if (is_weapon_locked(player.weapon_type)) {
+		total_ammo_count_content = "N/A";
+	} else {
+		total_ammo_count_content = std::to_string(player.total_ammo_count[player.weapon_type]);
+	}
+	
 	if (player.weapon_type == current_weapon) {
 		assert(registry.animations.has(current_ammo_icon) && "Current ammo icon does not exist in registry");
 		Animation& ammo_animation = registry.animations.get(current_ammo_icon);
+
 		switch (player.weapon_type) {
 		case WeaponType::GATLING_GUN:
 			ammo_animation.current_frame = player.ammo_count;
@@ -310,12 +318,12 @@ void UISystem::updateWeaponMenu(Player& player) {
 		case WeaponType::ROCKET_LAUNCHER:
 		case WeaponType::ENERGY_HALO:
 			assert(registry.texts.has(total_ammo_text) && "Total ammo text does not exist in registry");
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			ammo_animation.current_frame = max(0, player.ammo_count);
 			break;
 		case WeaponType::FLAMETHROWER:
 			assert(registry.texts.has(total_ammo_text) && "Total ammo text does not exist in registry");
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			// flamethrower has 200 ammo, but we only have 20 frames in the sprite sheet (0-19)
 			if (player.ammo_count == 200) {
 				ammo_animation.current_frame = 19;
@@ -335,10 +343,18 @@ void UISystem::updateWeaponMenu(Player& player) {
 		if (current_weapon == WeaponType::GATLING_GUN) {
 			// remove infinity icon from gatling gun as it is no longer equipped
 			registry.remove_all_components_of(total_ammo_icon);
-			total_ammo_text = createText(renderer, std::to_string(player.total_ammo_count[player.weapon_type]), { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
+			total_ammo_text = createText(renderer, total_ammo_count_content, { ammo_x, total_ammo_text_y }, 1.5f, COLOR_BLACK, TextAlignment::CENTER);
 		}
 		current_weapon = player.weapon_type;
 		Animation& ammo_animation = registry.animations.get(current_ammo_icon);
+
+		int animation_frame_idx;
+		if (is_weapon_locked(current_weapon)) {
+			animation_frame_idx = 0;
+		} else {
+			animation_frame_idx = player.ammo_count;
+		}
+
 		switch (player.weapon_type) {
 		case WeaponType::GATLING_GUN:
 			registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED; // 1st slot EQUIPPED
@@ -348,43 +364,45 @@ void UISystem::updateWeaponMenu(Player& player) {
 			registry.texts.get(total_ammo_text).content = "";
 			total_ammo_icon = createIconInfinity(renderer, { ammo_x, total_ammo_icon_y });
 			ammo_animation.sheet_id = SPRITE_SHEET_ID::AMMO_GATLING_GUN;
-			ammo_animation.current_frame = player.ammo_count;
+			ammo_animation.current_frame = animation_frame_idx;
 			break;
 		case WeaponType::SNIPER:
 			registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED; // 1st slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::SNIPER_EQUIPPED; // 2nd slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 			registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED; // 4th slot UN-EQUIPPED
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			ammo_animation.sheet_id = SPRITE_SHEET_ID::AMMO_SNIPER;
-			ammo_animation.current_frame = player.ammo_count;
+			ammo_animation.current_frame = animation_frame_idx;
 			break;
 		case WeaponType::SHOTGUN:
 			registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED; // 1st slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::SHOTGUN_EQUIPPED; // 2nd slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 			registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED; // 4th slot UN-EQUIPPED
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			ammo_animation.sheet_id = SPRITE_SHEET_ID::AMMO_SHOTGUN;
-			ammo_animation.current_frame = player.ammo_count;
+			ammo_animation.current_frame = animation_frame_idx;
 			break;
 		case WeaponType::ROCKET_LAUNCHER:
 			registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::SHOTGUN_UNEQUIPPED; // 1st slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_EQUIPPED; // 2nd slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 			registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED; // 4th slot UN-EQUIPPED
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			ammo_animation.sheet_id = SPRITE_SHEET_ID::AMMO_ROCKET_LAUNCHER;
-			ammo_animation.current_frame = player.ammo_count;
+			ammo_animation.current_frame = animation_frame_idx;
 			break;
 		case WeaponType::FLAMETHROWER:
 			registry.renderRequests.get(weapon_slot_1).used_texture = TEXTURE_ASSET_ID::ROCKET_LAUNCHER_UNEQUIPPED; // 1st slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::FLAME_THROWER_EQUIPPED; // 2nd slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 			registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED; // 4th slot UN-EQUIPPED
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			ammo_animation.sheet_id = SPRITE_SHEET_ID::AMMO_FLAMETHROWER;
-			if (player.ammo_count == 200) {
+			if (is_weapon_locked(current_weapon)) {
+				ammo_animation.current_frame = animation_frame_idx;
+			} else if (player.ammo_count == 200) {
 				ammo_animation.current_frame = 19;
 			}
 			else {
@@ -396,9 +414,9 @@ void UISystem::updateWeaponMenu(Player& player) {
 			registry.renderRequests.get(weapon_slot_2).used_texture = TEXTURE_ASSET_ID::ENERGY_HALO_EQUIPPED; // 2nd slot EQUIPPED
 			registry.renderRequests.get(weapon_slot_3).used_texture = TEXTURE_ASSET_ID::GATLING_GUN_UNEQUIPPED; // 3rd slot UN-EQUIPPED
 			registry.renderRequests.get(weapon_slot_4).used_texture = TEXTURE_ASSET_ID::SNIPER_UNEQUIPPED; // 4th slot UN-EQUIPPED
-			registry.texts.get(total_ammo_text).content = std::to_string(player.total_ammo_count[player.weapon_type]);
+			registry.texts.get(total_ammo_text).content = total_ammo_count_content;
 			ammo_animation.sheet_id = SPRITE_SHEET_ID::AMMO_ENERGY_HALO;
-			ammo_animation.current_frame = player.ammo_count;
+			ammo_animation.current_frame = animation_frame_idx;
 			break;
 		case WeaponType::TOTAL_WEAPON_TYPES:
 			break;

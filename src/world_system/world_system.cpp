@@ -1052,6 +1052,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			multiplier += 0.25;
 			score += 10 * multiplier;
 			registry.players.get(player).gold_balance += 10 * multiplier;
+			
 			if (current_room.enemy_count == 0)
 			{
 				registry.levels.get(level).num_rooms_until_boss--;

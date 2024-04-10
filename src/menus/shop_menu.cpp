@@ -48,7 +48,7 @@ void ShopMenu::init(
 	// Create a balance text
 	int text_scale = 1.5f;
 	balance_text_e = createText(renderer,
-		"Gold Balance: " + std::to_string(player.gold_balance), {window_width_px - 100.f, 100.f}, text_scale, COLOR_GREEN, TextAlignment::RIGHT
+		"Gold Balance: " + std::to_string(player.gold_balance) + "G", {window_width_px - 100.f, 100.f}, text_scale, COLOR_GREEN, TextAlignment::RIGHT
 	);
 
 	registry.renderRequests.emplace(balance_text_e).used_render_layer = RENDER_LAYER::GAME_MENU;
