@@ -499,6 +499,10 @@ void WorldSystem::restart_game() {
 		// Create a new player
 		player = createPlayer(renderer, { window_width_px / 2, window_height_px / 2 });
 
+		//add invincibility here
+		invincible = true;
+		initial_delay_ms = 250;
+
 
 		// Set collision invincibility time
 		invincibilityTime = 0;
@@ -567,6 +571,11 @@ void WorldSystem::enter_room(vec2 player_pos) {
 	// Move the player to position
 	assert(registry.motions.has(player) && "Player should have a motion");
 	registry.motions.get(player).position = player_pos;
+
+	//add invincibility here
+	invincible = true;
+	initial_delay_ms = 250;
+
 }
 // Remove entities between rooms
  void WorldSystem::remove_entities_on_entry()
@@ -647,7 +656,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			}
 
 			// Apply damage to the player
-			else if (registry.deadlies.has(entity_other)) {
+			else if (!invincible && registry.deadlies.has(entity_other)) {
 				if (invincibilityTime <= 0) {
 
 					assert(registry.shields.has(entity) && "Player should have a shield");
@@ -938,7 +947,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 			// Collision logic for enemy projectiles hitting the player
 			else if (registry.ais.has(projectileSource) && registry.players.has(entity_other)) {
 				// Apply damage to the player
-				if (registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
+				if (!invincible && registry.healths.has(entity_other) && registry.shields.has(entity_other)) {
 					assert(registry.shields.has(entity_other) && "Player should have a shield");
 					Shield& playerShield = registry.shields.get(entity_other);
 
@@ -1214,14 +1223,16 @@ void WorldSystem::on_key(int key, int, int action, int mod)
 		// Player keyboard controls
 		if (!registry.deathTimers.has(player)) {
 			// WEAPON CONTROLS
-			if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-				weapons->reload_weapon();
-			}
-			if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-				weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
-			}
-			if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-				weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
+			if (!invincible) {
+				if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+					weapons->reload_weapon();
+				}
+				if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
+					weapons->cycle_weapon(-1, registry.players.get(player)); // Cycle to the previous weapon
+				}
+				if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+					weapons->cycle_weapon(1, registry.players.get(player));  // Cycle to the next weapon
+				}
 			}
 
 			// MOVEMENT CONTROLS
