@@ -1540,6 +1540,7 @@ void WorldSystem::on_mouse_move(vec2 mouse_position)
 		break;
 
 	case GAME_STATE::SHOP_MENU:
+
 		cursor_ = ShopMenu::on_mouse_move(mouse_position);
 		glfwSetCursor(window, glfwCreateStandardCursor(cursor_));
 

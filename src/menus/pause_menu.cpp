@@ -116,8 +116,8 @@ int PauseMenu::on_mouse_move(vec2 mouse_position) {
 		if (
 			mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
 			mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
-			mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
-			mouse_position.y >= motion.position.y - motion.scale.y / 2
+			mouse_position.y <= motion.position.y + 0.5f * motion.scale.y &&
+			mouse_position.y >= motion.position.y - 0.5f * motion.scale.y
 		) {
 			cursor = GLFW_HAND_CURSOR;
 			button.on_mouse_in();
