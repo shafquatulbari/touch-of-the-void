@@ -873,8 +873,16 @@ void render_room(RenderSystem* render, Level& level)
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
 		
+		// After clearing each room, player has a higher chance of encountering a shop room.
+		// Using the logistic function to determine whether to spawn a shop room or an enemy room.
+		// Logistic function is defined as:
+		//		
+		//			f(x) = 1 / 1 + exp(-ax + b)
+		//
+		// - larger a -> larger increase of chance per room cleared
+		// - larger b -> smaller increase of chance per room cleared
 		std::knuth_b rnd_engine;
-		std::bernoulli_distribution prob( 1 / (1 + exp(-level.num_shop_spawn_counter + 0.f)) );
+		std::bernoulli_distribution prob( 1 / (1 + exp(-0.5 * level.num_shop_spawn_counter + 2.f)) );
 
 		if (prob(rnd_engine) && level.num_shop_spawned < 1000) {
 			// Generate a shop room

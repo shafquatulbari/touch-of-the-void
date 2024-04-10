@@ -99,42 +99,42 @@ struct ShopPanel {
 struct Player
 {
 	// Store the total ammo count for each weapon
-	//std::unordered_map<WeaponType, int> total_ammo_count = {
-	//	{WeaponType::GATLING_GUN, INT_MAX},
-	//	{WeaponType::SNIPER, 20},
-	//	{WeaponType::SHOTGUN, 60},
-	//	{WeaponType::ROCKET_LAUNCHER, 5},
-	//	{WeaponType::FLAMETHROWER, 400},
-	//	{WeaponType::ENERGY_HALO, 8},
-	//};
-
 	std::unordered_map<WeaponType, int> total_ammo_count = {
 		{WeaponType::GATLING_GUN, INT_MAX},
-		{WeaponType::SNIPER, INT_MIN},
-		{WeaponType::SHOTGUN, INT_MIN},
-		{WeaponType::ROCKET_LAUNCHER, INT_MIN},
-		{WeaponType::FLAMETHROWER, INT_MIN},
-		{WeaponType::ENERGY_HALO, INT_MIN},
+		{WeaponType::SNIPER, 20},
+		{WeaponType::SHOTGUN, 60},
+		{WeaponType::ROCKET_LAUNCHER, 5},
+		{WeaponType::FLAMETHROWER, 400},
+		{WeaponType::ENERGY_HALO, 8},
 	};
 
-	// Store the current ammo count for each weapon
-	//std::unordered_map<WeaponType, int> magazine_ammo_count = {
-	//	{WeaponType::GATLING_GUN, 100},
-	//	{WeaponType::SNIPER, 1},
-	//	{WeaponType::SHOTGUN, 6},
-	//	{WeaponType::ROCKET_LAUNCHER, 1},
-	//	{WeaponType::FLAMETHROWER, 200},
-	//	{WeaponType::ENERGY_HALO, 2},
+	//std::unordered_map<WeaponType, int> total_ammo_count = {
+	//	{WeaponType::GATLING_GUN, INT_MAX},
+	//	{WeaponType::SNIPER, INT_MIN},
+	//	{WeaponType::SHOTGUN, INT_MIN},
+	//	{WeaponType::ROCKET_LAUNCHER, INT_MIN},
+	//	{WeaponType::FLAMETHROWER, INT_MIN},
+	//	{WeaponType::ENERGY_HALO, INT_MIN},
 	//};
 
+	// Store the current ammo count for each weapon
 	std::unordered_map<WeaponType, int> magazine_ammo_count = {
 		{WeaponType::GATLING_GUN, 100},
-		{WeaponType::SNIPER, INT_MIN},
-		{WeaponType::SHOTGUN, INT_MIN},
-		{WeaponType::ROCKET_LAUNCHER, INT_MIN},
-		{WeaponType::FLAMETHROWER, INT_MIN},
-		{WeaponType::ENERGY_HALO, INT_MIN},
+		{WeaponType::SNIPER, 1},
+		{WeaponType::SHOTGUN, 6},
+		{WeaponType::ROCKET_LAUNCHER, 1},
+		{WeaponType::FLAMETHROWER, 200},
+		{WeaponType::ENERGY_HALO, 2},
 	};
+
+	//std::unordered_map<WeaponType, int> magazine_ammo_count = {
+	//	{WeaponType::GATLING_GUN, 100},
+	//	{WeaponType::SNIPER, INT_MIN},
+	//	{WeaponType::SHOTGUN, INT_MIN},
+	//	{WeaponType::ROCKET_LAUNCHER, INT_MIN},
+	//	{WeaponType::FLAMETHROWER, INT_MIN},
+	//	{WeaponType::ENERGY_HALO, INT_MIN},
+	//};
 
 	bool is_firing = false; // player is currently firing projectiles
 	float fire_length_ms = 0.0f; // time the player has been firing

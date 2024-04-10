@@ -8,3 +8,8 @@ std::unordered_map<WeaponType, WeaponShopInfo> weapon_shop_infos = {
 	{WeaponType::FLAMETHROWER, {TEXTURE_ASSET_ID::FLAME_THROWER_EQUIPPED, 9, 1, "Flamethrower"}},
 	{WeaponType::ENERGY_HALO, {TEXTURE_ASSET_ID::ENERGY_HALO_EQUIPPED, 9, 1, "Energy Halo"}}
 };
+
+// price table of the miscellaneous items
+std::vector<int> misc_shop_prices = {
+	10
+};

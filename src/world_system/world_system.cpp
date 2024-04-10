@@ -391,7 +391,6 @@ void WorldSystem::restart_game() {
 
 		//// Create HUD
 		score = 0;
-		registry.players.components.back().gold_balance = 100; // debug statement
 		multiplier = 1.0;
 		ui->init(renderer, registry.healths.get(player), registry.shields.get(player), registry.players.get(player), score, multiplier, registry.levels.get(level));
 

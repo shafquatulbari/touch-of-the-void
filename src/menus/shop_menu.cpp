@@ -40,6 +40,10 @@ void ShopMenu::init(
 			unlocked_weapons.push_back((WeaponType)i);
 		}
 	}
+
+	if (unlocked_weapons.size() > 0) {
+		current_item = unlocked_weapons[0];
+	}
 	
 	// Create a balance text
 	int text_scale = 1.5f;
@@ -132,11 +136,12 @@ void ShopMenu::render_weapons_page() {
 	if (weapon_on_sale == WeaponType::TOTAL_WEAPON_TYPES) {
 		Entity display_text_e = createText(
 			renderer, "You have unlocked all weapons", 
-			{ window_width_px / 2, window_height_px / 2 }, 2.5f, COLOR_GREEN, TextAlignment::CENTER
+			{ window_width_px / 2, window_height_px / 2 }, 2.f, COLOR_GREEN, TextAlignment::CENTER
 		);
 		
 		registry.renderRequests.emplace(display_text_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 		page_entities.push_back(display_text_e);
+		return;
 	}
 
 	// Get the information of the weapon being sold
@@ -357,9 +362,9 @@ void ShopMenu::render_ammo_page() {
 	page_entities.push_back(buy_text_e);
 
 	// Create a post-transaction indicator
-	Player& player = registry.players.components.back();
 	std::string indicator_content;
 	std::string post_t_content;
+	Player& player = registry.players.components.back();
 
 	if (player.gold_balance < w_info.price_per_ammo) {
 		indicator_content = "Not enough balance";
@@ -516,20 +521,31 @@ void ShopMenu::render_misc_page() {
 	//registry.motions.get(weapon_icon_e).scale = { 308.f, 308.f };
 	//page_entities.push_back(weapon_icon_e);
 
+	vec2 top_left_pos = { 200.f, 266.f };
+	Health& p_health = registry.healths.get(registry.players.entities.back());
+	Player& player = registry.players.components.back();
 
 	// Create the weapon title
-	Entity weapon_name_e = createText(renderer, "Health", {354.f, 374.f}, 2.25f, COLOR_GREEN, TextAlignment::LEFT);
+	Entity weapon_name_e = createText(renderer, "Health", top_left_pos, 2.25f, COLOR_GREEN, TextAlignment::LEFT);
 	registry.renderRequests.emplace(weapon_name_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 	page_entities.push_back(weapon_name_e);
 
 	// Create weapon price
-	Entity weapon_price_e = createText(renderer, "10G / unit", { 354.f, 420.f + 154.f + 1.25f * renderer->default_font_size }, 1.25f, COLOR_GREEN, TextAlignment::CENTER);
+	Entity weapon_price_e = createText(renderer, "10G / unit", { top_left_pos.x, top_left_pos.y + 2.25f * renderer->default_font_size }, 1.25f, COLOR_GREEN, TextAlignment::LEFT);
 	registry.renderRequests.emplace(weapon_price_e).used_render_layer = RENDER_LAYER::GAME_MENU;
 	page_entities.push_back(weapon_price_e);
 	
+	if (p_health.current_health == p_health.max_health) {
+		Entity full_text_e = createText(renderer, "Your health is full.", { 348.f, window_height_px - 125.f }, 1.f, COLOR_GREEN, TextAlignment::CENTER);
+		registry.renderRequests.emplace(full_text_e).used_render_layer = RENDER_LAYER::GAME_MENU;
+		page_entities.push_back(full_text_e);
+
+		return;
+	}
+
 	// Create the buy button
-	Entity buy_btn_e = createButton(renderer, { 348.f, window_height_px - 250.f }, { 256.f, 128.f });
-	Entity buy_text_e = createText(renderer, "Buy", { 348.f, window_height_px - 250.f }, 1.f, COLOR_GREEN, TextAlignment::CENTER);
+	Entity buy_btn_e = createButton(renderer, { 348.f, window_height_px - 125.f }, { 256.f, 128.f });
+	Entity buy_text_e = createText(renderer, "Buy", { 348.f, window_height_px - 125.f }, 1.f, COLOR_GREEN, TextAlignment::CENTER);
 
 	bind_button_hover(buy_btn_e, buy_text_e, COLOR_GREEN, COLOR_RED);
 
@@ -540,15 +556,25 @@ void ShopMenu::render_misc_page() {
 
 	Text& buy_text = registry.texts.get(buy_text_e);
 	Button& buy_btn = registry.buttons.get(buy_btn_e);
-	Player& player = registry.players.components.back();
+	buy_btn.on_click = []() {
+		Player& player = registry.players.components.back();
+		Health& player_health = registry.healths.get(registry.players.entities.back());
+
+		player_health.current_health += ShopMenu::quantity;
+		player.gold_balance -= ShopMenu::quantity * misc_shop_prices[(int)MiscType::HEALTH];
+
+		ShopMenu::quantity = 0;
+
+		registry.texts.get(balance_text_e).content = "Gold balance: " + std::to_string(player.gold_balance) + "G";
+		render_misc_page();
+	};
 
 	//////////
 	// Create a post-transaction indicator
-	Player& player = registry.players.components.back();
 	std::string indicator_content;
 	std::string post_t_content;
 
-	if (player.gold_balance < w_info.price_per_ammo) {
+	if (player.gold_balance < misc_shop_prices[(int)MiscType::HEALTH]) {
 		indicator_content = "Not enough balance";
 	} else {
 		indicator_content = "Quantity: " + std::to_string(ShopMenu::quantity);
@@ -557,12 +583,12 @@ void ShopMenu::render_misc_page() {
 	if (indicator_content == "Not enough balance") {
 		post_t_content = "";
 	} else {
-		post_t_content = "Post - transaction balance : " + std::to_string(player.gold_balance - (ShopMenu::quantity * w_info.price_per_ammo)) + "G.";
+		post_t_content = "Post - transaction balance : " + std::to_string(player.gold_balance - (ShopMenu::quantity * misc_shop_prices[(int)MiscType::HEALTH])) + "G.";
 	}
 
 	Entity indicator_text_e = createText(
 		renderer, indicator_content,
-		{ display_section_x + 96.f + 1.5f * game_window_block_size, window_height_px - 150.f },
+		{ top_left_pos.x + 225.f + 2.5f * game_window_block_size, window_height_px - 150.f },
 		1.5f, COLOR_RED, TextAlignment::LEFT
 	);
 	registry.renderRequests.emplace(indicator_text_e).used_render_layer = RENDER_LAYER::GAME_MENU;
@@ -571,7 +597,7 @@ void ShopMenu::render_misc_page() {
 
 	Entity post_transaction_e = createText(
 		renderer, post_t_content,
-		{ display_section_x + 96.f + 1.5f * game_window_block_size, window_height_px - 102.f },
+		{ top_left_pos.x + 225.f + 2.5f * game_window_block_size, window_height_px - 102.f },
 		1.f, COLOR_RED, TextAlignment::LEFT
 	);
 
@@ -580,8 +606,8 @@ void ShopMenu::render_misc_page() {
 
 	// Create a inventory display text
 	Entity inventory_text_e = createText(
-		renderer, "Inventory: " + std::to_string(player.total_ammo_count[current_item]) + " bullets",
-		{ display_section_x - 77.f - 75.f, window_height_px - 250.f },
+		renderer, "Health: " + std::to_string((int)p_health.current_health) + " units",
+		{ top_left_pos.x, window_height_px - 250.f },
 		1.25f, COLOR_RED, TextAlignment::LEFT
 	);
 
@@ -589,8 +615,8 @@ void ShopMenu::render_misc_page() {
 	page_entities.push_back(inventory_text_e);
 
 	// Create an increase and decrease button
-	Entity inc_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
-	Entity dec_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
+	Entity inc_btn_e = createButton(renderer, { top_left_pos.x + 256.f + 1.f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
+	Entity dec_btn_e = createButton(renderer, { top_left_pos.x + 256.f + 1.f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
 
 	registry.renderRequests.insert(inc_btn_e, {
 		TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON,
@@ -629,22 +655,26 @@ void ShopMenu::render_misc_page() {
 		dec_btn.hover = false;
 	};
 
-	inc_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e]() {
+	inc_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e, p_health]() {
 		WeaponShopInfo w_info = weapon_shop_infos[ShopMenu::current_item];
 		Player& player = registry.players.components.back();
 
-		if (player.gold_balance >= w_info.price_per_ammo * (ShopMenu::quantity + 1)) {
+		if (player.gold_balance >= misc_shop_prices[(int)MiscType::HEALTH] * (ShopMenu::quantity + 1) && 
+			p_health.current_health + (ShopMenu::quantity + 1) < p_health.max_health
+		) {
 			ShopMenu::quantity++;
 			registry.texts.get(indicator_text_e).content = "Quantity: " +
 				std::to_string(ShopMenu::quantity);
 			registry.texts.get(post_transaction_e).content = "Post - transaction balance : " +
 				std::to_string(player.gold_balance - (ShopMenu::quantity * w_info.price_per_ammo)) + "G.";
 			registry.texts.get(inventory_text_e).content = ("Inventory : " +
-				std::to_string(player.total_ammo_count[current_item]) + " bullets + " +
-				std::to_string(ShopMenu::quantity) + " bullets"
+				std::to_string((int)p_health.current_health) + " units + " +
+				std::to_string(ShopMenu::quantity) + " units"
 				);
 
-			if (player.gold_balance < w_info.price_per_ammo * (ShopMenu::quantity + 1)) {
+			if (player.gold_balance < misc_shop_prices[(int)MiscType::HEALTH] * (ShopMenu::quantity + 1) || 
+				p_health.current_health + (ShopMenu::quantity + 1) > p_health.max_health
+			) {
 				Button& inc_btn = registry.buttons.get(inc_btn_e);
 				registry.renderRequests.get(inc_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_UP_BUTTON;
 				inc_btn.disabled = true;
@@ -658,22 +688,23 @@ void ShopMenu::render_misc_page() {
 			}
 		}
 	};
-	dec_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e]() {
+
+	dec_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e, p_health]() {
 		WeaponShopInfo w_info = weapon_shop_infos[ShopMenu::current_item];
 		Player& player = registry.players.components.back();
 
-		if (w_info.price_per_ammo * (ShopMenu::quantity - 1) >= 0) {
+		if (misc_shop_prices[(int)MiscType::HEALTH] * (ShopMenu::quantity - 1) >= 0) {
 			ShopMenu::quantity--;
 			registry.texts.get(indicator_text_e).content = "Quantity: " +
 				std::to_string(ShopMenu::quantity);
 			registry.texts.get(post_transaction_e).content = "Post - transaction balance : " +
 				std::to_string(player.gold_balance - (ShopMenu::quantity * w_info.price_per_ammo)) + "G.";
 			registry.texts.get(inventory_text_e).content = ("Inventory : " +
-				std::to_string(player.total_ammo_count[current_item]) + " bullets + " +
-				std::to_string(ShopMenu::quantity) + " bullets"
+				std::to_string(p_health.current_health) + " units + " +
+				std::to_string(ShopMenu::quantity) + " units"
 				);
 
-			if (w_info.price_per_ammo * (ShopMenu::quantity - 1) < 0) {
+			if (misc_shop_prices[(int)MiscType::HEALTH] * (ShopMenu::quantity - 1) < 0) {
 				Button& dec_btn = registry.buttons.get(dec_btn_e);
 				registry.renderRequests.get(dec_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON;
 				dec_btn.disabled = true;
@@ -687,6 +718,9 @@ void ShopMenu::render_misc_page() {
 			}
 		}
 	};
+
+	page_entities.push_back(inc_btn_e);
+	page_entities.push_back(dec_btn_e);
 }
 
 int ShopMenu::on_mouse_move(vec2 mouse_position) {
@@ -766,7 +800,7 @@ int ShopMenu::on_mouse_click(int button, int action, int mods) {
 
 		Button& button = registry.buttons.get(btn_e);
 
-		if (button.hover && !button.disabled) {
+		if (button.hover && !button.disabled && action == GLFW_PRESS) {
 			button.on_click();
 			break;
 		}
