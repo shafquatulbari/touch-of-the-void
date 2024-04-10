@@ -42,3 +42,5 @@ extern Mix_Chunk* game_over_sound;
 // Music references
 extern Mix_Music* start_menu_music;
 extern Mix_Music* game_music;
+extern Mix_Music* game_win_music;
+extern Mix_Music* boss_music;

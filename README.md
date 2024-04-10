@@ -21,6 +21,8 @@ Audio Asset References:
 - Flamethrower: https://freesound.org/people/MATRIXXX_/sounds/459884/
 - No Ammo: https://freesound.org/people/PacmanGamer/sounds/165660/
 - Energy Halo: https://freesound.org/people/dpren/sounds/440147/
+- Boss Music: https://freesound.org/people/Volvion/sounds/265308/
+- Victory Music: https://freesound.org/people/Mrthenoronha/sounds/518308/
 
 Concept References:
 Copied Binding of Issac tutorial room concept.

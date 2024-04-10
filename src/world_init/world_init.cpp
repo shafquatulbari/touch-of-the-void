@@ -980,11 +980,14 @@ void render_room(RenderSystem* render, Level& level)
 		current_room.is_visited = true;
 		WorldGenerator world_generator;
 
+
 		if (level.num_rooms_visited == 1) {
 			// second tutorial room
 			world_generator.generateTutorialRoomTwo(current_room, level);
 		}
 		else if (level.num_rooms_until_boss <= 0) {
+			stop_music();
+			play_music(boss_music);
 			world_generator.generateNewRoom(current_room, level, true);
 			std::cout << "boss room generated, back to rendering" << std::endl;
 			level.num_rooms_until_boss = NUM_ROOMS_UNTIL_BOSS;
