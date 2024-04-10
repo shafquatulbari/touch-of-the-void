@@ -183,7 +183,7 @@ void ShopMenu::render_weapons_page() {
 	// Create the buy button
 	Entity buy_btn_e = createButton(renderer, { 348.f, window_height_px - 250.f }, { 256.f, 128.f });
 	Entity buy_text_e = createText(renderer, "Buy", { 348.f, window_height_px - 250.f }, 1.f, COLOR_GREEN, TextAlignment::CENTER);
-	
+
 	bind_button_hover(buy_btn_e, buy_text_e, COLOR_GREEN, COLOR_RED);
 
 	registry.renderRequests.emplace(buy_text_e).used_render_layer = RENDER_LAYER::GAME_MENU;
@@ -410,7 +410,7 @@ void ShopMenu::render_ammo_page() {
 	Entity inc_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
 	Entity dec_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
 
-	registry.renderRequests.insert(inc_btn_e, { 
+	registry.renderRequests.insert(inc_btn_e, {
 		TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
@@ -465,6 +465,7 @@ void ShopMenu::render_ammo_page() {
 			if (player.gold_balance < w_info.price_per_ammo * (ShopMenu::quantity + 1)) {
 				Button& inc_btn = registry.buttons.get(inc_btn_e);
 				registry.renderRequests.get(inc_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_UP_BUTTON;
+				inc_btn.hover = false;
 				inc_btn.disabled = true;
 				return;
 			}
@@ -494,6 +495,7 @@ void ShopMenu::render_ammo_page() {
 			if (w_info.price_per_ammo * (ShopMenu::quantity - 1) < 0) {
 				Button& dec_btn = registry.buttons.get(dec_btn_e);
 				registry.renderRequests.get(dec_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON;
+				dec_btn.hover = false;
 				dec_btn.disabled = true;
 				return;
 			}
@@ -700,7 +702,7 @@ void ShopMenu::render_misc_page() {
 			registry.texts.get(post_transaction_e).content = "Post - transaction balance : " +
 				std::to_string(player.gold_balance - (ShopMenu::quantity * w_info.price_per_ammo)) + "G.";
 			registry.texts.get(inventory_text_e).content = ("Inventory : " +
-				std::to_string(p_health.current_health) + " units + " +
+				std::to_string((int)p_health.current_health) + " units + " +
 				std::to_string(ShopMenu::quantity) + " units"
 				);
 
@@ -739,8 +741,8 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 		if (
 			mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
 			mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
-			mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
-			mouse_position.y >= motion.position.y - motion.scale.y / 2 &&
+			mouse_position.y >= motion.position.y - 0.5f * motion.scale.y &&
+			mouse_position.y <= motion.position.y + 0.5f * motion.scale.y &&
 			!button.disabled
 		) {
 			cursor = GLFW_HAND_CURSOR;
@@ -763,10 +765,10 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 		if (
 			mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
 			mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
-			mouse_position.y <= motion.position.y + motion.scale.y / 2 &&
-			mouse_position.y >= motion.position.y - motion.scale.y / 2 &&
+			mouse_position.y >= motion.position.y - 0.5f * motion.scale.y &&
+			mouse_position.y <= motion.position.y + 0.5f * motion.scale.y &&
 			!button.disabled
-			) {
+		) {
 			cursor = GLFW_HAND_CURSOR;
 			button.on_mouse_in();
 		} else if (!button.disabled) {
