@@ -496,6 +496,8 @@ void WorldSystem::restart_game() {
 	// All that have a motion, we could also iterate over all bug, eagles, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
+	while (registry.levels.entities.size() > 0)
+		registry.remove_all_components_of(registry.levels.entities.back());
 	
 	// Debugging for memory/component leaks
 	registry.list_all_components();
@@ -549,7 +551,7 @@ void WorldSystem::restart_game() {
 		// Create a level
 		background = createBackground(renderer);
 		level = createLevel(renderer, background);
-
+		
 		//// Create HUD
 		score = 0;
 		multiplier = 1.0;
