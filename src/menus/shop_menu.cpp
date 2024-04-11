@@ -742,7 +742,7 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 			mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
 			mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
 			mouse_position.y >= motion.position.y - 0.5f * motion.scale.y &&
-			mouse_position.y <= motion.position.y + 0.5f * motion.scale.y &&
+			mouse_position.y <= motion.position.y + 0.5f * motion.scale.y && 
 			!button.disabled
 		) {
 			cursor = GLFW_HAND_CURSOR;
@@ -762,13 +762,26 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 		Motion& motion = registry.motions.get(e);
 		Button& button = registry.buttons.get(e);
 
-		if (
+		bool mouse_enters_button = (
 			mouse_position.x <= motion.position.x + motion.scale.x / 2 &&
-			mouse_position.x >= motion.position.x - motion.scale.x / 2 &&
-			mouse_position.y >= motion.position.y - 0.5f * motion.scale.y &&
-			mouse_position.y <= motion.position.y + 0.5f * motion.scale.y &&
-			!button.disabled
-		) {
+			mouse_position.x >= motion.position.x - motion.scale.x / 2
+		);
+		
+		// Check mouse overlap on vertical axis
+		if (registry.renderRequests.has(e) && registry.renderRequests.get(e).used_texture != TEXTURE_ASSET_ID::TEXTURE_COUNT) {
+			mouse_enters_button = mouse_enters_button && (
+				mouse_position.y >= motion.position.y + 1.f * motion.scale.y &&
+				mouse_position.y <= motion.position.y + 2.f * motion.scale.y
+			);
+		} else {
+			mouse_enters_button = mouse_enters_button && (
+				mouse_position.y >= motion.position.y - 0.5f * motion.scale.y &&
+				mouse_position.y <= motion.position.y + 0.5f * motion.scale.y
+			);
+		}
+
+		// Check whether the button is hovered over
+		if (mouse_enters_button && !button.disabled) {
 			cursor = GLFW_HAND_CURSOR;
 			button.on_mouse_in();
 		} else if (!button.disabled) {
