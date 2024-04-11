@@ -521,6 +521,9 @@ void WorldSystem::restart_game() {
 
 	case GAME_STATE::GAME: {
 		play_music(game_music);
+
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 		std::string line;
 		std::fstream high_score_file("../../../data/highscore.txt");
 		if (high_score_file.is_open())

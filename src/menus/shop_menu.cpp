@@ -238,7 +238,7 @@ void ShopMenu::render_weapons_page() {
 
 	Entity after_text = createText(
 		renderer, after_text_content, 
-		{348.f + 128.f + 25.f, window_height_px - 250.f}, 1.f, COLOR_GREEN, TextAlignment::LEFT
+		{ 348.f + 128.f + 25.f, window_height_px - 250.f }, 1.f, {0.3f, 0.3f, 0.3f}, TextAlignment::LEFT
 	);
 
 	registry.renderRequests.emplace(after_text).used_render_layer = RENDER_LAYER::GAME_MENU;
@@ -390,7 +390,7 @@ void ShopMenu::render_ammo_page() {
 	Entity post_transaction_e = createText(
 		renderer, post_t_content,
 		{ display_section_x + 96.f + 1.5f * game_window_block_size, window_height_px - 102.f },
-		1.f, COLOR_RED, TextAlignment::LEFT
+		1.f, {0.3f, 0.3f, 0.3f}, TextAlignment::LEFT
 	);
 
 	registry.renderRequests.emplace(post_transaction_e).used_render_layer = RENDER_LAYER::GAME_MENU;
@@ -775,7 +775,7 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 			);
 		} else {
 			mouse_enters_button = mouse_enters_button && (
-				mouse_position.y >= motion.position.y - 0.5f * motion.scale.y &&
+				mouse_position.y >= motion.position.y - 0.25f * motion.scale.y &&
 				mouse_position.y <= motion.position.y + 0.5f * motion.scale.y
 			);
 		}
