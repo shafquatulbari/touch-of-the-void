@@ -1141,7 +1141,7 @@ Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
 Entity createShopIndicator(RenderSystem* renderer, vec2 position) {
 	vec3 color = { 1.f, 1.f, 1.f };
 	
-	Entity text_e = createText(renderer, "G", position, 0.75f, color, TextAlignment::CENTER);
+	Entity text_e = createText(renderer, "Z", position, 0.75f, color, TextAlignment::CENTER);
 	registry.renderRequests.emplace(text_e).used_render_layer = RENDER_LAYER::FOREGROUND;
 	registry.debugComponents.emplace(text_e);
 
