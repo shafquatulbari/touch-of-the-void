@@ -1438,6 +1438,9 @@ Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, fl
 {
 	auto entity = Entity();
 
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
+
 	// Actual firing angle is randomly perturbed based on accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);
 	float perturbedAngle = angle + (rng - 0.5f) * accuracy;
