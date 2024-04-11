@@ -101,6 +101,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			RENDER_LAYER::FOREGROUND });
 	}
 	else if (aiType == AI::AIType::TURRET) {
+		registry.immobiles.emplace(entity);
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,
@@ -1424,7 +1425,7 @@ Entity createLevel(RenderSystem* render, Entity background)
 	auto starting_room_entity = Entity();
 	level.current_room = std::pair<int, int>(0, 0);
 	level.rooms.emplace(level.current_room, starting_room_entity);
-
+	level.num_rooms_cleared = 0;
 	Room& starting_room = registry.rooms.emplace(starting_room_entity);
 	WorldGenerator world_generator;
 

@@ -122,6 +122,10 @@ struct ShopPanel {
 	WeaponType weapon_on_sale;
 };
 
+// Cannot move component
+struct Immobile {
+};
+
 // Player component
 struct Player
 {

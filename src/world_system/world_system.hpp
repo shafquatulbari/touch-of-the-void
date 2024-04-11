@@ -131,6 +131,7 @@ public:
 
 	// is the game paused
 	bool is_paused = false;
+	bool invincible = false; // whether the player is invincible
 
 	// function for switching game state
 	//void switch_game_state(GAME_STATE new_state);

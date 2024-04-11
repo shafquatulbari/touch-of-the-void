@@ -20,7 +20,6 @@
 // TODO: set hard coded game configuration values here
 bool fullscreen;
 int invincibilityTime;
-bool invincible;
 int initial_delay_ms;
 
 // Create the world
@@ -496,6 +495,8 @@ void WorldSystem::restart_game() {
 	// All that have a motion, we could also iterate over all bug, eagles, ... but that would be more cumbersome
 	while (registry.motions.entities.size() > 0)
 		registry.remove_all_components_of(registry.motions.entities.back());
+	while (registry.levels.entities.size() > 0)
+		registry.remove_all_components_of(registry.levels.entities.back());
 	
 	// Debugging for memory/component leaks
 	registry.list_all_components();
@@ -552,7 +553,7 @@ void WorldSystem::restart_game() {
 		// Create a level
 		background = createBackground(renderer);
 		level = createLevel(renderer, background);
-
+		
 		//// Create HUD
 		score = 0;
 		multiplier = 1.0;
@@ -565,11 +566,15 @@ void WorldSystem::restart_game() {
 		break;
 
 	case GAME_STATE::GAME_OVER: {
-		high_score = std::max(high_score, score);
 		/*createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
 		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
 		createDeathScreen(renderer);
+		if (score > high_score)
+		{
+			createText(renderer, "New High Score!", { 960.0f, 824.0f }, 1.f, COLOR_GOLD, TextAlignment::CENTER);
+		}
 		createText(renderer, "Score " + std::to_string(score), { 960.0f, 864.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		high_score = std::max(high_score, score);
 		createText(renderer, "High Score " + std::to_string(high_score), { 960.0f, 904.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		std::fstream new_highscore_file("../../../data/highscore.txt");
 		if (new_highscore_file.is_open())
@@ -584,6 +589,19 @@ void WorldSystem::restart_game() {
 		play_music(game_win_music);
 		createWinScreen(renderer);
 		createText(renderer, "Press Enter to Start Again", { 960.0f, 664.0f }, 2.f, COLOR_RED, TextAlignment::CENTER);
+		if (score > high_score)
+		{
+			createText(renderer, "New High Score!", { 960.0f, 824.0f }, 1.f, COLOR_GOLD, TextAlignment::CENTER);
+		}
+		createText(renderer, "Score " + std::to_string(score), { 960.0f, 864.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		high_score = std::max(high_score, score);
+		createText(renderer, "High Score " + std::to_string(high_score), { 960.0f, 904.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		std::fstream new_highscore_file("../../../data/highscore.txt");
+		if (new_highscore_file.is_open())
+		{
+			new_highscore_file << std::to_string(high_score);
+			new_highscore_file.close();
+		}
 		break;
 	}
 
@@ -977,7 +995,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 
 			// Collision logic for projectiles hitting obstacles
-			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
+			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other) && !registry.powerups.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
 				Entity projectileSource = projectile.source;
 
@@ -1419,6 +1437,9 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	//Motion& playerMotion = registry.motions.get(player);
 	//playerMotion.velocity *= -1;
 	//playerMotion.position += playerMotion.velocity * 0.01f;
+	if (registry.immobiles.has(player)) {
+		return; // do not move immobile entities
+	}
 
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
