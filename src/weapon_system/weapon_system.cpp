@@ -29,13 +29,17 @@ void WeaponSystem::step(float elapsed_ms, RenderSystem* renderer, Entity& player
 		if (p.instant_ammo_reload || p.reload_timer_ms < 0) {
 			// Reload complete, refill ammo
 			p.is_reloading = false;
+			
 			p.reload_timer_ms = weapon_stats[p.weapon_type].reload_time;
-			int ammo_to_refill = std::min(weapon_stats[p.weapon_type].magazine_size - p.ammo_count, p.total_ammo_count[p.weapon_type]);
-			p.ammo_count += ammo_to_refill; // Refill ammo after reload
 			
-			p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
-			
-			play_sound(reload_end_sound);
+			if (!is_weapon_locked(p.weapon_type)) {
+				int ammo_to_refill = std::min(weapon_stats[p.weapon_type].magazine_size - p.ammo_count, p.total_ammo_count[p.weapon_type]);
+				p.ammo_count += ammo_to_refill; // Refill ammo after reload
+
+				p.total_ammo_count[p.weapon_type] -= ammo_to_refill;
+
+				play_sound(reload_end_sound);
+			}
 		}
 	}
 	// Handle firing

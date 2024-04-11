@@ -22,8 +22,9 @@ private:
 	static int items_per_list;
 
 	static int quantity;
-	static ITEM_TYPE current_page;
+	static bool scroll_area_hover;
 	static int current_list_index;
+	static ITEM_TYPE current_page;
 	static WeaponType current_item;
 	static std::vector<WeaponType> unlocked_weapons;
 
@@ -48,6 +49,7 @@ public:
 	static Entity buy_btn_e;
 	static Entity increase_amount_btn_e;
 	static Entity decrease_amount_btn_e;
+	static Entity quantity_btn_container_e;
 
 	static void init(
 		RenderSystem* renderer, 
@@ -57,6 +59,7 @@ public:
 
 	static int on_mouse_move(vec2 mouse_position);
 	static int on_mouse_click(int button, int action, int mods);
+	static int on_scroll(double x_offset, double y_offset);
 
 	static void close();
 };

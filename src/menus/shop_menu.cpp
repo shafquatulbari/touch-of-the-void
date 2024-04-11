@@ -11,10 +11,16 @@ int ShopMenu::quantity = 0;
 int ShopMenu::items_per_list = 5;
 
 int ShopMenu::current_list_index = 0;
+bool ShopMenu::scroll_area_hover = false;
 ITEM_TYPE ShopMenu::current_page = ITEM_TYPE::WEAPON;
 WeaponType ShopMenu::current_item = WeaponType::TOTAL_WEAPON_TYPES;
 
 Entity ShopMenu::balance_text_e;
+Entity ShopMenu::quantity_btn_container_e;
+Entity ShopMenu::buy_btn_e;
+Entity ShopMenu::increase_amount_btn_e;
+Entity ShopMenu::decrease_amount_btn_e;
+
 WeaponType ShopMenu::weapon_on_sale;
 std::vector<WeaponType> ShopMenu::unlocked_weapons;
 
@@ -109,6 +115,14 @@ void ShopMenu::init(
 }
 
 void ShopMenu::clear_page_entities() {
+	// Clear all the static entities
+	registry.remove_all_components_of(buy_btn_e);
+	registry.remove_all_components_of(increase_amount_btn_e);
+	registry.remove_all_components_of(decrease_amount_btn_e);
+	registry.remove_all_components_of(quantity_btn_container_e);
+
+	quantity = 0;
+
 	for (Entity e : page_entities) {
 		registry.remove_all_components_of(e);
 	}
@@ -131,7 +145,8 @@ Entity ShopMenu::createStatText(std::string content, std::string value, vec2 pos
 
 void ShopMenu::render_weapons_page() {
 	clear_page_entities();
-
+	current_page = ITEM_TYPE::WEAPON;
+	
 	// Page when all weapons are unlocked
 	if (weapon_on_sale == WeaponType::TOTAL_WEAPON_TYPES) {
 		Entity display_text_e = createText(
@@ -248,6 +263,7 @@ void ShopMenu::render_weapons_page() {
 void ShopMenu::render_ammo_page() {
 	// Clear the page entities
 	clear_page_entities();
+	current_page = ITEM_TYPE::AMMO;
 
 	if (unlocked_weapons.size() < 1) {
 		return;
@@ -407,47 +423,60 @@ void ShopMenu::render_ammo_page() {
 	page_entities.push_back(inventory_text_e);
 
 	// Create an increase and decrease button
-	Entity inc_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
-	Entity dec_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
+	increase_amount_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
+	decrease_amount_btn_e = createButton(renderer, { display_section_x + 96.f + 0.5f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
 
-	registry.renderRequests.insert(inc_btn_e, {
+	// Create a scroll section for inc/dec
+	quantity_btn_container_e = Entity();
+	Motion& q_motion = registry.motions.emplace(quantity_btn_container_e);
+	
+	q_motion.position = { 
+		display_section_x + 96.f + 0.5f * game_window_block_size, 
+		window_height_px - 125.f + 0.25f * game_window_block_size
+	};
+	q_motion.scale = {
+		game_window_block_size,
+		1.5f * game_window_block_size
+	};
+
+	registry.renderRequests.insert(increase_amount_btn_e, {
 		TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::GAME_MENU
 	});
 	
-	registry.renderRequests.insert(dec_btn_e, {
+	registry.renderRequests.insert(decrease_amount_btn_e, {
 		TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::GAME_MENU
 	});
 
-	Button& inc_btn = registry.buttons.get(inc_btn_e);
-	Button& dec_btn = registry.buttons.get(dec_btn_e);
+	Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
+	Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
 	dec_btn.disabled = true;
 
 	// Bind the inc/decrease buttons to the callbacks
-	inc_btn.on_mouse_in = [inc_btn_e]() {
-		Button& inc_btn = registry.buttons.get(inc_btn_e);
+	inc_btn.on_mouse_in = []() {
+		Button& inc_btn = registry.buttons.get(ShopMenu::increase_amount_btn_e);
 		inc_btn.hover = true;
 	};
-	dec_btn.on_mouse_in = [dec_btn_e]() {
-		Button& dec_btn = registry.buttons.get(dec_btn_e);
+	dec_btn.on_mouse_in = []() {
+		Button& dec_btn = registry.buttons.get(ShopMenu::decrease_amount_btn_e);
 		dec_btn.hover = true;
 	};
 
-	inc_btn.on_mouse_out = [inc_btn_e]() {
-		Button& inc_btn = registry.buttons.get(inc_btn_e);
+	inc_btn.on_mouse_out = []() {
+		Button& inc_btn = registry.buttons.get(ShopMenu::increase_amount_btn_e);
 		inc_btn.hover = false;
 	};
-	dec_btn.on_mouse_out = [dec_btn_e]() {
-		Button& dec_btn = registry.buttons.get(dec_btn_e);
+	dec_btn.on_mouse_out = []() {
+		Button& dec_btn = registry.buttons.get(ShopMenu::decrease_amount_btn_e);
 		dec_btn.hover = false;
 	};
 
-	inc_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e]() {
+	inc_btn.on_click = [indicator_text_e, post_transaction_e, inventory_text_e]() {
 		WeaponShopInfo w_info = weapon_shop_infos[ShopMenu::current_item];
 		Player& player = registry.players.components.back();
 
@@ -463,21 +492,21 @@ void ShopMenu::render_ammo_page() {
 			);
 
 			if (player.gold_balance < w_info.price_per_ammo * (ShopMenu::quantity + 1)) {
-				Button& inc_btn = registry.buttons.get(inc_btn_e);
-				registry.renderRequests.get(inc_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_UP_BUTTON;
+				Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
+				registry.renderRequests.get(increase_amount_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_UP_BUTTON;
 				inc_btn.hover = false;
 				inc_btn.disabled = true;
 				return;
 			}
 
-			Button& dec_btn = registry.buttons.get(dec_btn_e);
+			Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
 			if (dec_btn.disabled) {
-				registry.renderRequests.get(dec_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_DOWN_BUTTON;
+				registry.renderRequests.get(decrease_amount_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_DOWN_BUTTON;
 				dec_btn.disabled = false;
 			}
 		}
 	};
-	dec_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e]() {
+	dec_btn.on_click = [indicator_text_e, post_transaction_e, inventory_text_e]() {
 		WeaponShopInfo w_info = weapon_shop_infos[ShopMenu::current_item];
 		Player& player = registry.players.components.back();
 
@@ -490,32 +519,33 @@ void ShopMenu::render_ammo_page() {
 			registry.texts.get(inventory_text_e).content = ("Inventory : " +
 				std::to_string(player.total_ammo_count[current_item]) + " bullets + " +
 				std::to_string(ShopMenu::quantity) + " bullets"
-				);
+			);
 
 			if (w_info.price_per_ammo * (ShopMenu::quantity - 1) < 0) {
-				Button& dec_btn = registry.buttons.get(dec_btn_e);
-				registry.renderRequests.get(dec_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON;
+				Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
+				registry.renderRequests.get(decrease_amount_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON;
 				dec_btn.hover = false;
 				dec_btn.disabled = true;
 				return;
 			}
 
-			Button& inc_btn = registry.buttons.get(inc_btn_e);
+			Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
 			if (inc_btn.disabled) {
-				registry.renderRequests.get(inc_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON;
+				registry.renderRequests.get(increase_amount_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON;
 				inc_btn.disabled = false;
 			}
 		}
 	};
 
-	page_entities.push_back(inc_btn_e);
-	page_entities.push_back(dec_btn_e);
+	page_entities.push_back(increase_amount_btn_e);
+	page_entities.push_back(decrease_amount_btn_e);
 	
 }
 
 void ShopMenu::render_misc_page() {
 	// Clear all of the page entities
 	clear_page_entities();
+	current_page = ITEM_TYPE::MISC;
 
 	// Create the health icon
 	//Entity weapon_icon_e = createWeaponEquippedIcon(renderer, { 354.f, 420.f }, );
@@ -617,47 +647,59 @@ void ShopMenu::render_misc_page() {
 	page_entities.push_back(inventory_text_e);
 
 	// Create an increase and decrease button
-	Entity inc_btn_e = createButton(renderer, { top_left_pos.x + 256.f + 1.f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
-	Entity dec_btn_e = createButton(renderer, { top_left_pos.x + 256.f + 1.f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
+	increase_amount_btn_e = createButton(renderer, { top_left_pos.x + 256.f + 1.f * game_window_block_size, window_height_px - 125.f - (0.25f + 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
+	decrease_amount_btn_e = createButton(renderer, { top_left_pos.x + 256.f + 1.f * game_window_block_size, window_height_px - 125.f - (0.25f - 0.5f) * game_window_block_size }, { 0.5f * game_window_block_size, 0.5f * game_window_block_size });
 
-	registry.renderRequests.insert(inc_btn_e, {
+	// Create the quantity scroll area
+	quantity_btn_container_e = Entity();
+	Motion& q_motion = registry.motions.emplace(quantity_btn_container_e);
+	q_motion.position = {
+		top_left_pos.x + 256.f + 1.f * game_window_block_size, 
+		window_height_px - 125.f + 0.25f * game_window_block_size
+	};
+	q_motion.scale = {
+		game_window_block_size,
+		1.5f * game_window_block_size 
+	};
+
+	registry.renderRequests.insert(increase_amount_btn_e, {
 		TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::GAME_MENU
 		});
 
-	registry.renderRequests.insert(dec_btn_e, {
+	registry.renderRequests.insert(decrease_amount_btn_e, {
 		TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON,
 		EFFECT_ASSET_ID::TEXTURED,
 		GEOMETRY_BUFFER_ID::SPRITE,
 		RENDER_LAYER::GAME_MENU
 		});
 
-	Button& inc_btn = registry.buttons.get(inc_btn_e);
-	Button& dec_btn = registry.buttons.get(dec_btn_e);
+	Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
+	Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
 	dec_btn.disabled = true;
 
 	// Bind the inc/decrease buttons to the callbacks
-	inc_btn.on_mouse_in = [inc_btn_e]() {
-		Button& inc_btn = registry.buttons.get(inc_btn_e);
+	inc_btn.on_mouse_in = []() {
+		Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
 		inc_btn.hover = true;
 	};
-	dec_btn.on_mouse_in = [dec_btn_e]() {
-		Button& dec_btn = registry.buttons.get(dec_btn_e);
+	dec_btn.on_mouse_in = []() {
+		Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
 		dec_btn.hover = true;
 	};
 
-	inc_btn.on_mouse_out = [inc_btn_e]() {
-		Button& inc_btn = registry.buttons.get(inc_btn_e);
+	inc_btn.on_mouse_out = []() {
+		Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
 		inc_btn.hover = false;
 	};
-	dec_btn.on_mouse_out = [dec_btn_e]() {
-		Button& dec_btn = registry.buttons.get(dec_btn_e);
+	dec_btn.on_mouse_out = []() {
+		Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
 		dec_btn.hover = false;
 	};
 
-	inc_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e, p_health]() {
+	inc_btn.on_click = [indicator_text_e, post_transaction_e, inventory_text_e, p_health]() {
 		WeaponShopInfo w_info = weapon_shop_infos[ShopMenu::current_item];
 		Player& player = registry.players.components.back();
 
@@ -677,21 +719,21 @@ void ShopMenu::render_misc_page() {
 			if (player.gold_balance < misc_shop_prices[(int)MiscType::HEALTH] * (ShopMenu::quantity + 1) || 
 				p_health.current_health + (ShopMenu::quantity + 1) > p_health.max_health
 			) {
-				Button& inc_btn = registry.buttons.get(inc_btn_e);
-				registry.renderRequests.get(inc_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_UP_BUTTON;
+				Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
+				registry.renderRequests.get(increase_amount_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_UP_BUTTON;
 				inc_btn.disabled = true;
 				return;
 			}
 
-			Button& dec_btn = registry.buttons.get(dec_btn_e);
+			Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
 			if (dec_btn.disabled) {
-				registry.renderRequests.get(dec_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_DOWN_BUTTON;
+				registry.renderRequests.get(decrease_amount_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_DOWN_BUTTON;
 				dec_btn.disabled = false;
 			}
 		}
 	};
 
-	dec_btn.on_click = [inc_btn_e, dec_btn_e, indicator_text_e, post_transaction_e, inventory_text_e, p_health]() {
+	dec_btn.on_click = [indicator_text_e, post_transaction_e, inventory_text_e, p_health]() {
 		WeaponShopInfo w_info = weapon_shop_infos[ShopMenu::current_item];
 		Player& player = registry.players.components.back();
 
@@ -707,27 +749,44 @@ void ShopMenu::render_misc_page() {
 				);
 
 			if (misc_shop_prices[(int)MiscType::HEALTH] * (ShopMenu::quantity - 1) < 0) {
-				Button& dec_btn = registry.buttons.get(dec_btn_e);
-				registry.renderRequests.get(dec_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON;
+				Button& dec_btn = registry.buttons.get(decrease_amount_btn_e);
+				registry.renderRequests.get(decrease_amount_btn_e).used_texture = TEXTURE_ASSET_ID::INACTIVE_DOWN_BUTTON;
 				dec_btn.disabled = true;
 				return;
 			}
 
-			Button& inc_btn = registry.buttons.get(inc_btn_e);
+			Button& inc_btn = registry.buttons.get(increase_amount_btn_e);
 			if (inc_btn.disabled) {
-				registry.renderRequests.get(inc_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON;
+				registry.renderRequests.get(increase_amount_btn_e).used_texture = TEXTURE_ASSET_ID::ACTIVE_UP_BUTTON;
 				inc_btn.disabled = false;
 			}
 		}
 	};
 
-	page_entities.push_back(inc_btn_e);
-	page_entities.push_back(dec_btn_e);
+	page_entities.push_back(increase_amount_btn_e);
+	page_entities.push_back(decrease_amount_btn_e);
 }
 
 int ShopMenu::on_mouse_move(vec2 mouse_position) {
 	int cursor = GLFW_ARROW_CURSOR;
+	
+	// Check hover area
+	if (registry.motions.has(quantity_btn_container_e)) {
+		Motion& scroll_area_motion = registry.motions.get(quantity_btn_container_e);
+		if (
+			mouse_position.x >= scroll_area_motion.position.x - scroll_area_motion.scale.x / 2 &&
+			mouse_position.x <= scroll_area_motion.position.x + scroll_area_motion.scale.x / 2 &&
+			mouse_position.y >= scroll_area_motion.position.y - scroll_area_motion.scale.y / 2 &&
+			mouse_position.y <= scroll_area_motion.position.y + scroll_area_motion.scale.y / 2
+		) {
+			cursor = GLFW_VRESIZE_CURSOR;
+			scroll_area_hover = true;
+		} else {
+			scroll_area_hover = false;
+		}
+	}
 
+	// Page entity checks
 	for (int i = 0; i < button_entities.size(); i++) {
 		Entity& e = button_entities[i];
 
@@ -752,6 +811,7 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 		}
 	}
 
+	// Page entity checks
 	for (int i = 0; i < page_entities.size(); i++) {
 		Entity& e = page_entities[i];
 
@@ -788,7 +848,7 @@ int ShopMenu::on_mouse_move(vec2 mouse_position) {
 			button.on_mouse_out();
 		}
 	}
-	
+
 	return cursor;
 }
 
@@ -818,6 +878,20 @@ int ShopMenu::on_mouse_click(int button, int action, int mods) {
 		if (button.hover && !button.disabled && action == GLFW_PRESS) {
 			button.on_click();
 			break;
+		}
+	}
+
+	return 0;
+}
+
+int ShopMenu::on_scroll(double x_offset, double y_offset) {
+	if ((current_page == ITEM_TYPE::AMMO || current_page == ITEM_TYPE::MISC) && scroll_area_hover) {
+		if (y_offset < 0) {
+			Button& btn = registry.buttons.get(decrease_amount_btn_e);
+			btn.on_click();
+		} else {
+			Button& btn = registry.buttons.get(increase_amount_btn_e);
+			btn.on_click();
 		}
 	}
 
