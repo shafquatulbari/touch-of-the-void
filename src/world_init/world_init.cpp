@@ -101,6 +101,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			RENDER_LAYER::FOREGROUND });
 	}
 	else if (aiType == AI::AIType::TURRET) {
+		registry.immobiles.emplace(entity);
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,

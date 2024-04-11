@@ -1432,6 +1432,9 @@ void WorldSystem::bounce_back(Entity player, Entity obstacle) {
 	//Motion& playerMotion = registry.motions.get(player);
 	//playerMotion.velocity *= -1;
 	//playerMotion.position += playerMotion.velocity * 0.01f;
+	if (registry.immobiles.has(player)) {
+		return; // do not move immobile entities
+	}
 
 	Motion& p_motion = registry.motions.get(player);
 	Motion& obs_motion = registry.motions.get(obstacle);
