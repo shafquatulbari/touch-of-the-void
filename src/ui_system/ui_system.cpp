@@ -568,7 +568,7 @@ void UISystem::update(Health& player_health, Shield& player_shield, Player& play
 
 	// handle fps
 	if (showFPS) {
-		if (!showingFPS) {
+		if (!showingFPS || !registry.texts.has(fps_text)) {
 			fps_text = createText(renderer, "", { fps_x, fps_y }, 0.8f, { 0.0f, 1.0f, 1.0f }, TextAlignment::LEFT);
 			showingFPS = true;
 		}
