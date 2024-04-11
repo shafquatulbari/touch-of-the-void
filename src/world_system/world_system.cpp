@@ -20,7 +20,6 @@
 // TODO: set hard coded game configuration values here
 bool fullscreen;
 int invincibilityTime;
-bool invincible;
 int initial_delay_ms;
 
 // Create the world
@@ -974,7 +973,7 @@ void WorldSystem::handle_collisions(float elapsed_ms) {
 
 
 			// Collision logic for projectiles hitting obstacles
-			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other)) {
+			else if (registry.projectiles.has(entity) && registry.obstacles.has(entity_other) && !registry.powerups.has(entity_other)) {
 				Projectile& projectile = registry.projectiles.get(entity);
 				Entity projectileSource = projectile.source;
 
