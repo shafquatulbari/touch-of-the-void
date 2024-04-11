@@ -1140,7 +1140,9 @@ Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
 }
 
 Entity createShopIndicator(RenderSystem* renderer, vec2 position) {
-	Entity text_e = createText(renderer, "Z", position, 0.75f, { 1.f, 1.f, 1.f }, TextAlignment::CENTER);
+	vec3 color = { 1.f, 1.f, 1.f };
+	
+	Entity text_e = createText(renderer, "Z", position, 0.75f, color, TextAlignment::CENTER);
 	registry.renderRequests.emplace(text_e).used_render_layer = RENDER_LAYER::FOREGROUND;
 	registry.debugComponents.emplace(text_e);
 
@@ -1436,6 +1438,9 @@ Entity createLevel(RenderSystem* render, Entity background)
 Entity createBossProjectile(RenderSystem* render, vec2 position, float angle, float rng, float fire_length, int i, Entity source)
 {
 	auto entity = Entity();
+
+	Mesh& mesh = render->getMesh(GEOMETRY_BUFFER_ID::BULLET_CH);
+	registry.meshPtrs.emplace(entity, &mesh);
 
 	// Actual firing angle is randomly perturbed based on accuracy and how long the fire button has been held
 	float accuracy = clamp(fire_length * 0.0005f, 0.0f, 0.4f);

@@ -446,7 +446,7 @@ bool WorldSystem::step(float elapsed_ms_since_last_update)
 	if (registry.shopPanels.entities.size() > 0) {
 		vec2& shop_pos = registry.motions.get(registry.shopPanels.entities.back()).position;
 		if (glm::distance(shop_pos, player_pos) <= 1.5f * game_window_block_size) {
-			createShopIndicator(renderer, player_pos + vec2({ game_window_block_size / 2, -game_window_block_size / 2 }));
+			createShopIndicator(renderer, player_pos + vec2({ game_window_block_size * 0.75f, -game_window_block_size * 0.75f }));
 		}
 	}
 
@@ -522,6 +522,9 @@ void WorldSystem::restart_game() {
 
 	case GAME_STATE::GAME: {
 		play_music(game_music);
+
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
 		std::string line;
 		std::fstream high_score_file("../../../data/highscore.txt");
 		if (high_score_file.is_open())
@@ -1584,6 +1587,11 @@ void WorldSystem::on_scroll(double x_offset, double y_offset) {
 			}
 
 			break;
+
+		case GAME_STATE::SHOP_MENU:
+			ShopMenu::on_scroll(x_offset, y_offset);
+			break;
+
 		default:
 			break;
 	}
