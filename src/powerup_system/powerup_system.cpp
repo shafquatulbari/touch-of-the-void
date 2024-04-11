@@ -177,9 +177,9 @@ void PowerupSystem::awardPowerup(Entity entity, std::default_random_engine rng, 
 			player.defense_boost = true;
 			break;
 		case PowerupType::SPEED_BOOST:
-			playerMotion.acceleration_rate *= 2;
-			playerMotion.deceleration_rate *= 2;
-			playerMotion.max_velocity *= 2;
+			playerMotion.acceleration_rate *= 1.5;
+			playerMotion.deceleration_rate *= 1.5;
+			playerMotion.max_velocity *= 1.5;
 			break;
 		case PowerupType::MULTIPLIER_BOOST:
 			registry.multiplierBoostPowerupTimers.emplace(entity);
