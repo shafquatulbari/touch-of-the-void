@@ -101,6 +101,7 @@ Entity createEnemy(RenderSystem *renderer, vec2 position, float health_points, A
 			RENDER_LAYER::FOREGROUND });
 	}
 	else if (aiType == AI::AIType::TURRET) {
+		registry.immobiles.emplace(entity);
 		registry.renderRequests.insert(
 			entity,
 			{ TEXTURE_ASSET_ID::ENEMY_TURRET_GUN,
@@ -1141,7 +1142,7 @@ Entity createShopPanel(RenderSystem* renderer, WeaponType weapon_on_sale) {
 Entity createShopIndicator(RenderSystem* renderer, vec2 position) {
 	vec3 color = { 1.f, 1.f, 1.f };
 	
-	Entity text_e = createText(renderer, "G", position, 0.75f, color, TextAlignment::CENTER);
+	Entity text_e = createText(renderer, "Z", position, 0.75f, color, TextAlignment::CENTER);
 	registry.renderRequests.emplace(text_e).used_render_layer = RENDER_LAYER::FOREGROUND;
 	registry.debugComponents.emplace(text_e);
 
@@ -1424,7 +1425,7 @@ Entity createLevel(RenderSystem* render, Entity background)
 	auto starting_room_entity = Entity();
 	level.current_room = std::pair<int, int>(0, 0);
 	level.rooms.emplace(level.current_room, starting_room_entity);
-
+	level.num_rooms_cleared = 0;
 	Room& starting_room = registry.rooms.emplace(starting_room_entity);
 	WorldGenerator world_generator;
 

@@ -60,7 +60,9 @@ int main()
 		world.step(elapsed_ms);
 
 		if (!world.is_paused) {
-			ai.step(elapsed_ms);
+			if (!world.invincible) {
+				ai.step(elapsed_ms);
+			}
 			physics.step(elapsed_ms);
 			world.handle_collisions(elapsed_ms);
 			boss.step(elapsed_ms);

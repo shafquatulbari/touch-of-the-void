@@ -26,6 +26,7 @@ void WorldGenerator::populateRoom(Room& room)
 
 
 	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
+
 	Level& level = registry.levels.get(registry.levels.entities[0]);
 	room.obstacle_count += level.num_rooms_cleared;
 	room.enemy_count += level.num_rooms_cleared;
@@ -76,8 +77,6 @@ void WorldGenerator::populateFirstRoom(Room& room)
 
 	// Assume only 1 level - add 1 enemy / obstacle for each room the enemy has cleared
 	Level& level = registry.levels.get(registry.levels.entities[0]);
-	room.obstacle_count += level.num_rooms_cleared;
-	room.enemy_count += level.num_rooms_cleared;
 
 	int cur_obstacles_count = 0;
 
