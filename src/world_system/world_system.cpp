@@ -561,11 +561,15 @@ void WorldSystem::restart_game() {
 		break;
 
 	case GAME_STATE::GAME_OVER: {
-		high_score = std::max(high_score, score);
 		/*createText(renderer, "GAME OVER", { 960.0f, 324.0f }, 3.f, COLOR_RED, TextAlignment::CENTER);
 		createText(renderer, "Press 'enter' to play again", { 960.0f, 464.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);*/
 		createDeathScreen(renderer);
+		if (score > high_score)
+		{
+			createText(renderer, "New High Score!", { 960.0f, 824.0f }, 1.f, COLOR_GOLD, TextAlignment::CENTER);
+		}
 		createText(renderer, "Score " + std::to_string(score), { 960.0f, 864.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		high_score = std::max(high_score, score);
 		createText(renderer, "High Score " + std::to_string(high_score), { 960.0f, 904.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		std::fstream new_highscore_file("../../../data/highscore.txt");
 		if (new_highscore_file.is_open())
@@ -580,7 +584,12 @@ void WorldSystem::restart_game() {
 		play_music(game_win_music);
 		createWinScreen(renderer);
 		createText(renderer, "Press Enter to Start Again", { 960.0f, 664.0f }, 2.f, COLOR_RED, TextAlignment::CENTER);
+		if (score > high_score)
+		{
+			createText(renderer, "New High Score!", { 960.0f, 824.0f }, 1.f, COLOR_GOLD, TextAlignment::CENTER);
+		}
 		createText(renderer, "Score " + std::to_string(score), { 960.0f, 864.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
+		high_score = std::max(high_score, score);
 		createText(renderer, "High Score " + std::to_string(high_score), { 960.0f, 904.0f }, 1.f, COLOR_WHITE, TextAlignment::CENTER);
 		std::fstream new_highscore_file("../../../data/highscore.txt");
 		if (new_highscore_file.is_open())

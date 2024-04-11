@@ -7,8 +7,7 @@
 
 #include <iomanip>
 #include <iostream>
-
-
+#include <algorithm>
 
 float top_left_corner_x = 208.f, top_left_corner_y = 290.f, box_width = 36.f, box_height = 36.f;
 void UISystem::createMap(Level& level) {
@@ -250,10 +249,12 @@ void UISystem::updatePlayerStatus(Health& player_health, Shield& player_shield) 
 	registry.texts.get(player_shield_text).content = shieldText;
 }
 
-float score_x = 1750.0f, score_y = 932.0f, multiplier_x = 1545.0f, multiplier_y = 919.0f;
+float score_x = 1798.0f, score_y = 932.0f, multiplier_x = 1545.0f, multiplier_y = 919.0f;
+size_t n_zero = 4;
 void UISystem::createScoreboard(int score, float multiplier) {
 	// score
 	std::string scoreText = std::to_string(score);
+	scoreText = std::string(n_zero - std::min(n_zero, scoreText.length()), '0') + scoreText; 	// one liner to pad with zeros taken from https://stackoverflow.com/questions/6143824/add-leading-zeroes-to-string-without-sprintf
 	score_text = createText(renderer, scoreText, { score_x, score_y }, 1.5f, COLOR_GREEN, TextAlignment::RIGHT);
 	// multiplier
 	std::string multiplierText = std::to_string(multiplier);
@@ -264,6 +265,7 @@ void UISystem::createScoreboard(int score, float multiplier) {
 void UISystem::updateScoreboard(int score, float multiplier, int deltaScore) {
 	// Update Score
 	std::string scoreText = std::to_string(score);
+	scoreText = std::string(n_zero - std::min(n_zero, scoreText.length()), '0') + scoreText; 	// one liner to pad with zeros taken from https://stackoverflow.com/questions/6143824/add-leading-zeroes-to-string-without-sprintf
 	registry.texts.get(score_text).content = scoreText;
 
 	// Update Multiplier
