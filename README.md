@@ -1,5 +1,13 @@
 # Team10-Touch-Of-The-Void
 
+Team 10:
+- Adrian Lee
+- Alex Choi
+- Andrew Cheah
+- Celvin Koesasih
+- Nathan Dar
+- Shafquat ul Bari
+
 Art Asset References:
 - guy in tank - https://ansimuz.itch.io/warped-sci-fi-lab
 - shop background - https://ansimuz.itch.io/bulkhead-walls-environment
