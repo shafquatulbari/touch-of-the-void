@@ -1,5 +1,10 @@
 # Team10-Touch-Of-The-Void
 
+Milestone Presentations:
+- Milestone 1 - https://drive.google.com/file/d/1fYqf2jQUOHdmvZTHVnYxGODOavnkKXsL/view
+- Milestone 2 - https://www.youtube.com/watch?v=P_-DTJ5GPJw
+- Milestone 3 - https://www.youtube.com/watch?v=NY5xw3HrLY0
+- Milestone 4 - https://www.youtube.com/watch?v=uPVyCMU1ZOA
 Team 10:
 - Adrian Lee
 - Alex Choi
